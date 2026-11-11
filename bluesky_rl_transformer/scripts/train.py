@@ -15,7 +15,7 @@ import torch
 from rl_tf.envs import (VecEnv, FlightEnv, add_reward_args, reward_kwargs, obs_dims, rollout_episode, turn_stats)
 from rl_tf.lidar import Lidar
 from rl_tf.networks import build_policy, save_checkpoint, n_params
-from rl_tf.common import (setup_torch, compute_gae, pass_criterion, window_stats, write_json, policy_fn_from,
+from rl_tf.common import (setup_torch, compute_gae, pass_criterion, window_stats, write_json, policy_fn_from, wandb_upload,
                           wandb_init, add_wandb_args)
 
 EVAL_SEED0 = 900_000_000   # held-out scenario seeds for the final flights without noise
@@ -181,11 +181,13 @@ def main(argv=None):
               f"log_std={row['log_std']:.2f}{txt}", flush=True)
         if updates % args.save_every == 0:
             save_checkpoint(model_path, policy, vars(args), dims)
+            wandb_upload(wb, model_path)
 
     wall = time.time() - t_start
     vec.close()
     save_checkpoint(model_path, policy, vars(args), dims)
     print(f"Saved {model_path}")
+    wandb_upload(wb, model_path)
 
     # final flights without noise (this process has no BlueSky environment until here)
     torch.set_num_threads(1)
@@ -202,8 +204,8 @@ def main(argv=None):
         gm = window_stats(greedy_rows) or {}
         wb.summary.update({f"final_no_noise/{k}": v for k, v in gm.items()})
         wb.summary.update({"wall_seconds": wall, "n_agent_episodes": len(episodes)})
-        wb.finish()
-    write_json(out / "results" / f"{args.name}_summary.json", {
+    summary_path = out / "results" / f"{args.name}_summary.json"
+    write_json(summary_path, {
         "status": "EXPLORATORY",
         "task": "overfit on one fixed scenario" if reset_seed is not None else "random scenarios",
         "name": args.name, "setting": args.setting, "encoder": "lidar ray-token Transformer", "n_aircraft": N,
@@ -213,6 +215,9 @@ def main(argv=None):
         "greedy_eval": {"seeds": seeds, "mean": window_stats(greedy_rows), "rows": greedy_rows},
         "wall_seconds": wall, "seconds_per_step": wall / max(total, 1),
         "args": vars(args), "curve": curve, "episodes": episodes})
+    if wb is not None:
+        wandb_upload(wb, summary_path)
+        wb.finish()
 
 
 if __name__ == "__main__":

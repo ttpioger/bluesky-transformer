@@ -12,6 +12,7 @@ dependencies = [
     "shapely>=2.1.2",
     "pettingzoo>=1.26.1",
     "supersuit>=3.11.0",
+    "wandb>=0.31.0",
 ]
 
 authors = [

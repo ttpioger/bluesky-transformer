@@ -77,6 +77,12 @@ def wandb_init(mode, project, name, config=None):
     return wandb.init(project=project, name=name, id=name, resume="allow", mode=mode, config=config)
 
 
+def wandb_upload(wb, path):
+    """Copy one file (model or summary) to the Files tab of the W&B run. A later call replaces the file."""
+    if wb is not None:
+        wb.save(str(path), base_path=str(Path(path).parent.parent), policy="now")
+
+
 def add_wandb_args(p):
     p.add_argument("--wandb", choices=["off", "online", "offline"], default="off",
                    help="Send the main metrics (and in scripts.compare the figures and GIFs) to Weights & Biases.")
