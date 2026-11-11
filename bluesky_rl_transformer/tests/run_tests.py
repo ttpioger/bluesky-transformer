@@ -63,6 +63,17 @@ def test_own_frame():
     assert east[0] > 11.0 and abs(east[1]) < 1e-9 and south[1] > 11.0 and abs(south[0]) < 1e-9
 
 
+def test_inside_zone_flag():
+    from rl_tf.lidar import inside_zone, own_state
+    assert inside_zone(fake_obs(zone=(5.0, 0.0, 10.0))) == 1.0      # own aircraft inside the square zone
+    assert inside_zone(fake_obs(zone=(50.0, 0.0, 10.0))) == 0.0     # zone ahead
+    assert inside_zone(fake_obs(zone=(-50.0, 3.0, 10.0))) == 0.0    # zone behind
+    assert inside_zone(fake_obs()) == 0.0
+    s = own_state(fake_obs(zone=(5.0, 0.0, 10.0)), (0.5, -0.5), zone_flag=True)
+    assert s.shape == (8,) and s[5] == 1.0 and s[6] == 0.5 and s[7] == -0.5
+    assert own_state(fake_obs(), (0.0, 0.0)).shape == (7,)
+
+
 def test_frame_stack():
     lid = Lidar(n_rays=16)
     b = ObsBuilder(lid, history=4)

@@ -68,6 +68,21 @@ def write_json(path, data):
     print(f"Wrote {p}")
 
 
+def wandb_init(mode, project, name, config=None):
+    """Weights & Biases run, or None if mode is "off". The run id is the run name, so that scripts.train and
+    scripts.compare write to the same run."""
+    if mode == "off":
+        return None
+    import wandb
+    return wandb.init(project=project, name=name, id=name, resume="allow", mode=mode, config=config)
+
+
+def add_wandb_args(p):
+    p.add_argument("--wandb", choices=["off", "online", "offline"], default="off",
+                   help="Send the main metrics (and in scripts.compare the figures and GIFs) to Weights & Biases.")
+    p.add_argument("--wandb-project", default="bluesky-rl-transformer")
+
+
 def policy_fn_from(policy, device="cpu", deterministic=True):
     """policy_fn for rollout_episode: joint forward pass over the live aircraft."""
     def fn(raw_obs, built):

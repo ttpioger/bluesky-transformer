@@ -15,7 +15,8 @@ import torch
 from rl_tf.envs import (VecEnv, FlightEnv, add_reward_args, reward_kwargs, obs_dims, rollout_episode, turn_stats)
 from rl_tf.lidar import Lidar
 from rl_tf.networks import build_policy, save_checkpoint, n_params
-from rl_tf.common import setup_torch, compute_gae, pass_criterion, window_stats, write_json, policy_fn_from
+from rl_tf.common import (setup_torch, compute_gae, pass_criterion, window_stats, write_json, policy_fn_from,
+                          wandb_init, add_wandb_args)
 
 EVAL_SEED0 = 900_000_000   # held-out scenario seeds for the final flights without noise
 
@@ -42,6 +43,8 @@ def build_parser():
     p.add_argument("--fov-deg", type=float, default=360.0)
     p.add_argument("--max-range-km", type=float, default=100.0)
     p.add_argument("--history", type=int, default=4, help="Stacked frames (reference: 4).")
+    p.add_argument("--zone-flag", type=int, choices=[0, 1], default=1,
+                   help="1: the own state has a flag 'inside a no-fly zone'. 0: as before 2026-11-11.")
     # network
     p.add_argument("--patch", type=int, default=4, help="Adjacent rays per token.")
     p.add_argument("--d-model", type=int, default=64)
@@ -57,6 +60,7 @@ def build_parser():
                         "to the waypoint, so it breaks the only-negative constraint.")
     p.add_argument("--shaping-speed", type=float, default=150.0, help="Nominal speed (m/s) in the potential.")
     add_reward_args(p)
+    add_wandb_args(p)
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--reset-seed", type=int, default=-1, help="Scenario seed used at every reset. -1 = random scenarios.")
     p.add_argument("--eval-episodes", type=int, default=10, help="Final flights without noise (random scenarios: held-out seeds).")
@@ -74,7 +78,8 @@ def main(argv=None):
     reset_seed = None if args.reset_seed < 0 else args.reset_seed
     out = Path(args.out_dir)
     (out / "models").mkdir(parents=True, exist_ok=True)
-    lidar_cfg = dict(n_rays=args.n_rays, fov_deg=args.fov_deg, max_range_km=args.max_range_km)
+    lidar_cfg = dict(n_rays=args.n_rays, fov_deg=args.fov_deg, max_range_km=args.max_range_km,
+                     zone_flag=bool(args.zone_flag))
     cfg = dict(setting=args.setting, n_agents=args.n_agents, reward=reward_kwargs(args), lidar=lidar_cfg,
                history=args.history, shaping=args.shaping == "potential", shaping_speed=args.shaping_speed,
                seed=args.seed, reset_seed=reset_seed)
@@ -84,6 +89,7 @@ def main(argv=None):
     n_par = {"policy": n_params(policy), "encoder": n_params(policy.encoder),
              "actor_head": n_params(policy.actor) + policy.log_std.numel(), "critic_head": n_params(policy.critic)}
     model_path = out / "models" / f"{args.name}.pt"
+    wb = wandb_init(args.wandb, args.wandb_project, args.name, {**vars(args), "n_params": n_par})
 
     vec = VecEnv(cfg, args.workers)
     E, N = vec.n_envs, vec.n_agents
@@ -167,6 +173,10 @@ def main(argv=None):
                    f"intrusions={row['intrusion_events']:.2f} zones={row['restricted_area_events']:.2f} "
                    f"sector_exit={row['sector_exit_events']:.2f} flight_time={row['flight_time']:.0f}")
         curve.append(row)
+        if wb is not None:
+            extra = {k: float(np.mean([e[k] for e in new_eps])) for k in
+                     ["intrusion_time", "time_in_restricted_area", "time_outside_sector"]} if new_eps else {}
+            wb.log({f"train/{k}": v for k, v in {**row, **extra}.items() if k != "env_steps"}, step=total)
         print(f"env_steps={total} policy_loss={row['policy_loss']:.4f} value_loss={row['value_loss']:.4f} "
               f"log_std={row['log_std']:.2f}{txt}", flush=True)
         if updates % args.save_every == 0:
@@ -188,6 +198,11 @@ def main(argv=None):
             rows, _, tr = rollout_episode(env, fn, s, Lidar(**lidar_cfg), args.history)
             greedy_rows += [{"episode_seed": s, "aircraft": a, **r, **turn_stats(tr[a])} for a, r in rows.items()]
         env.close()
+    if wb is not None:
+        gm = window_stats(greedy_rows) or {}
+        wb.summary.update({f"final_no_noise/{k}": v for k, v in gm.items()})
+        wb.summary.update({"wall_seconds": wall, "n_agent_episodes": len(episodes)})
+        wb.finish()
     write_json(out / "results" / f"{args.name}_summary.json", {
         "status": "EXPLORATORY",
         "task": "overfit on one fixed scenario" if reset_seed is not None else "random scenarios",

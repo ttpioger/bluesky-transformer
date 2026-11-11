@@ -47,8 +47,10 @@ def main(argv=None):
         policy, ck = load_policy(args.model, args.device)
         a = ck["args"]
         setting, n_agents = args.setting or a["setting"], args.n_agents or a["n_agents"]
+        rew["goal_distance_penalty"] = 0.0             # a checkpoint without this key had no such term
         rew.update({k: a[k] for k in rew if k in a})
-        lidar_cfg = dict(n_rays=a["n_rays"], fov_deg=a["fov_deg"], max_range_km=a["max_range_km"])
+        lidar_cfg = dict(n_rays=a["n_rays"], fov_deg=a["fov_deg"], max_range_km=a["max_range_km"],
+                         zone_flag=bool(a.get("zone_flag", 0)))
         history, n_par = a["history"], ck["n_params"]
         fn = policy_fn_from(policy, args.device, deterministic=not args.stochastic)
         name = args.name or Path(args.model).stem

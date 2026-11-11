@@ -20,7 +20,7 @@ from pathlib import Path
 import numpy as np
 from rl_tf.envs import FlightEnv, REWARD_DEFAULTS, METRIC_KEYS, ObsBuilder, metrics_row, turn_stats
 from rl_tf.lidar import Lidar, NM2KM, DEG2KM
-from rl_tf.common import setup_torch, write_json
+from rl_tf.common import setup_torch, write_json, wandb_init, add_wandb_args
 
 EVAL_SEED0 = 900_000_000
 CURVE_KEYS = ["ep_return", "waypoint_reached", "intrusion_time", "sector_exit_events"]
@@ -89,7 +89,8 @@ def _job(job):
     a = ck["args"]
     # A checkpoint from before 2026-11-11 has no goal-distance term: 0 keeps the reward of its training.
     rew = {**REWARD_DEFAULTS, "goal_distance_penalty": 0.0, **{k: a[k] for k in REWARD_DEFAULTS if k in a}}
-    lidar = Lidar(n_rays=a["n_rays"], fov_deg=a["fov_deg"], max_range_km=a["max_range_km"])
+    lidar = Lidar(n_rays=a["n_rays"], fov_deg=a["fov_deg"], max_range_km=a["max_range_km"],
+                  zone_flag=bool(a.get("zone_flag", 0)))          # no key: checkpoint from before the flag
     fns = {"straight": lambda raw, built: {k: np.zeros(2, dtype=np.float32) for k in raw},
            "policy": policy_fn_from(policy, device, deterministic=True)}
     with contextlib.redirect_stdout(io.StringIO()):
@@ -250,6 +251,7 @@ def main(argv=None):
     p.add_argument("--no-rays", action="store_true", help="GIF frames without the lidar rays.")
     p.add_argument("--name", default=None, help="Default: model file name.")
     p.add_argument("--out-dir", default=".")
+    add_wandb_args(p)
     args = p.parse_args(argv)
     name, out = args.name or Path(args.model).stem, Path(args.out_dir)
     eval_seeds = [EVAL_SEED0 + i for i in range(args.eval_episodes)]
@@ -288,6 +290,28 @@ def main(argv=None):
         "status": "EXPLORATORY", "name": name, "model": args.model, "setting": "single", "deterministic": True,
         "track_seeds": args.seeds, "eval_seeds": eval_seeds, "std": "population std over the held-out scenarios (one model seed)",
         "held_out": agg, "rows": rows})
+
+    wb = wandb_init(args.wandb, args.wandb_project, name)
+    if wb is not None:
+        import wandb
+        media = {"figures/tracks": wandb.Image(str(out / "figures" / f"{name}_tracks.png"))}
+        if summary_path.exists():
+            media["figures/training_curves"] = wandb.Image(str(out / "figures" / f"{name}_curves.png"))
+        if not args.no_gif:
+            media["videos/policy"] = wandb.Video(str(out / "gifs" / f"{name}_sa.gif"), format="gif")
+            media["videos/straight_vs_policy"] = wandb.Video(str(out / "gifs" / f"{name}_vs_straight.gif"), format="gif")
+        table = wandb.Table(columns=["episode_seed", "flight"] + cols)
+        for r in rows:
+            for pol in ["straight", "policy"]:
+                table.add_data(r["episode_seed"], pol, *[r[pol][c] for c in cols])
+        media["held_out/per_scenario"] = table
+        wb.log(media)
+        if agg:
+            for pol in ["straight", "policy"]:
+                wb.summary.update({f"held_out/{pol}/{k}_{s}": v[s] for k, v in agg[pol].items() for s in ["mean", "std"]})
+            wb.summary.update({f"held_out/violation_time_policy_minus_straight/{k}": v
+                               for k, v in agg["violation_time_policy_minus_straight"].items()})
+        wb.finish()
 
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@ import os
 from collections import deque
 import multiprocessing as mp
 import numpy as np
-from .lidar import Lidar, own_state, STATE_DIM, N_CHANNELS, DIST_NORM_KM, GEOM_KEY, NM2KM, to_own_frame
+from .lidar import Lidar, own_state, state_dim, N_CHANNELS, DIST_NORM_KM, GEOM_KEY, NM2KM, to_own_frame
 
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")   # no window for rgb_array rendering
 
@@ -26,7 +26,8 @@ METRIC_KEYS = ["waypoint_reached", "flight_time", "intrusion_events", "intrusion
 REWARD_DEFAULTS = dict(drift_penalty=-0.01, time_penalty=-5.0, intrusion_penalty=-10.0,
                        restricted_penalty=-10.0, sector_exit_penalty=-50.0,
                        zone_entry_penalty=-100.0, sector_exit_event_penalty=-500.0, turn_change_penalty=0.0,
-                       goal_distance_penalty=-0.05, heading_penalty=0.0)
+                       goal_distance_penalty=-0.05, heading_penalty=0.0,
+                       intrusion_event_penalty=0.0)
 
 # Reward presets (--reward-preset). "friend": the reward that a friend of the user uses (user, 2026-11-11):
 # r_t = -sum over the simulated seconds k of the step (100 x1_k + 10 x2_k + 10 x3_k + 1 (1 - cos psi_t) + 0.1),
@@ -35,7 +36,15 @@ REWARD_DEFAULTS = dict(drift_penalty=-0.01, time_penalty=-5.0, intrusion_penalty
 REWARD_PRESETS = {
     "friend": dict(drift_penalty=0.0, time_penalty=-0.1, intrusion_penalty=-100.0, restricted_penalty=-10.0,
                    sector_exit_penalty=-10.0, zone_entry_penalty=0.0, sector_exit_event_penalty=0.0,
-                   turn_change_penalty=0.0, goal_distance_penalty=0.0, heading_penalty=-1.0)}
+                   turn_change_penalty=0.0, goal_distance_penalty=0.0, heading_penalty=-1.0,
+                   intrusion_event_penalty=0.0),
+    # "los" (user, 2026-11-11): loss of separation (LoS = another aircraft within 5 NM) -0.5 per second and
+    # -3 per event, no-fly zone -0.3 per second and -2 per entry, outside the sector -0.2 per second,
+    # time -0.015 per second. The user gave no other term, so all other terms are 0.
+    "los": dict(drift_penalty=0.0, time_penalty=-0.015, intrusion_penalty=-0.5, restricted_penalty=-0.3,
+                sector_exit_penalty=-0.2, zone_entry_penalty=-2.0, sector_exit_event_penalty=0.0,
+                turn_change_penalty=0.0, goal_distance_penalty=0.0, heading_penalty=0.0,
+                intrusion_event_penalty=-3.0)}
 assert all(set(v) == set(REWARD_DEFAULTS) for v in REWARD_PRESETS.values())
 REWARD_HELP = dict(
     drift_penalty="Per radian of drift, per step.",
@@ -47,14 +56,16 @@ REWARD_HELP = dict(
     turn_change_penalty="Per unit of change of the turn action between two steps (give a negative value).",
     goal_distance_penalty="Per second flown and per km of distance to the goal (distance after the step).",
     heading_penalty="Per second flown, times (1 - cos psi); psi = angle between the heading and the bearing "
-                    "to the goal after the step.")
+                    "to the goal after the step.",
+    intrusion_event_penalty="Once per start of an intrusion (another aircraft comes within 5 NM).")
 
 
 def add_reward_args(p):
     for k, v in REWARD_DEFAULTS.items():
-        p.add_argument("--" + k.replace("_", "-"), type=float, default=v, help=REWARD_HELP[k])
+        p.add_argument("--" + k.replace("_", "-"), type=float, default=None,
+                       help=f"{REWARD_HELP[k]} Default: {v}, or the preset value.")
     p.add_argument("--reward-preset", choices=["none"] + list(REWARD_PRESETS), default="none",
-                   help="A preset sets all reward weights and ignores the weight flags.")
+                   help="A preset sets all reward weights. A weight flag that you give overrides the preset.")
 
 
 def check_reward(rw):
@@ -66,9 +77,9 @@ def check_reward(rw):
 
 
 def reward_kwargs(args):
-    preset = REWARD_PRESETS.get(getattr(args, "reward_preset", "none"))
-    if preset:                                   # write the weights into args: the checkpoint then holds them
-        for k, v in preset.items():
+    base = REWARD_PRESETS.get(getattr(args, "reward_preset", "none"), REWARD_DEFAULTS)
+    for k, v in base.items():                    # order: given flag, preset, default. The result goes into
+        if getattr(args, k) is None:             # args, so that the checkpoint holds the weights in use.
             setattr(args, k, v)
     return {k: getattr(args, k) for k in REWARD_DEFAULTS}
 
@@ -110,7 +121,7 @@ class FlightEnv:
         else:
             obs, _ = self.env.reset(seed=seed)
         self.agents = list(obs)
-        self._prev = {a: dict(t=0.0, zone=0.0, exit=0.0, turn=0.0) for a in self.agents}
+        self._prev = {a: dict(t=0.0, zone=0.0, exit=0.0, turn=0.0, intr=0.0) for a in self.agents}
         self._geom = {}
         self._add_geometry(obs)
         return obs
@@ -128,7 +139,7 @@ class FlightEnv:
         for a in obs:
             i, p = infos[a], self._prev[a]
             t, zone, ext = float(i["flight_time"]), float(i["restricted_area_events"]), float(i["sector_exit_events"])
-            turn = float(actions[a][0])
+            turn, intr = float(actions[a][0]), float(i["intrusion_events"])
             gx, gy = obs[a][GEOM_KEY]["goal"]                          # own frame: origin = own aircraft, x = nose
             goal_km = float(np.hypot(gx, gy))
             cos_psi = float(gx) / goal_km if goal_km > 1e-9 else 1.0
@@ -137,8 +148,9 @@ class FlightEnv:
                           + rw["heading_penalty"] * (1.0 - cos_psi) * (t - p["t"])
                           + rw["zone_entry_penalty"] * (zone - p["zone"])
                           + rw["sector_exit_event_penalty"] * (ext - p["exit"])
+                          + rw["intrusion_event_penalty"] * (intr - p["intr"])
                           + rw["turn_change_penalty"] * abs(turn - p["turn"]))
-            p.update(t=t, zone=zone, exit=ext, turn=turn)
+            p.update(t=t, zone=zone, exit=ext, turn=turn, intr=intr)
         return obs, out_rew, {a: bool(term[a]) for a in obs}, {a: bool(trunc[a]) for a in obs}, infos
 
     def _ac_id(self, a):
@@ -213,21 +225,21 @@ class ObsBuilder:
         self.frames = deque(maxlen=history)
 
     def reset(self, obs):
-        f = (own_state(obs, (0.0, 0.0)), self.lidar.scan(obs))
+        f = (own_state(obs, (0.0, 0.0), self.lidar.zone_flag), self.lidar.scan(obs))
         z = (np.zeros_like(f[0]), np.zeros_like(f[1]))
         self.frames.clear()
         self.frames.extend([z] * (self.k - 1) + [f])
 
     def push(self, obs, action):
-        self.frames.append((own_state(obs, action), self.lidar.scan(obs)))
+        self.frames.append((own_state(obs, action, self.lidar.zone_flag), self.lidar.scan(obs)))
 
     def get(self):
-        """state [K * 7], lidar [K * 3, n_rays]."""
+        """state [K * 7] (K * 8 with the inside-zone flag), lidar [K * 3, n_rays]."""
         return (np.concatenate([f[0] for f in self.frames]), np.concatenate([f[1] for f in self.frames], axis=0))
 
 
 def obs_dims(lidar_cfg, history):
-    return dict(state_dim=STATE_DIM * history, lidar_ch=N_CHANNELS * history, n_rays=lidar_cfg["n_rays"])
+    return dict(state_dim=state_dim(lidar_cfg.get("zone_flag", True)) * history, lidar_ch=N_CHANNELS * history, n_rays=lidar_cfg["n_rays"])
 
 
 def potential(obs, time_penalty, speed):

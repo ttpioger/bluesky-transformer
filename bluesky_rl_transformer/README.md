@@ -31,6 +31,12 @@ Lidar details. Frame: own aircraft at the origin, x = nose, y = starboard (flat-
 
 n_params: policy 306 757 (encoder 215 808, actor head 20 740, critic head 70 209).
 
+Inside-zone flag (2026-11-11, `--zone-flag 1`, default): the own state of each frame also has a flag "inside a no-fly zone" (even-odd rule on the zone polygons). With the flag, n_params: policy 307 269 (encoder 216 320). `--zone-flag 0` gives the state of before. A checkpoint without the key `zone_flag` is read without the flag. Check: the flag is equal to the environment state on 1800 of 1800 steps (6 scenarios, random actions, 63 steps inside a zone).
+
+Waypoint input: the first observation holds the waypoint (cos_drift, sin_drift, waypoint_distance in units of 170 km). Check on 6 scenarios: the values agree with the simulator geometry.
+
+Weights & Biases (2026-11-11, package `wandb` 0.31.0 in `../.venv`): `--wandb online` (or `offline`) and `--wandb-project` on `scripts.train` and `scripts.compare`. Training sends the metrics of each update (`train/...`) and the final flights without noise. `scripts.compare` sends the track figure, the training curves, both GIFs, the per-scenario table and the held-out means to the same run (run id = run name). Default: off.
+
 ## Reward
 
 | Term | Value | Unit |
@@ -50,7 +56,9 @@ Each value is a flag. Ten seconds in a zone cost -200 (entry included); a detour
 
 Reason for the 2026-11-11 change: with -50 per second and -500 per entry, the policy of `sa_tf_neg_s0` (2 000 000 steps) flew a circle at its start point (50 held-out scenarios: goal reached 0.0, mean turn 43.3 degrees per step, return -20 905; fly straight: -9 405). The new values are not tested in a training run. The episode does not end at a zone entry or a sector exit ("shot down"), for two reasons. The multi-agent environment cannot remove an aircraft without a code change. An early end also stops the time penalty, which can reward a crash. A flight to the time limit (3000 s) costs -15 000 from the time term alone.
 
-Preset `--reward-preset friend` (user, 2026-11-11, the reward of a friend of the user): per second, -100 per aircraft within 5 NM, -10 in a no-fly zone, -10 outside the sector, -(1 - cos psi), -0.1 time; all other terms 0. The preset ignores the weight flags. Not matched with the friend's setup: the decision step here is 10 simulated seconds (the friend: 5); the per-second rates are the same. The friend's method, network and learning settings are not known here.
+Preset `--reward-preset friend` (user, 2026-11-11, the reward of a friend of the user): per second, -100 per aircraft within 5 NM, -10 in a no-fly zone, -10 outside the sector, -(1 - cos psi), -0.1 time; all other terms 0. A weight flag that you give overrides the preset value. Not matched with the friend's setup: the decision step here is 10 simulated seconds (the friend: 5); the per-second rates are the same. The friend's method, network and learning settings are not known here.
+
+Preset `--reward-preset los` (user, 2026-11-11): loss of separation (another aircraft within 5 NM) -0.5 per second and -3 per event (new term `--intrusion-event-penalty`), no-fly zone -0.3 per second and -2 per entry, outside the sector -0.2 per second, time -0.015 per second; all other terms 0.
 
 Hard constraint (user, 2026-11-11): the reward has only negative terms. The waypoint reward (+1) is removed. `check_reward` in `rl_tf/envs.py` stops the run if a weight is positive. Check on 2026-11-11 (8 flights, random actions, 2175 steps): the largest step reward is -25.0.
 

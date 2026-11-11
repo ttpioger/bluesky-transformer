@@ -30,6 +30,11 @@ OWN_KEYS = ["airspeed", "inside_sector", "cos_drift", "sin_drift", "waypoint_dis
 STATE_DIM = len(OWN_KEYS) + 2                          # own features + previous action (turn, speed)
 
 
+def state_dim(zone_flag=True):
+    """Size of the own state of one frame. zone_flag adds the inside-zone flag (2026-11-11)."""
+    return STATE_DIM + int(bool(zone_flag))
+
+
 def ray_circles(u, c, r):
     """Distance along each ray to each circle, reference rule (nav/ray_intersection.py):
     the first crossing with t >= 0; inside the circle this is the exit point.
@@ -78,8 +83,9 @@ def to_own_frame(lat, lon, lat0, lon0, hdg_deg):
 
 
 class Lidar:
-    def __init__(self, n_rays=120, fov_deg=360.0, max_range_km=100.0, ac_radius_km=5.0 * NM2KM):
+    def __init__(self, n_rays=120, fov_deg=360.0, max_range_km=100.0, ac_radius_km=5.0 * NM2KM, zone_flag=True):
         self.n_rays, self.fov_deg, self.max_range, self.ac_radius = n_rays, fov_deg, max_range_km, ac_radius_km
+        self.zone_flag = bool(zone_flag)               # the own state has the inside-zone flag
         if fov_deg >= 360.0:
             ang = -180.0 + 360.0 * np.arange(n_rays) / n_rays          # ring, no doubled ray
         else:
@@ -122,7 +128,21 @@ class Lidar:
         return out
 
 
-def own_state(obs, prev_action):
-    """Own-aircraft state of one frame: 5 own features + the previous action. [7] float32."""
+def inside_zone(obs):
+    """1.0 if the own aircraft (origin of the own frame) is inside a no-fly zone polygon, else 0.0.
+    Even-odd rule: a ray from the origin crosses the polygon edges an odd number of times."""
+    u = np.array([[1.0, 0.0]])
+    for z in obs[GEOM_KEY]["zones"]:
+        p, q = polygon_edges([z])
+        if int(np.isfinite(ray_segments(u, p, q)).sum()) % 2 == 1:
+            return 1.0
+    return 0.0
+
+
+def own_state(obs, prev_action, zone_flag=False):
+    """Own-aircraft state of one frame: 5 own features, the inside-zone flag (if zone_flag), the previous
+    action. [7] or [8] float32."""
     own = [float(np.asarray(obs[k]).reshape(-1)[0]) for k in OWN_KEYS]
+    if zone_flag:
+        own.append(inside_zone(obs))
     return np.asarray(own + [float(prev_action[0]), float(prev_action[1])], dtype=np.float32)
