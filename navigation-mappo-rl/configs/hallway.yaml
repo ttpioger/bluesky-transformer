@@ -1,0 +1,78 @@
+# Configuration for a basic environment with 8 agents and circular obstacle
+num_rays: 60
+goal_threshold: 0.02
+num_agents_per_group: 5
+terminal_strategy: individual
+
+# Boundary configuration
+boundary:
+  type: polygon
+  vertices:
+    - { x: 0.0, y: 0.0 }
+    - { x: 1.0, y: 0.0 }
+    - { x: 1.0, y: 1.0 }
+    - { x: 0.0, y: 1.0 }
+
+# Agents configuration - 8 agents in circular formation
+agents:
+  # Agent 1 - Top (0°)
+  - start_pos:
+      center:
+        x: 0.5
+        y: 0.25
+      width: 0.25
+      height: 0.1
+    goal_pos:
+      center:
+        x: 0.5
+        y: 0.85
+      width: 0.2
+      height: 0.02
+    radius: 0.01
+    max_range: 0.2
+    max_speed: 0.15
+    fov_degrees: 210 
+    spawn_time: 0.0
+    agent_col: red
+    
+  - start_pos:
+      center:
+        x: 0.5
+        y: 0.75
+      width: 0.25
+      height: 0.1
+    goal_pos:
+      center:
+        x: 0.5
+        y: 0.25
+      width: 0.15
+      height: 0.02
+    radius: 0.01
+    max_range: 0.2
+    max_speed: 0.15
+    fov_degrees: 210 
+    spawn_time: 0.0
+    agent_col: blue
+
+    # Obstacles configuration
+obstacles:
+  # Rectangular obstacle
+  - shape:
+      type: rectangle
+      center:
+        x: 0.8
+        y: 0.5
+      width: 0.3
+      height: 1
+    noise: 0.0
+
+  - shape:
+      type: rectangle
+      center:
+        x: 0.2
+        y: 0.5
+      width: 0.3
+      height: 1
+    noise: 0.0
+
+max_time: 500

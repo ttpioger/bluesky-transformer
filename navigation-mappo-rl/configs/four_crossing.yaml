@@ -1,0 +1,96 @@
+# Configuration for a basic environment with 8 agents and circular obstacle
+num_rays: 60
+goal_threshold: 0.04
+num_agents_per_group: 4
+terminal_strategy: individual
+
+# Boundary configuration
+boundary:
+  type: polygon
+  vertices:
+    - { x: 0.05, y: 0.05 }
+    - { x: 0.95, y: 0.05 }
+    - { x: 0.95, y: 0.95 }
+    - { x: 0.05, y: 0.95 }
+
+# Agents configuration - 8 agents in circular formation
+agents:
+  # Agent 1 - Top (0°)
+  - start_pos:
+      center:
+        x: 0.5
+        y: 0.25
+      width: 0.3
+      height: 0.02
+    goal_pos:
+      center:
+        x: 0.5
+        y: 0.85
+      width: 0.3
+      height: 0.02
+    radius: 0.015
+    max_speed: 0.2
+    fov_degrees: 360 
+    max_range: 0.5
+    spawn_time: 0.0
+    agent_col: red
+    
+  - start_pos:
+      center:
+        x: 0.5
+        y: 0.85
+      width: 0.3
+      height: 0.02
+    goal_pos:
+      center:
+        x: 0.5
+        y: 0.25
+      width: 0.3
+      height: 0.02
+    radius: 0.015
+    max_speed: 0.2
+    fov_degrees: 360 
+    max_range: 0.5
+    spawn_time: 0.0
+    agent_col: blue
+
+
+  - start_pos:
+      center:
+        x: 0.35
+        y: 0.5
+      width: 0.02
+      height: 0.3
+    goal_pos:
+      center:
+        x: 0.75
+        y: 0.5
+      width: 0.1
+      height: 0.3
+    radius: 0.015
+    max_speed: 0.2
+    fov_degrees: 360 
+    max_range: 0.5
+    spawn_time: 0.0
+    agent_col: green
+
+  - start_pos:
+      center:
+        x: 0.85
+        y: 0.5
+      width: 0.1
+      height: 0.3
+    goal_pos:
+      center:
+        x: 0.25
+        y: 0.5
+      width: 0.1
+      height: 0.3
+    radius: 0.015
+    max_speed: 0.2
+    fov_degrees: 360 
+    max_range: 0.5
+    spawn_time: 0.0
+    agent_col: yellow
+
+max_time: 500

@@ -1,0 +1,153 @@
+{
+ "status": "EXPLORATORY",
+ "setting": "single",
+ "cells": [
+  "R",
+  "A",
+  "B",
+  "C"
+ ],
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "imitation_pass": {
+  "cnn": true,
+  "set_tf": true
+ },
+ "failed_jobs": [],
+ "jobs": [
+  {
+   "job": "collect_sa",
+   "exit": 0,
+   "seconds": 85.80334997177124
+  },
+  {
+   "job": "imit_sa_cnn",
+   "exit": 0,
+   "seconds": 91.23109531402588
+  },
+  {
+   "job": "imit_sa_set_tf",
+   "exit": 0,
+   "seconds": 139.48200964927673
+  },
+  {
+   "job": "sa_R_s0",
+   "exit": 0,
+   "seconds": 763.0903525352478
+  },
+  {
+   "job": "sa_R_s1",
+   "exit": 0,
+   "seconds": 768.8698987960815
+  },
+  {
+   "job": "sa_R_s2",
+   "exit": 0,
+   "seconds": 763.0786242485046
+  },
+  {
+   "job": "sa_A_s0",
+   "exit": 0,
+   "seconds": 831.9000272750854
+  },
+  {
+   "job": "sa_A_s1",
+   "exit": 0,
+   "seconds": 834.2994089126587
+  },
+  {
+   "job": "sa_A_s2",
+   "exit": 0,
+   "seconds": 835.0617039203644
+  },
+  {
+   "job": "jepa_sa_B_s0",
+   "exit": 0,
+   "seconds": 83.7501974105835
+  },
+  {
+   "job": "sa_B_s0",
+   "exit": 0,
+   "seconds": 836.8037436008453
+  },
+  {
+   "job": "jepa_sa_B_s1",
+   "exit": 0,
+   "seconds": 84.40185165405273
+  },
+  {
+   "job": "sa_B_s1",
+   "exit": 0,
+   "seconds": 836.1439573764801
+  },
+  {
+   "job": "jepa_sa_B_s2",
+   "exit": 0,
+   "seconds": 86.15240144729614
+  },
+  {
+   "job": "sa_B_s2",
+   "exit": 0,
+   "seconds": 828.6129567623138
+  },
+  {
+   "job": "jepa_sa_C_s0",
+   "exit": 0,
+   "seconds": 163.55504655838013
+  },
+  {
+   "job": "sa_C_s0",
+   "exit": 0,
+   "seconds": 870.5875468254089
+  },
+  {
+   "job": "jepa_sa_C_s1",
+   "exit": 0,
+   "seconds": 164.03288388252258
+  },
+  {
+   "job": "sa_C_s1",
+   "exit": 0,
+   "seconds": 863.8173961639404
+  },
+  {
+   "job": "jepa_sa_C_s2",
+   "exit": 0,
+   "seconds": 164.93272757530212
+  },
+  {
+   "job": "sa_C_s2",
+   "exit": 0,
+   "seconds": 862.2060163021088
+  }
+ ],
+ "args": {
+  "setting": "single",
+  "cells": [
+   "R",
+   "A",
+   "B",
+   "C"
+  ],
+  "seeds": [
+   0,
+   1,
+   2
+  ],
+  "workers": 6,
+  "steps": 30000,
+  "n_agents": 2,
+  "reset_seed": 1,
+  "transitions": 6000,
+  "jepa_epochs": 30,
+  "imitate_epochs": 60,
+  "jepa_aux_coef": 0.1,
+  "skip_imitate": false,
+  "device": "cpu",
+  "tag": "",
+  "train_args": []
+ }
+}

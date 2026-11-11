@@ -1,0 +1,6 @@
+KL001_flight_time,KL001_intrusion_events,KL001_intrusion_time,KL001_restricted_area_events,KL001_sector_exit_events,KL001_time_in_restricted_area,KL001_time_outside_sector,KL001_total_reward,KL001_waypoint_reached,KL002_flight_time,KL002_intrusion_events,KL002_intrusion_time,KL002_restricted_area_events,KL002_sector_exit_events,KL002_time_in_restricted_area,KL002_time_outside_sector,KL002_total_reward,KL002_waypoint_reached,episode
+1023.0,0,0.0,1,0,12.0,0.0,-11.142594979207416,1,954.0,0,0.0,2,0,228.0,0.0,-227.12629145951107,1,0
+1023.0,0,0.0,1,0,12.0,0.0,-11.142594979207416,1,954.0,0,0.0,2,0,228.0,0.0,-227.12629145951107,1,1
+1023.0,0,0.0,1,0,12.0,0.0,-11.142594979207416,1,954.0,0,0.0,2,0,228.0,0.0,-227.12629145951107,1,2
+1023.0,0,0.0,1,0,12.0,0.0,-11.142594979207416,1,954.0,0,0.0,2,0,228.0,0.0,-227.12629145951107,1,3
+1023.0,0,0.0,1,0,12.0,0.0,-11.142594979207416,1,954.0,0,0.0,2,0,228.0,0.0,-227.12629145951107,1,4

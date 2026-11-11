@@ -1,0 +1,46 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <list>
+          <option value="bzip2" />
+          <option value="ca-certificates" />
+          <option value="colorama" />
+          <option value="exceptiongroup" />
+          <option value="libexpat" />
+          <option value="libffi" />
+          <option value="libmpdec" />
+          <option value="libzlib" />
+          <option value="numpy-typing-compat" />
+          <option value="openssl" />
+          <option value="optype" />
+          <option value="polars" />
+          <option value="polars-runtime-32" />
+          <option value="python" />
+          <option value="python_abi" />
+          <option value="scipy-stubs" />
+          <option value="sqlite" />
+          <option value="tk" />
+          <option value="tomli" />
+          <option value="tzdata" />
+          <option value="ucrt" />
+          <option value="vc" />
+          <option value="vc14_runtime" />
+          <option value="vs2015_runtime" />
+          <option value="wheel" />
+          <option value="xz" />
+          <option value="zlib" />
+        </list>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyStubPackagesAdvertiser" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <list>
+          <option value="scipy" />
+          <option value="pandas" />
+        </list>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>

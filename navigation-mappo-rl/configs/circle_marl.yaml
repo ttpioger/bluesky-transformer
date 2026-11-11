@@ -1,0 +1,187 @@
+# Configuration for a basic environment with 8 agents and circular obstacle
+num_rays: 120
+goal_threshold: 0.02
+num_agents_per_group: 1
+terminal_strategy: individual
+
+# Boundary configuration
+boundary:
+  type: polygon
+  vertices:
+    - { x: 0.1, y: 0.1 }
+    - { x: 0.9, y: 0.1 }
+    - { x: 0.9, y: 0.9 }
+    - { x: 0.1, y: 0.9 }
+
+# Agents configuration - 8 agents in circular formation
+agents:
+  # Agent 1 - Top (0°)
+  - start_pos:
+      center:
+        x: 0.5
+        y: 0.75  # 0.5 + 0.25 (obstacle center + distance)
+      width: 0.02
+      height: 0.02
+    goal_pos:
+      center:
+        x: 0.5
+        y: 0.25  # 0.5 - 0.25 (opposite side)
+      width: 0.02
+      height: 0.02
+    radius: 0.02
+    max_speed: 0.2
+    fov_degrees: 360 
+    spawn_time: 0.0
+    max_range: 0.3
+    agent_col: red
+    
+  # Agent 2 - Top-Right (45°)
+  - start_pos:
+      center:
+        x: 0.677  # 0.5 + 0.25*cos(45°)
+        y: 0.677  # 0.5 + 0.25*sin(45°)
+      width: 0.02
+      height: 0.02
+    goal_pos:
+      center:
+        x: 0.323  # 0.5 - 0.25*cos(45°)
+        y: 0.323  # 0.5 - 0.25*sin(45°)
+      width: 0.02
+      height: 0.02
+    radius: 0.02
+    max_speed: 0.2
+    fov_degrees: 360 
+    spawn_time: 0.0
+    max_range: 0.3
+    agent_col: blue
+    
+  # Agent 3 - Right (90°)
+  - start_pos:
+      center:
+        x: 0.75  # 0.5 + 0.25
+        y: 0.5
+      width: 0.02
+      height: 0.02
+    goal_pos:
+      center:
+        x: 0.25  # 0.5 - 0.25
+        y: 0.5
+      width: 0.02
+      height: 0.02
+    radius: 0.02
+    max_speed: 0.2
+    fov_degrees: 360 
+    spawn_time: 0.0
+    max_range: 0.3
+    agent_col: green
+    
+  # Agent 4 - Bottom-Right (135°)
+  - start_pos:
+      center:
+        x: 0.677  # 0.5 + 0.25*cos(135°)
+        y: 0.323  # 0.5 + 0.25*sin(135°)
+      width: 0.02
+      height: 0.02
+    goal_pos:
+      center:
+        x: 0.323  # 0.5 - 0.25*cos(135°)
+        y: 0.677  # 0.5 - 0.25*sin(135°)
+      width: 0.02
+      height: 0.02
+    radius: 0.02
+    max_speed: 0.2
+    fov_degrees: 360 
+    spawn_time: 0.0
+    max_range: 0.3
+    agent_col: yellow
+    
+  # Agent 5 - Bottom (180°)
+  - start_pos:
+      center:
+        x: 0.5
+        y: 0.25  # 0.5 - 0.25
+      width: 0.02
+      height: 0.02
+    goal_pos:
+      center:
+        x: 0.5
+        y: 0.75  # 0.5 + 0.25
+      width: 0.02
+      height: 0.02
+    radius: 0.02
+    max_speed: 0.2
+    fov_degrees: 360 
+    spawn_time: 0.0
+    max_range: 0.3
+    agent_col: purple
+    
+  # Agent 6 - Bottom-Left (225°)
+  - start_pos:
+      center:
+        x: 0.323  # 0.5 + 0.25*cos(225°)
+        y: 0.323  # 0.5 + 0.25*sin(225°)
+      width: 0.02
+      height: 0.02
+    goal_pos:
+      center:
+        x: 0.677  # 0.5 - 0.25*cos(225°)
+        y: 0.677  # 0.5 - 0.25*sin(225°)
+      width: 0.02
+      height: 0.02
+    radius: 0.02
+    max_speed: 0.2
+    fov_degrees: 360 
+    spawn_time: 0.0
+    max_range: 0.3
+    agent_col: orange
+    
+  # Agent 7 - Left (270°)
+  - start_pos:
+      center:
+        x: 0.25  # 0.5 - 0.25
+        y: 0.5
+      width: 0.02
+      height: 0.02
+    goal_pos:
+      center:
+        x: 0.75  # 0.5 + 0.25
+        y: 0.5
+      width: 0.02
+      height: 0.02
+    radius: 0.02
+    max_speed: 0.2
+    fov_degrees: 360 
+    spawn_time: 0.0
+    max_range: 0.3
+    agent_col: cyan
+    
+  # Agent 8 - Top-Left (315°)
+  - start_pos:
+      center:
+        x: 0.323  # 0.5 + 0.25*cos(315°)
+        y: 0.677  # 0.5 + 0.25*sin(315°)
+      width: 0.02
+      height: 0.02
+    goal_pos:
+      center:
+        x: 0.677  # 0.5 - 0.25*cos(315°)
+        y: 0.323  # 0.5 - 0.25*sin(315°)
+      width: 0.02
+      height: 0.02
+    radius: 0.02
+    max_speed: 0.2
+    fov_degrees: 360 
+    spawn_time: 0.0
+    max_range: 0.3
+    agent_col: magenta
+  
+# Obstacles configuration
+obstacles:
+  # Rectangular obstacle
+  - shape:
+      type: circle
+      center:
+        x: 0.5
+        y: 0.5
+      radius: 0.1
+max_time: 500

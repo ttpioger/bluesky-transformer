@@ -1,0 +1,25 @@
+{
+ "status": "EXPLORATORY",
+ "task": "imitation of scripted controller",
+ "seed": 42,
+ "n_params_actor": 617228,
+ "samples": 6001,
+ "collect_seconds": 43.21805500984192,
+ "train_seconds": 137.9934811592102,
+ "first_mse": 0.10932378069502456,
+ "last_mse": 0.00012650287104745323,
+ "args": {
+  "n_agents": 2,
+  "samples": 6000,
+  "noise": 0.3,
+  "gain": 3.0,
+  "epochs": 30,
+  "minibatch_size": 128,
+  "lr": 0.0003,
+  "seed": 42,
+  "reset_seed": 1,
+  "device": "cpu",
+  "output": "models/imitation_2ag.pt",
+  "summary": "results/vit_imitation_2ag_summary.json"
+ }
+}

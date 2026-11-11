@@ -1,0 +1,955 @@
+{
+ "status": "EXPLORATORY",
+ "task": "overfit on one fixed scenario",
+ "n_agents": 2,
+ "reset_seed": 1,
+ "seed": 42,
+ "env_steps": 30000,
+ "n_params_actor": 617228,
+ "n_params_critic": 406017,
+ "n_agent_episodes": 200,
+ "first_window": {
+  "n_agent_episodes": 20,
+  "ep_return": -195.8199999999996,
+  "waypoint_reached": 0.0,
+  "intrusion_events": 0.0,
+  "restricted_area_events": 2.4,
+  "sector_exit_events": 0.75
+ },
+ "last_window": {
+  "n_agent_episodes": 20,
+  "ep_return": -87.78499999999988,
+  "waypoint_reached": 0.0,
+  "intrusion_events": 0.0,
+  "restricted_area_events": 1.4,
+  "sector_exit_events": 0.55
+ },
+ "args": {
+  "steps": 30000,
+  "n_agents": 2,
+  "seed": 42,
+  "rollout_steps": 300,
+  "epochs": 10,
+  "minibatch_size": 128,
+  "lr": 0.0003,
+  "gamma": 0.99,
+  "gae_lambda": 0.95,
+  "clip": 0.2,
+  "entropy_coef": 0.01,
+  "value_coef": 0.5,
+  "pretrained": null,
+  "output": "models/overfit_2ag_negrew.pt",
+  "device": "cpu",
+  "reset_seed": 1,
+  "reward_scale": 0.01,
+  "reach_reward": 0.0,
+  "drift_penalty": 0.0,
+  "intrusion_penalty": -10.0,
+  "restricted_penalty": -0.1,
+  "sector_exit_penalty": -0.1,
+  "time_penalty": -0.1,
+  "summary": "results/vit_overfit_2ag_negrew_summary.json"
+ },
+ "curve": [
+  {
+   "env_steps": 300,
+   "n_episodes": 2,
+   "ep_return": -159.95000000000013,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 5.5,
+   "sector_exit_events": 0.0
+  },
+  {
+   "env_steps": 600,
+   "n_episodes": 2,
+   "ep_return": -227.9999999999992,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 5.0,
+   "sector_exit_events": 0.5
+  },
+  {
+   "env_steps": 900,
+   "n_episodes": 2,
+   "ep_return": -152.7999999999996,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 1.0,
+   "sector_exit_events": 1.5
+  },
+  {
+   "env_steps": 1200,
+   "n_episodes": 2,
+   "ep_return": -160.9999999999997,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 1.0,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 1500,
+   "n_episodes": 2,
+   "ep_return": -199.24999999999932,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 2.5,
+   "sector_exit_events": 0.5
+  },
+  {
+   "env_steps": 1800,
+   "n_episodes": 2,
+   "ep_return": -258.14999999999947,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 4.5,
+   "sector_exit_events": 0.5
+  },
+  {
+   "env_steps": 2100,
+   "n_episodes": 2,
+   "ep_return": -252.9999999999996,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 1.0,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 2400,
+   "n_episodes": 2,
+   "ep_return": -220.6499999999993,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 1.5,
+   "sector_exit_events": 1.5
+  },
+  {
+   "env_steps": 2700,
+   "n_episodes": 2,
+   "ep_return": -143.74999999999963,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 0.5
+  },
+  {
+   "env_steps": 3000,
+   "n_episodes": 2,
+   "ep_return": -181.6500000000001,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 2.0,
+   "sector_exit_events": 0.5
+  },
+  {
+   "env_steps": 3300,
+   "n_episodes": 2,
+   "ep_return": -136.99999999999972,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.5,
+   "sector_exit_events": 1.5
+  },
+  {
+   "env_steps": 3600,
+   "n_episodes": 2,
+   "ep_return": -78.59999999999948,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 1.5,
+   "sector_exit_events": 0.5
+  },
+  {
+   "env_steps": 3900,
+   "n_episodes": 2,
+   "ep_return": -666.0500000000034,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 1.0,
+   "restricted_area_events": 6.5,
+   "sector_exit_events": 0.0
+  },
+  {
+   "env_steps": 4200,
+   "n_episodes": 2,
+   "ep_return": -68.54999999999995,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 2.5,
+   "sector_exit_events": 0.0
+  },
+  {
+   "env_steps": 4500,
+   "n_episodes": 2,
+   "ep_return": -258.49999999999943,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 4800,
+   "n_episodes": 2,
+   "ep_return": -265.64999999999947,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 5100,
+   "n_episodes": 2,
+   "ep_return": -228.3999999999994,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 5400,
+   "n_episodes": 2,
+   "ep_return": -199.29999999999964,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.5
+  },
+  {
+   "env_steps": 5700,
+   "n_episodes": 2,
+   "ep_return": -218.0499999999996,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.5
+  },
+  {
+   "env_steps": 6000,
+   "n_episodes": 2,
+   "ep_return": -252.09999999999945,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 6300,
+   "n_episodes": 2,
+   "ep_return": -260.1999999999994,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 6600,
+   "n_episodes": 2,
+   "ep_return": -239.14999999999952,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 6900,
+   "n_episodes": 2,
+   "ep_return": -239.9499999999993,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.5,
+   "sector_exit_events": 1.5
+  },
+  {
+   "env_steps": 7200,
+   "n_episodes": 2,
+   "ep_return": -254.99999999999943,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.5
+  },
+  {
+   "env_steps": 7500,
+   "n_episodes": 2,
+   "ep_return": -211.09999999999928,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.5
+  },
+  {
+   "env_steps": 7800,
+   "n_episodes": 2,
+   "ep_return": -227.29999999999944,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 8100,
+   "n_episodes": 2,
+   "ep_return": -219.5499999999996,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.5,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 8400,
+   "n_episodes": 2,
+   "ep_return": -227.5999999999995,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.5
+  },
+  {
+   "env_steps": 8700,
+   "n_episodes": 2,
+   "ep_return": -227.29999999999944,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 3.5,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 9000,
+   "n_episodes": 2,
+   "ep_return": -162.04999999999953,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 2.0,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 9300,
+   "n_episodes": 2,
+   "ep_return": -111.94999999999976,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 2.5
+  },
+  {
+   "env_steps": 9600,
+   "n_episodes": 2,
+   "ep_return": -36.35000000000015,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.5,
+   "sector_exit_events": 0.5
+  },
+  {
+   "env_steps": 9900,
+   "n_episodes": 2,
+   "ep_return": -39.35000000000015,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.5,
+   "sector_exit_events": 0.5
+  },
+  {
+   "env_steps": 10200,
+   "n_episodes": 2,
+   "ep_return": -54.65000000000025,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.5
+  },
+  {
+   "env_steps": 10500,
+   "n_episodes": 2,
+   "ep_return": -52.80000000000012,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 10800,
+   "n_episodes": 2,
+   "ep_return": -1501.8999999999903,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 1.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 3.5
+  },
+  {
+   "env_steps": 11100,
+   "n_episodes": 2,
+   "ep_return": -268.09999999999934,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 1.0,
+   "sector_exit_events": 1.5
+  },
+  {
+   "env_steps": 11400,
+   "n_episodes": 2,
+   "ep_return": -98.19999999999985,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 2.0
+  },
+  {
+   "env_steps": 11700,
+   "n_episodes": 2,
+   "ep_return": -59.70000000000003,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 12000,
+   "n_episodes": 2,
+   "ep_return": -176.89999999999935,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 1.5,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 12300,
+   "n_episodes": 2,
+   "ep_return": -91.09999999999982,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 2.5,
+   "sector_exit_events": 0.0
+  },
+  {
+   "env_steps": 12600,
+   "n_episodes": 2,
+   "ep_return": -677.1000000000005,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 1.0,
+   "restricted_area_events": 1.0,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 12900,
+   "n_episodes": 2,
+   "ep_return": -216.7999999999995,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 1.0,
+   "sector_exit_events": 2.0
+  },
+  {
+   "env_steps": 13200,
+   "n_episodes": 2,
+   "ep_return": -30.000000000000156,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 0.0
+  },
+  {
+   "env_steps": 13500,
+   "n_episodes": 2,
+   "ep_return": -272.74999999999955,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.5,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 13800,
+   "n_episodes": 2,
+   "ep_return": -172.04999999999964,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 1.0,
+   "sector_exit_events": 1.5
+  },
+  {
+   "env_steps": 14100,
+   "n_episodes": 2,
+   "ep_return": -266.9999999999994,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 3.0,
+   "sector_exit_events": 0.5
+  },
+  {
+   "env_steps": 14400,
+   "n_episodes": 2,
+   "ep_return": -181.84999999999997,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 14700,
+   "n_episodes": 2,
+   "ep_return": -246.94999999999942,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 4.0,
+   "sector_exit_events": 0.5
+  },
+  {
+   "env_steps": 15000,
+   "n_episodes": 2,
+   "ep_return": -203.9499999999996,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 1.0,
+   "sector_exit_events": 1.5
+  },
+  {
+   "env_steps": 15300,
+   "n_episodes": 2,
+   "ep_return": -263.5999999999992,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.5,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 15600,
+   "n_episodes": 2,
+   "ep_return": -203.54999999999984,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 1.0,
+   "sector_exit_events": 2.0
+  },
+  {
+   "env_steps": 15900,
+   "n_episodes": 2,
+   "ep_return": -169.35,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 16200,
+   "n_episodes": 2,
+   "ep_return": -126.5999999999998,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.5,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 16500,
+   "n_episodes": 2,
+   "ep_return": -88.24999999999964,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.5,
+   "sector_exit_events": 2.0
+  },
+  {
+   "env_steps": 16800,
+   "n_episodes": 2,
+   "ep_return": -56.59999999999984,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.5
+  },
+  {
+   "env_steps": 17100,
+   "n_episodes": 2,
+   "ep_return": -219.84999999999945,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.5,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 17400,
+   "n_episodes": 2,
+   "ep_return": -239.99999999999943,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 2.0
+  },
+  {
+   "env_steps": 17700,
+   "n_episodes": 2,
+   "ep_return": -124.79999999999968,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 1.0,
+   "sector_exit_events": 1.5
+  },
+  {
+   "env_steps": 18000,
+   "n_episodes": 2,
+   "ep_return": -251.39999999999958,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 18300,
+   "n_episodes": 2,
+   "ep_return": -265.24999999999955,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 18600,
+   "n_episodes": 2,
+   "ep_return": -190.24999999999937,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 18900,
+   "n_episodes": 2,
+   "ep_return": -194.84999999999937,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 19200,
+   "n_episodes": 2,
+   "ep_return": -214.74999999999966,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 19500,
+   "n_episodes": 2,
+   "ep_return": -176.89999999999947,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 19800,
+   "n_episodes": 2,
+   "ep_return": -247.99999999999955,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 2.0,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 20100,
+   "n_episodes": 2,
+   "ep_return": -1477.2999999999806,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 1.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.5
+  },
+  {
+   "env_steps": 20400,
+   "n_episodes": 2,
+   "ep_return": -175.74999999999926,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 1.0,
+   "sector_exit_events": 0.5
+  },
+  {
+   "env_steps": 20700,
+   "n_episodes": 2,
+   "ep_return": -215.3999999999993,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 1.5,
+   "sector_exit_events": 0.5
+  },
+  {
+   "env_steps": 21000,
+   "n_episodes": 2,
+   "ep_return": -207.1499999999994,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 1.5,
+   "sector_exit_events": 0.5
+  },
+  {
+   "env_steps": 21300,
+   "n_episodes": 2,
+   "ep_return": -183.44999999999905,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 1.5,
+   "sector_exit_events": 0.5
+  },
+  {
+   "env_steps": 21600,
+   "n_episodes": 2,
+   "ep_return": -198.24999999999926,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 1.0,
+   "sector_exit_events": 0.5
+  },
+  {
+   "env_steps": 21900,
+   "n_episodes": 2,
+   "ep_return": -200.0999999999994,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 1.5,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 22200,
+   "n_episodes": 2,
+   "ep_return": -193.99999999999906,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 1.0,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 22500,
+   "n_episodes": 2,
+   "ep_return": -168.39999999999952,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.5
+  },
+  {
+   "env_steps": 22800,
+   "n_episodes": 2,
+   "ep_return": -152.3999999999998,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 0.5
+  },
+  {
+   "env_steps": 23100,
+   "n_episodes": 2,
+   "ep_return": -204.7999999999994,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.5,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 23400,
+   "n_episodes": 2,
+   "ep_return": -208.74999999999966,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 23700,
+   "n_episodes": 2,
+   "ep_return": -167.1499999999995,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 2.0
+  },
+  {
+   "env_steps": 24000,
+   "n_episodes": 2,
+   "ep_return": -121.39999999999972,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 0.5
+  },
+  {
+   "env_steps": 24300,
+   "n_episodes": 2,
+   "ep_return": -138.79999999999967,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 24600,
+   "n_episodes": 2,
+   "ep_return": -121.34999999999971,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 0.5
+  },
+  {
+   "env_steps": 24900,
+   "n_episodes": 2,
+   "ep_return": -154.74999999999986,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 0.5
+  },
+  {
+   "env_steps": 25200,
+   "n_episodes": 2,
+   "ep_return": -121.84999999999961,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 2.0
+  },
+  {
+   "env_steps": 25500,
+   "n_episodes": 2,
+   "ep_return": -67.70000000000002,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 0.5
+  },
+  {
+   "env_steps": 25800,
+   "n_episodes": 2,
+   "ep_return": -162.69999999999914,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 1.0,
+   "sector_exit_events": 0.5
+  },
+  {
+   "env_steps": 26100,
+   "n_episodes": 2,
+   "ep_return": -1449.9999999999939,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 1.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 0.0
+  },
+  {
+   "env_steps": 26400,
+   "n_episodes": 2,
+   "ep_return": -44.80000000000017,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 1.0,
+   "sector_exit_events": 0.0
+  },
+  {
+   "env_steps": 26700,
+   "n_episodes": 2,
+   "ep_return": -70.94999999999958,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 1.0,
+   "sector_exit_events": 0.0
+  },
+  {
+   "env_steps": 27000,
+   "n_episodes": 2,
+   "ep_return": -73.69999999999966,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 2.0,
+   "sector_exit_events": 0.0
+  },
+  {
+   "env_steps": 27300,
+   "n_episodes": 2,
+   "ep_return": -52.249999999999886,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 1.5,
+   "sector_exit_events": 0.0
+  },
+  {
+   "env_steps": 27600,
+   "n_episodes": 2,
+   "ep_return": -56.750000000000085,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 2.5,
+   "sector_exit_events": 0.0
+  },
+  {
+   "env_steps": 27900,
+   "n_episodes": 2,
+   "ep_return": -114.44999999999959,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 4.0,
+   "sector_exit_events": 0.0
+  },
+  {
+   "env_steps": 28200,
+   "n_episodes": 2,
+   "ep_return": -147.44999999999968,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 2.0,
+   "sector_exit_events": 0.0
+  },
+  {
+   "env_steps": 28500,
+   "n_episodes": 2,
+   "ep_return": -131.44999999999968,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 2.5,
+   "sector_exit_events": 0.0
+  },
+  {
+   "env_steps": 28800,
+   "n_episodes": 2,
+   "ep_return": -98.84999999999965,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 1.5,
+   "sector_exit_events": 0.0
+  },
+  {
+   "env_steps": 29100,
+   "n_episodes": 2,
+   "ep_return": -30.000000000000156,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 0.0
+  },
+  {
+   "env_steps": 29400,
+   "n_episodes": 2,
+   "ep_return": -88.39999999999998,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 4.0
+  },
+  {
+   "env_steps": 29700,
+   "n_episodes": 2,
+   "ep_return": -77.89999999999998,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 1.0
+  },
+  {
+   "env_steps": 30000,
+   "n_episodes": 2,
+   "ep_return": -80.34999999999994,
+   "waypoint_reached": 0.0,
+   "intrusion_events": 0.0,
+   "restricted_area_events": 0.0,
+   "sector_exit_events": 0.5
+  }
+ ]
+}

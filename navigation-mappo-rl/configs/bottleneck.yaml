@@ -1,0 +1,66 @@
+# Configuration for a basic environment with one agent and obstacles
+num_rays: 120
+goal_threshold: 0.02
+num_agents_per_group: 8
+terminal_strategy: individual
+
+# Boundary configuration
+boundary:
+  type: polygon
+  vertices:
+    - { x: 0.1, y: 0.1 }
+    - { x: 0.9, y: 0.1 }
+    - { x: 0.9, y: 0.9 }
+    - { x: 0.1, y: 0.9 }
+
+# Agents configuration
+agents:
+  - start_pos:
+      center:
+        x: 0.625
+        y: 0.2
+      width: 0.6
+      height: 0.1
+    goal_pos:
+      center:
+        x: 0.625
+        y: 0.8
+      width: 0.6
+      height: 0.1
+    radius: 0.015
+    max_speed: 0.1
+    fov_degrees: 360 
+    spawn_time: 0.0
+    max_range: 0.5
+
+# Obstacles configuration
+obstacles:
+  # Rectangular obstacle
+  - shape:
+      type: rectangle
+      center:
+        x: 0.5
+        y: 0.5
+      width: 0.17
+      height: 0.4
+    noise: 0.0
+  
+  - shape:
+      type: rectangle
+      center:
+        x: 0.25
+        y: 0.5
+      width: 0.17
+      height: 0.4
+    noise: 0.0
+
+  - shape:
+      type: rectangle
+      center:
+        x: 0.75
+        y: 0.5
+      width: 0.17
+      height: 0.4
+    noise: 0.0
+
+max_time: 400

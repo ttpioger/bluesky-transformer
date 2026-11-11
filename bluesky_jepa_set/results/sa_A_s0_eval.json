@@ -1,0 +1,45 @@
+{
+ "status": "EXPLORATORY",
+ "name": "sa_A_s0",
+ "setting": "single",
+ "n_aircraft": 1,
+ "n_params_actor": 87044,
+ "deterministic": true,
+ "reward": {
+  "reach_reward": 1.0,
+  "drift_penalty": -0.01,
+  "intrusion_penalty": -10.0,
+  "restricted_penalty": -0.1,
+  "sector_exit_penalty": -0.1,
+  "time_penalty": -5.0
+ },
+ "mean": {
+  "n_agent_episodes": 1,
+  "waypoint_reached": 1.0,
+  "flight_time": 956.0,
+  "intrusion_events": 0.0,
+  "intrusion_time": 0.0,
+  "restricted_area_events": 2.0,
+  "time_in_restricted_area": 47.0,
+  "sector_exit_events": 0.0,
+  "time_outside_sector": 0.0,
+  "ep_return": -4783.844321581556,
+  "ep_return_std": 0.0
+ },
+ "rows": [
+  {
+   "episode_seed": 1,
+   "aircraft": "own",
+   "waypoint_reached": 1.0,
+   "flight_time": 956.0,
+   "intrusion_events": 0.0,
+   "intrusion_time": 0.0,
+   "restricted_area_events": 2.0,
+   "time_in_restricted_area": 47.0,
+   "sector_exit_events": 0.0,
+   "time_outside_sector": 0.0,
+   "ep_return": -4783.844321581556
+  }
+ ],
+ "gif": "gifs/sa_A_s0.gif"
+}

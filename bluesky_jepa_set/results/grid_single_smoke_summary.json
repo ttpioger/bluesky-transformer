@@ -1,0 +1,121 @@
+{
+ "status": "EXPLORATORY",
+ "setting": "single",
+ "cells": [
+  "R",
+  "A",
+  "B",
+  "C"
+ ],
+ "seeds": [
+  0,
+  1
+ ],
+ "imitation_pass": {
+  "cnn": true,
+  "set_tf": true
+ },
+ "failed_jobs": [],
+ "jobs": [
+  {
+   "job": "collect_sa_smoke",
+   "exit": 0,
+   "seconds": 77.66870045661926
+  },
+  {
+   "job": "imit_sa_cnn_smoke",
+   "exit": 0,
+   "seconds": 48.69258117675781
+  },
+  {
+   "job": "imit_sa_set_tf_smoke",
+   "exit": 0,
+   "seconds": 73.20341205596924
+  },
+  {
+   "job": "sa_R_s0_smoke",
+   "exit": 0,
+   "seconds": 97.0139422416687
+  },
+  {
+   "job": "sa_R_s1_smoke",
+   "exit": 0,
+   "seconds": 97.09447979927063
+  },
+  {
+   "job": "sa_A_s0_smoke",
+   "exit": 0,
+   "seconds": 107.01049852371216
+  },
+  {
+   "job": "sa_A_s1_smoke",
+   "exit": 0,
+   "seconds": 104.2824170589447
+  },
+  {
+   "job": "jepa_sa_B_s0_smoke",
+   "exit": 0,
+   "seconds": 91.90913271903992
+  },
+  {
+   "job": "sa_B_s0_smoke",
+   "exit": 0,
+   "seconds": 89.0889322757721
+  },
+  {
+   "job": "jepa_sa_B_s1_smoke",
+   "exit": 0,
+   "seconds": 86.92691850662231
+  },
+  {
+   "job": "sa_B_s1_smoke",
+   "exit": 0,
+   "seconds": 92.34039545059204
+  },
+  {
+   "job": "jepa_sa_C_s0_smoke",
+   "exit": 0,
+   "seconds": 128.81679487228394
+  },
+  {
+   "job": "sa_C_s0_smoke",
+   "exit": 0,
+   "seconds": 71.50400400161743
+  },
+  {
+   "job": "jepa_sa_C_s1_smoke",
+   "exit": 0,
+   "seconds": 129.1453835964203
+  },
+  {
+   "job": "sa_C_s1_smoke",
+   "exit": 0,
+   "seconds": 70.49291253089905
+  }
+ ],
+ "args": {
+  "setting": "single",
+  "cells": [
+   "R",
+   "A",
+   "B",
+   "C"
+  ],
+  "seeds": [
+   0,
+   1
+  ],
+  "workers": 6,
+  "steps": 3000,
+  "n_agents": 2,
+  "reset_seed": 1,
+  "transitions": 6000,
+  "jepa_epochs": 30,
+  "imitate_epochs": 60,
+  "jepa_aux_coef": 0.1,
+  "skip_imitate": false,
+  "device": "cpu",
+  "tag": "_smoke",
+  "train_args": []
+ }
+}
