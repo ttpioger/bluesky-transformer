@@ -1,0 +1,376 @@
+wandb: [wandb.login()] Loaded credentials for https://api.forge.coreweave.com from /home/thomas/.netrc.
+wandb: Currently logged in as: thomas-pioger (lego_block) to https://api.forge.coreweave.com. Use `wandb login --relogin` to force relogin
+wandb: setting up run ma10_tf_los_speed_s0
+wandb: Tracking run with wandb version 0.31.0
+wandb: Run data is saved locally in /home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/bluesky_rl_transformer/wandb/run-20261112_114413-ma10_tf_los_speed_s0
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run ma10_tf_los_speed_s0
+wandb: ⭐️ View project at https://forge.coreweave.com/wandb/lego_block/bluesky-rl-transformer
+wandb: 🚀 View run at https://forge.coreweave.com/wandb/lego_block/bluesky-rl-transformer/runs/ma10_tf_los_speed_s0
+/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+ma10_tf_los_speed_s0: setting multi, aircraft 10, workers 8, n_params {'policy': 308293, 'encoder': 217344, 'actor_head': 20740, 'critic_head': 70209}
+env_steps=4096 policy_loss=1.4733 value_loss=0.8028 log_std=0.05 | eps=82 ep_return=-576.3 waypoint=0.07 intrusions=1.33 zones=1.89 sector_exit=1.27 flight_time=2907
+env_steps=8192 policy_loss=1.0814 value_loss=0.6823 log_std=0.06 | eps=82 ep_return=-479.4 waypoint=0.05 intrusions=1.24 zones=2.13 sector_exit=0.76 flight_time=2926
+env_steps=12288 policy_loss=0.9049 value_loss=0.6734 log_std=0.06 | eps=84 ep_return=-492.4 waypoint=0.05 intrusions=1.55 zones=1.75 sector_exit=0.69 flight_time=2916
+env_steps=16384 policy_loss=0.6785 value_loss=0.7349 log_std=0.07 | eps=80 ep_return=-514.5 waypoint=0.00 intrusions=1.25 zones=1.55 sector_exit=0.82 flight_time=3000
+env_steps=20480 policy_loss=0.4046 value_loss=0.8603 log_std=0.09 | eps=83 ep_return=-397.9 waypoint=0.12 intrusions=1.01 zones=1.78 sector_exit=0.48 flight_time=2828
+env_steps=24576 policy_loss=0.1004 value_loss=0.6832 log_std=0.10 | eps=92 ep_return=-342.6 waypoint=0.26 intrusions=1.25 zones=1.55 sector_exit=0.63 flight_time=2670
+env_steps=28672 policy_loss=0.2481 value_loss=0.8914 log_std=0.10 | eps=95 ep_return=-297.4 waypoint=0.34 intrusions=1.21 zones=1.16 sector_exit=0.29 flight_time=2529
+env_steps=32768 policy_loss=0.2317 value_loss=0.8185 log_std=0.10 | eps=94 ep_return=-269.2 waypoint=0.41 intrusions=1.03 zones=1.13 sector_exit=0.13 flight_time=2547
+env_steps=36864 policy_loss=0.1623 value_loss=0.8051 log_std=0.10 | eps=93 ep_return=-281.3 waypoint=0.29 intrusions=0.87 zones=0.87 sector_exit=0.14 flight_time=2647
+env_steps=40960 policy_loss=-0.0225 value_loss=0.4753 log_std=0.10 | eps=99 ep_return=-210.2 waypoint=0.47 intrusions=0.86 zones=0.53 sector_exit=0.02 flight_time=2374
+env_steps=45056 policy_loss=0.0394 value_loss=0.6642 log_std=0.10 | eps=105 ep_return=-217.2 waypoint=0.58 intrusions=0.82 zones=0.79 sector_exit=0.08 flight_time=2278
+env_steps=49152 policy_loss=-0.1973 value_loss=0.4557 log_std=0.09 | eps=112 ep_return=-191.5 waypoint=0.70 intrusions=1.11 zones=0.55 sector_exit=0.04 flight_time=2050
+env_steps=53248 policy_loss=-0.0675 value_loss=0.3468 log_std=0.09 | eps=114 ep_return=-144.1 waypoint=0.75 intrusions=0.82 zones=0.46 sector_exit=0.02 flight_time=1955
+env_steps=57344 policy_loss=-0.0674 value_loss=0.2869 log_std=0.09 | eps=122 ep_return=-145.5 waypoint=0.79 intrusions=0.69 zones=0.48 sector_exit=0.01 flight_time=1907
+env_steps=61440 policy_loss=-0.0816 value_loss=0.3099 log_std=0.09 | eps=126 ep_return=-133.0 waypoint=0.81 intrusions=0.61 zones=0.54 sector_exit=0.01 flight_time=1838
+env_steps=65536 policy_loss=0.0895 value_loss=0.4902 log_std=0.09 | eps=138 ep_return=-137.2 waypoint=0.86 intrusions=0.65 zones=0.51 sector_exit=0.04 flight_time=1692
+env_steps=69632 policy_loss=0.0305 value_loss=0.3421 log_std=0.09 | eps=129 ep_return=-128.3 waypoint=0.79 intrusions=0.55 zones=0.42 sector_exit=0.05 flight_time=1812
+env_steps=73728 policy_loss=0.0285 value_loss=0.3624 log_std=0.09 | eps=123 ep_return=-129.1 waypoint=0.82 intrusions=0.72 zones=0.37 sector_exit=0.04 flight_time=1789
+env_steps=77824 policy_loss=0.0648 value_loss=0.2994 log_std=0.10 | eps=129 ep_return=-127.1 waypoint=0.84 intrusions=0.71 zones=0.40 sector_exit=0.03 flight_time=1730
+env_steps=81920 policy_loss=0.2513 value_loss=0.8461 log_std=0.11 | eps=137 ep_return=-135.1 waypoint=0.82 intrusions=0.78 zones=0.48 sector_exit=0.04 flight_time=1758
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+Transient error Service Unavailable encountered while exporting metrics batch, retrying in 0.91s.
+env_steps=86016 policy_loss=0.0073 value_loss=0.1871 log_std=0.12 | eps=121 ep_return=-103.6 waypoint=0.79 intrusions=0.46 zones=0.18 sector_exit=0.00 flight_time=1810
+env_steps=90112 policy_loss=0.0110 value_loss=0.2470 log_std=0.13 | eps=138 ep_return=-121.0 waypoint=0.85 intrusions=0.74 zones=0.41 sector_exit=0.02 flight_time=1777
+env_steps=94208 policy_loss=0.0094 value_loss=0.2064 log_std=0.12 | eps=126 ep_return=-106.3 waypoint=0.77 intrusions=0.52 zones=0.25 sector_exit=0.02 flight_time=1762
+env_steps=98304 policy_loss=-0.0011 value_loss=0.1885 log_std=0.12 | eps=132 ep_return=-94.0 waypoint=0.80 intrusions=0.37 zones=0.09 sector_exit=0.06 flight_time=1785
+env_steps=102400 policy_loss=0.1280 value_loss=0.2930 log_std=0.13 | eps=127 ep_return=-110.9 waypoint=0.85 intrusions=0.61 zones=0.37 sector_exit=0.00 flight_time=1756
+env_steps=106496 policy_loss=0.0210 value_loss=0.3271 log_std=0.12 | eps=136 ep_return=-100.5 waypoint=0.79 intrusions=0.36 zones=0.34 sector_exit=0.03 flight_time=1768
+env_steps=110592 policy_loss=0.2427 value_loss=0.6377 log_std=0.13 | eps=132 ep_return=-115.6 waypoint=0.89 intrusions=0.36 zones=0.51 sector_exit=0.00 flight_time=1661
+env_steps=114688 policy_loss=0.1459 value_loss=0.3810 log_std=0.12 | eps=121 ep_return=-93.3 waypoint=0.92 intrusions=0.45 zones=0.31 sector_exit=0.01 flight_time=1651
+env_steps=118784 policy_loss=0.1204 value_loss=0.3168 log_std=0.13 | eps=126 ep_return=-116.0 waypoint=0.79 intrusions=0.40 zones=0.28 sector_exit=0.03 flight_time=1840
+env_steps=122880 policy_loss=0.0993 value_loss=0.6429 log_std=0.14 | eps=135 ep_return=-152.9 waypoint=0.78 intrusions=0.64 zones=0.61 sector_exit=0.03 flight_time=1822
+env_steps=126976 policy_loss=0.0420 value_loss=0.3563 log_std=0.14 | eps=121 ep_return=-101.4 waypoint=0.80 intrusions=0.37 zones=0.26 sector_exit=0.05 flight_time=1837
+env_steps=131072 policy_loss=0.0024 value_loss=0.2249 log_std=0.14 | eps=126 ep_return=-103.0 waypoint=0.83 intrusions=0.29 zones=0.25 sector_exit=0.03 flight_time=1801
+env_steps=135168 policy_loss=0.0023 value_loss=0.3725 log_std=0.14 | eps=122 ep_return=-102.5 waypoint=0.84 intrusions=0.36 zones=0.34 sector_exit=0.00 flight_time=1789
+env_steps=139264 policy_loss=0.0061 value_loss=0.2588 log_std=0.14 | eps=128 ep_return=-98.3 waypoint=0.76 intrusions=0.22 zones=0.28 sector_exit=0.02 flight_time=1826
+env_steps=143360 policy_loss=-0.0314 value_loss=0.1388 log_std=0.13 | eps=136 ep_return=-75.3 waypoint=0.90 intrusions=0.35 zones=0.18 sector_exit=0.01 flight_time=1597
+env_steps=147456 policy_loss=-0.0054 value_loss=0.2746 log_std=0.12 | eps=128 ep_return=-101.2 waypoint=0.82 intrusions=0.32 zones=0.39 sector_exit=0.02 flight_time=1787
+env_steps=151552 policy_loss=0.0352 value_loss=0.2826 log_std=0.13 | eps=131 ep_return=-97.0 waypoint=0.80 intrusions=0.37 zones=0.28 sector_exit=0.06 flight_time=1694
+env_steps=155648 policy_loss=-0.0726 value_loss=0.1408 log_std=0.13 | eps=125 ep_return=-99.6 waypoint=0.79 intrusions=0.26 zones=0.43 sector_exit=0.02 flight_time=1809
+env_steps=159744 policy_loss=-0.0229 value_loss=0.1869 log_std=0.12 | eps=136 ep_return=-76.0 waypoint=0.91 intrusions=0.31 zones=0.10 sector_exit=0.00 flight_time=1624
+env_steps=163840 policy_loss=0.0164 value_loss=0.1075 log_std=0.12 | eps=139 ep_return=-71.0 waypoint=0.85 intrusions=0.12 zones=0.17 sector_exit=0.00 flight_time=1636
+env_steps=167936 policy_loss=0.0244 value_loss=0.2828 log_std=0.12 | eps=120 ep_return=-126.7 waypoint=0.64 intrusions=0.25 zones=0.28 sector_exit=0.00 flight_time=2039
+env_steps=172032 policy_loss=0.0890 value_loss=0.1833 log_std=0.12 | eps=127 ep_return=-70.7 waypoint=0.84 intrusions=0.15 zones=0.07 sector_exit=0.01 flight_time=1689
+env_steps=176128 policy_loss=0.1294 value_loss=0.3663 log_std=0.13 | eps=134 ep_return=-112.0 waypoint=0.81 intrusions=0.53 zones=0.32 sector_exit=0.00 flight_time=1729
+env_steps=180224 policy_loss=-0.0070 value_loss=0.2850 log_std=0.15 | eps=137 ep_return=-135.8 waypoint=0.77 intrusions=0.38 zones=0.50 sector_exit=0.01 flight_time=1876
+env_steps=184320 policy_loss=0.0255 value_loss=0.3426 log_std=0.15 | eps=135 ep_return=-94.8 waypoint=0.86 intrusions=0.32 zones=0.29 sector_exit=0.01 flight_time=1718
+env_steps=188416 policy_loss=0.0256 value_loss=0.2408 log_std=0.16 | eps=139 ep_return=-97.8 waypoint=0.83 intrusions=0.37 zones=0.22 sector_exit=0.01 flight_time=1712
+env_steps=192512 policy_loss=0.1140 value_loss=0.4385 log_std=0.18 | eps=124 ep_return=-110.8 waypoint=0.86 intrusions=0.55 zones=0.23 sector_exit=0.02 flight_time=1721
+env_steps=196608 policy_loss=-0.0696 value_loss=0.2434 log_std=0.19 | eps=125 ep_return=-116.8 waypoint=0.85 intrusions=0.38 zones=0.44 sector_exit=0.02 flight_time=1752
+env_steps=200704 policy_loss=-0.0306 value_loss=0.1953 log_std=0.18 | eps=135 ep_return=-99.8 waypoint=0.81 intrusions=0.39 zones=0.36 sector_exit=0.01 flight_time=1788
+env_steps=204800 policy_loss=0.0589 value_loss=0.2734 log_std=0.18 | eps=134 ep_return=-83.8 waypoint=0.81 intrusions=0.29 zones=0.31 sector_exit=0.00 flight_time=1733
+env_steps=208896 policy_loss=-0.0162 value_loss=0.1516 log_std=0.18 | eps=129 ep_return=-83.8 waypoint=0.83 intrusions=0.38 zones=0.12 sector_exit=0.01 flight_time=1641
+Traceback (most recent call last):
+  File "/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/bluesky/stack/simstack.py", line 73, in process
+    success, echotext = cmdobj(argstring)
+                        ^^^^^^^^^^^^^^^^^
+  File "/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/bluesky/stack/cmdparser.py", line 70, in __call__
+    result = param(argstring)
+             ^^^^^^^^^^^^^^^^
+  File "/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/bluesky/stack/argparser.py", line 87, in __call__
+    raise ArgumentError(error)
+bluesky.stack.argparser.ArgumentError: 
+txt2hdg needs either a float, optionally with an M/T prefix or a position
+env_steps=212992 policy_loss=-0.0335 value_loss=0.1094 log_std=0.19 | eps=138 ep_return=-87.1 waypoint=0.86 intrusions=0.32 zones=0.18 sector_exit=0.01 flight_time=1699
+env_steps=217088 policy_loss=-0.0034 value_loss=0.1775 log_std=0.21 | eps=135 ep_return=-85.1 waypoint=0.90 intrusions=0.27 zones=0.18 sector_exit=0.01 flight_time=1644
+env_steps=221184 policy_loss=0.0072 value_loss=0.1689 log_std=0.20 | eps=134 ep_return=-86.3 waypoint=0.84 intrusions=0.28 zones=0.32 sector_exit=0.00 flight_time=1700
+env_steps=225280 policy_loss=0.0694 value_loss=0.1690 log_std=0.21 | eps=117 ep_return=-110.3 waypoint=0.84 intrusions=0.37 zones=0.38 sector_exit=0.01 flight_time=1775
+env_steps=229376 policy_loss=0.0176 value_loss=0.2652 log_std=0.23 | eps=142 ep_return=-104.3 waypoint=0.82 intrusions=0.26 zones=0.22 sector_exit=0.00 flight_time=1769
+env_steps=233472 policy_loss=0.0695 value_loss=0.2684 log_std=0.25 | eps=129 ep_return=-110.6 waypoint=0.93 intrusions=0.39 zones=0.34 sector_exit=0.00 flight_time=1611
+env_steps=237568 policy_loss=0.0895 value_loss=0.3953 log_std=0.26 | eps=127 ep_return=-113.3 waypoint=0.78 intrusions=0.28 zones=0.29 sector_exit=0.02 flight_time=1925
+env_steps=241664 policy_loss=0.0795 value_loss=0.3416 log_std=0.26 | eps=123 ep_return=-124.6 waypoint=0.78 intrusions=0.30 zones=0.28 sector_exit=0.02 flight_time=1938
+env_steps=245760 policy_loss=0.0920 value_loss=0.4137 log_std=0.27 | eps=135 ep_return=-113.4 waypoint=0.81 intrusions=0.38 zones=0.25 sector_exit=0.03 flight_time=1826
+env_steps=249856 policy_loss=0.0898 value_loss=0.5697 log_std=0.28 | eps=127 ep_return=-146.3 waypoint=0.82 intrusions=0.38 zones=0.49 sector_exit=0.01 flight_time=1868
+env_steps=253952 policy_loss=0.0226 value_loss=0.2947 log_std=0.28 | eps=130 ep_return=-111.0 waypoint=0.86 intrusions=0.38 zones=0.31 sector_exit=0.01 flight_time=1774
+env_steps=258048 policy_loss=-0.0577 value_loss=0.2168 log_std=0.27 | eps=121 ep_return=-81.8 waypoint=0.92 intrusions=0.27 zones=0.10 sector_exit=0.01 flight_time=1734
+env_steps=262144 policy_loss=0.0324 value_loss=0.3652 log_std=0.27 | eps=130 ep_return=-100.0 waypoint=0.85 intrusions=0.22 zones=0.23 sector_exit=0.00 flight_time=1803
+env_steps=266240 policy_loss=0.0566 value_loss=0.3658 log_std=0.27 | eps=131 ep_return=-134.3 waypoint=0.85 intrusions=0.37 zones=0.37 sector_exit=0.02 flight_time=1846
+env_steps=270336 policy_loss=0.0057 value_loss=0.4108 log_std=0.27 | eps=125 ep_return=-97.4 waypoint=0.83 intrusions=0.15 zones=0.34 sector_exit=0.01 flight_time=1805
+Traceback (most recent call last):
+  File "/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/bluesky/stack/simstack.py", line 73, in process
+    success, echotext = cmdobj(argstring)
+                        ^^^^^^^^^^^^^^^^^
+  File "/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/bluesky/stack/cmdparser.py", line 70, in __call__
+    result = param(argstring)
+             ^^^^^^^^^^^^^^^^
+  File "/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/bluesky/stack/argparser.py", line 87, in __call__
+    raise ArgumentError(error)
+bluesky.stack.argparser.ArgumentError: 
+txt2hdg needs either a float, optionally with an M/T prefix or a position
+env_steps=274432 policy_loss=-0.0991 value_loss=0.1083 log_std=0.26 | eps=133 ep_return=-79.2 waypoint=0.86 intrusions=0.16 zones=0.24 sector_exit=0.00 flight_time=1656
+env_steps=278528 policy_loss=-0.0337 value_loss=0.1329 log_std=0.26 | eps=133 ep_return=-92.2 waypoint=0.84 intrusions=0.32 zones=0.30 sector_exit=0.03 flight_time=1804
+env_steps=282624 policy_loss=0.0581 value_loss=0.2322 log_std=0.27 | eps=132 ep_return=-97.2 waypoint=0.85 intrusions=0.27 zones=0.20 sector_exit=0.03 flight_time=1717
+env_steps=286720 policy_loss=0.0825 value_loss=0.2420 log_std=0.27 | eps=131 ep_return=-94.6 waypoint=0.89 intrusions=0.48 zones=0.20 sector_exit=0.00 flight_time=1719
+env_steps=290816 policy_loss=0.0890 value_loss=0.3700 log_std=0.28 | eps=122 ep_return=-100.3 waypoint=0.86 intrusions=0.45 zones=0.15 sector_exit=0.02 flight_time=1862
+env_steps=294912 policy_loss=0.0599 value_loss=0.1616 log_std=0.28 | eps=124 ep_return=-104.9 waypoint=0.87 intrusions=0.35 zones=0.29 sector_exit=0.03 flight_time=1823
+env_steps=299008 policy_loss=-0.0359 value_loss=0.1377 log_std=0.28 | eps=120 ep_return=-107.6 waypoint=0.83 intrusions=0.41 zones=0.38 sector_exit=0.00 flight_time=1816
+env_steps=303104 policy_loss=0.1015 value_loss=0.3257 log_std=0.29 | eps=128 ep_return=-110.6 waypoint=0.85 intrusions=0.46 zones=0.39 sector_exit=0.00 flight_time=1784
+env_steps=307200 policy_loss=-0.0198 value_loss=0.2357 log_std=0.29 | eps=129 ep_return=-91.0 waypoint=0.89 intrusions=0.37 zones=0.25 sector_exit=0.01 flight_time=1751
+env_steps=311296 policy_loss=0.0223 value_loss=0.2071 log_std=0.29 | eps=135 ep_return=-112.3 waypoint=0.81 intrusions=0.44 zones=0.36 sector_exit=0.00 flight_time=1796
+env_steps=315392 policy_loss=0.1928 value_loss=0.7386 log_std=0.30 | eps=133 ep_return=-105.3 waypoint=0.80 intrusions=0.18 zones=0.38 sector_exit=0.02 flight_time=1936
+env_steps=319488 policy_loss=-0.0701 value_loss=0.1273 log_std=0.29 | eps=118 ep_return=-99.7 waypoint=0.80 intrusions=0.29 zones=0.21 sector_exit=0.01 flight_time=1968
+env_steps=323584 policy_loss=0.0565 value_loss=0.3412 log_std=0.29 | eps=131 ep_return=-80.4 waypoint=0.90 intrusions=0.25 zones=0.12 sector_exit=0.00 flight_time=1845
+env_steps=327680 policy_loss=0.1320 value_loss=0.2773 log_std=0.29 | eps=128 ep_return=-98.4 waypoint=0.91 intrusions=0.30 zones=0.35 sector_exit=0.02 flight_time=1749
+env_steps=331776 policy_loss=-0.0807 value_loss=0.1021 log_std=0.29 | eps=126 ep_return=-84.8 waypoint=0.93 intrusions=0.33 zones=0.21 sector_exit=0.01 flight_time=1730
+env_steps=335872 policy_loss=0.1430 value_loss=0.3509 log_std=0.31 | eps=129 ep_return=-122.8 waypoint=0.78 intrusions=0.36 zones=0.40 sector_exit=0.01 flight_time=1923
+env_steps=339968 policy_loss=-0.0510 value_loss=0.1116 log_std=0.31 | eps=135 ep_return=-86.6 waypoint=0.90 intrusions=0.23 zones=0.16 sector_exit=0.00 flight_time=1730
+env_steps=344064 policy_loss=-0.0029 value_loss=0.1634 log_std=0.31 | eps=127 ep_return=-104.6 waypoint=0.83 intrusions=0.36 zones=0.39 sector_exit=0.02 flight_time=1842
+env_steps=348160 policy_loss=-0.0022 value_loss=0.0966 log_std=0.31 | eps=127 ep_return=-79.8 waypoint=0.91 intrusions=0.34 zones=0.16 sector_exit=0.02 flight_time=1742
+env_steps=352256 policy_loss=0.0226 value_loss=0.2987 log_std=0.31 | eps=126 ep_return=-101.2 waypoint=0.89 intrusions=0.37 zones=0.28 sector_exit=0.03 flight_time=1774
+env_steps=356352 policy_loss=-0.0391 value_loss=0.1043 log_std=0.30 | eps=149 ep_return=-66.9 waypoint=0.95 intrusions=0.26 zones=0.21 sector_exit=0.00 flight_time=1534
+env_steps=360448 policy_loss=0.0650 value_loss=0.5413 log_std=0.32 | eps=138 ep_return=-120.3 waypoint=0.92 intrusions=0.54 zones=0.44 sector_exit=0.01 flight_time=1687
+env_steps=364544 policy_loss=0.0398 value_loss=0.3799 log_std=0.32 | eps=128 ep_return=-94.3 waypoint=0.91 intrusions=0.44 zones=0.29 sector_exit=0.02 flight_time=1704
+env_steps=368640 policy_loss=-0.0270 value_loss=0.2057 log_std=0.32 | eps=128 ep_return=-87.0 waypoint=0.90 intrusions=0.29 zones=0.30 sector_exit=0.01 flight_time=1700
+env_steps=372736 policy_loss=-0.0886 value_loss=0.0861 log_std=0.32 | eps=141 ep_return=-83.2 waypoint=0.93 intrusions=0.40 zones=0.14 sector_exit=0.01 flight_time=1705
+env_steps=376832 policy_loss=-0.1049 value_loss=0.1595 log_std=0.32 | eps=134 ep_return=-82.0 waypoint=0.85 intrusions=0.21 zones=0.19 sector_exit=0.01 flight_time=1799
+env_steps=380928 policy_loss=0.0952 value_loss=0.4818 log_std=0.33 | eps=140 ep_return=-109.8 waypoint=0.86 intrusions=0.44 zones=0.32 sector_exit=0.04 flight_time=1788
+env_steps=385024 policy_loss=0.0446 value_loss=0.1253 log_std=0.32 | eps=134 ep_return=-100.2 waypoint=0.81 intrusions=0.28 zones=0.45 sector_exit=0.03 flight_time=1832
+env_steps=389120 policy_loss=-0.0499 value_loss=0.2095 log_std=0.32 | eps=120 ep_return=-79.1 waypoint=0.85 intrusions=0.23 zones=0.17 sector_exit=0.03 flight_time=1788
+env_steps=393216 policy_loss=-0.0031 value_loss=0.1995 log_std=0.31 | eps=131 ep_return=-94.0 waypoint=0.88 intrusions=0.46 zones=0.24 sector_exit=0.05 flight_time=1766
+env_steps=397312 policy_loss=-0.0326 value_loss=0.1886 log_std=0.31 | eps=140 ep_return=-72.8 waypoint=0.86 intrusions=0.14 zones=0.18 sector_exit=0.01 flight_time=1781
+env_steps=401408 policy_loss=-0.0131 value_loss=0.1161 log_std=0.30 | eps=126 ep_return=-79.3 waypoint=0.88 intrusions=0.20 zones=0.22 sector_exit=0.00 flight_time=1737
+env_steps=405504 policy_loss=-0.0402 value_loss=0.1945 log_std=0.30 | eps=131 ep_return=-102.7 waypoint=0.73 intrusions=0.22 zones=0.37 sector_exit=0.01 flight_time=1937
+env_steps=409600 policy_loss=0.0192 value_loss=0.1855 log_std=0.30 | eps=132 ep_return=-82.6 waypoint=0.90 intrusions=0.33 zones=0.24 sector_exit=0.00 flight_time=1735
+env_steps=413696 policy_loss=-0.0408 value_loss=0.1059 log_std=0.30 | eps=141 ep_return=-84.6 waypoint=0.87 intrusions=0.37 zones=0.33 sector_exit=0.01 flight_time=1708
+env_steps=417792 policy_loss=0.0332 value_loss=0.2631 log_std=0.30 | eps=132 ep_return=-87.5 waypoint=0.88 intrusions=0.49 zones=0.26 sector_exit=0.06 flight_time=1678
+env_steps=421888 policy_loss=-0.0041 value_loss=0.2132 log_std=0.30 | eps=134 ep_return=-101.3 waypoint=0.84 intrusions=0.46 zones=0.26 sector_exit=0.01 flight_time=1833
+env_steps=425984 policy_loss=0.0109 value_loss=0.1661 log_std=0.30 | eps=136 ep_return=-75.0 waypoint=0.88 intrusions=0.23 zones=0.26 sector_exit=0.01 flight_time=1759
+env_steps=430080 policy_loss=0.0094 value_loss=0.1341 log_std=0.32 | eps=129 ep_return=-98.7 waypoint=0.79 intrusions=0.43 zones=0.33 sector_exit=0.01 flight_time=1851
+env_steps=434176 policy_loss=-0.0025 value_loss=0.1664 log_std=0.33 | eps=132 ep_return=-81.5 waypoint=0.90 intrusions=0.25 zones=0.40 sector_exit=0.02 flight_time=1656
+env_steps=438272 policy_loss=-0.0532 value_loss=0.0891 log_std=0.34 | eps=130 ep_return=-81.5 waypoint=0.85 intrusions=0.23 zones=0.31 sector_exit=0.00 flight_time=1806
+env_steps=442368 policy_loss=0.0691 value_loss=0.2193 log_std=0.33 | eps=138 ep_return=-94.1 waypoint=0.80 intrusions=0.32 zones=0.37 sector_exit=0.02 flight_time=1867
+env_steps=446464 policy_loss=0.0229 value_loss=0.3212 log_std=0.35 | eps=132 ep_return=-98.2 waypoint=0.83 intrusions=0.46 zones=0.40 sector_exit=0.00 flight_time=1754
+env_steps=450560 policy_loss=0.0271 value_loss=0.3000 log_std=0.35 | eps=131 ep_return=-101.7 waypoint=0.82 intrusions=0.32 zones=0.22 sector_exit=0.02 flight_time=1898
+env_steps=454656 policy_loss=-0.0268 value_loss=0.2144 log_std=0.36 | eps=120 ep_return=-89.1 waypoint=0.76 intrusions=0.20 zones=0.32 sector_exit=0.00 flight_time=1895
+env_steps=458752 policy_loss=0.0060 value_loss=0.1523 log_std=0.34 | eps=128 ep_return=-87.9 waypoint=0.80 intrusions=0.26 zones=0.21 sector_exit=0.00 flight_time=1888
+env_steps=462848 policy_loss=0.0707 value_loss=0.2506 log_std=0.34 | eps=134 ep_return=-87.8 waypoint=0.84 intrusions=0.25 zones=0.22 sector_exit=0.03 flight_time=1927
+env_steps=466944 policy_loss=-0.0217 value_loss=0.0996 log_std=0.33 | eps=130 ep_return=-82.8 waypoint=0.80 intrusions=0.15 zones=0.25 sector_exit=0.02 flight_time=1914
+env_steps=471040 policy_loss=-0.0517 value_loss=0.0672 log_std=0.32 | eps=128 ep_return=-76.3 waypoint=0.82 intrusions=0.09 zones=0.29 sector_exit=0.02 flight_time=1884
+env_steps=475136 policy_loss=-0.0176 value_loss=0.0543 log_std=0.32 | eps=115 ep_return=-85.9 waypoint=0.78 intrusions=0.15 zones=0.35 sector_exit=0.00 flight_time=1998
+env_steps=479232 policy_loss=0.0028 value_loss=0.0696 log_std=0.32 | eps=125 ep_return=-77.5 waypoint=0.82 intrusions=0.11 zones=0.07 sector_exit=0.02 flight_time=1873
+env_steps=483328 policy_loss=0.0581 value_loss=0.3613 log_std=0.33 | eps=132 ep_return=-98.8 waypoint=0.77 intrusions=0.28 zones=0.24 sector_exit=0.02 flight_time=1866
+env_steps=487424 policy_loss=0.0624 value_loss=0.3838 log_std=0.36 | eps=128 ep_return=-125.9 waypoint=0.77 intrusions=0.68 zones=0.55 sector_exit=0.02 flight_time=1868
+env_steps=491520 policy_loss=-0.0193 value_loss=0.1250 log_std=0.36 | eps=139 ep_return=-75.2 waypoint=0.90 intrusions=0.19 zones=0.17 sector_exit=0.01 flight_time=1762
+env_steps=495616 policy_loss=0.0871 value_loss=0.2988 log_std=0.36 | eps=127 ep_return=-120.2 waypoint=0.76 intrusions=0.37 zones=0.57 sector_exit=0.01 flight_time=1934
+env_steps=499712 policy_loss=-0.0187 value_loss=0.1713 log_std=0.38 | eps=135 ep_return=-82.3 waypoint=0.95 intrusions=0.41 zones=0.27 sector_exit=0.00 flight_time=1759
+env_steps=500000 policy_loss=0.1136 value_loss=0.0304 log_std=0.38
+/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+wandb: updating run metadata
+wandb: uploading wandb-summary.json; uploading config.yaml; uploading results/ma10_tf_los_speed_s0_summary.json; uploading output.log
+wandb: uploading results/ma10_tf_los_speed_s0_summary.json; uploading output.log
+wandb: uploading results/ma10_tf_los_speed_s0_summary.json
+wandb: 
+wandb: Run history:
+wandb:              train/ep_return ▂▁▄▅▅▇██▇███▇▇▇██▇▇▇██▇▇███████████████▇
+wandb:            train/flight_time █▇▆▃▃▂▂▂▂▂▃▂▂▁▂▂▂▂▂▂▃▃▂▂▃▃▂▂▃▁▂▂▂▃▂▃▃▃▃▂
+wandb:       train/intrusion_events █▇▆▆▅▅▃▂▂▂▂▂▂▂▁▂▂▂▂▂▂▂▁▂▂▁▂▂▂▂▂▃▂▂▂▂▂▂▁▂
+wandb:         train/intrusion_time ███▆▇▄▅▅▅▃▂▂▂▅▃▁▂▁▃▁▃▃▂▂▂▂▂▂▂▃▃▄▁▃▃▃▂▂▂▃
+wandb:                train/log_std ▁▂▂▂▂▃▃▃▃▃▃▃▃▃▄▄▄▅▆▆▆▆▆▆▆▇▇▇▇▇▇▇▇▇▇▇█▇▇█
+wandb:         train/n_cut_episodes ▁█▅▅▄▅▄▄▅▅▃▅▅▃▅▅▄▄▄▄▅▅▄▄▃▄▄▄▃▅▄▄▆▄▃▆▃▅▄▃
+wandb:             train/n_episodes ▁▁▁▁▆▆▅▆▇▆▆▇▅▇▅▇▇▅▆▆▆▆▆▆▆█▇▆▆▇▆▇▆▇▆▇▆▆▇▇
+wandb:            train/policy_loss █▅▄▃▃▃▁▁▁▂▁▁▁▂▂▂▂▁▂▂▁▁▂▂▂▁▁▁▂▁▂▁▁▂▁▁▂▁▁▁
+wandb: train/restricted_area_events █▆▆▃▃▃▁▃▃▂▂▃▁▃▂▃▃▂▂▄▃▂▂▂▃▂▁▃▂▃▃▃▂▂▂▃▂▂▁▂
+wandb:     train/sector_exit_events █▅▆▃▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:                           +4 ...
+wandb: 
+wandb: Run summary:
+wandb:               final_no_noise/ep_return -71.35565
+wandb:           final_no_noise/ep_return_std 59.68073
+wandb:             final_no_noise/flight_time 1978.64
+wandb:        final_no_noise/intrusion_events 0.02
+wandb:          final_no_noise/intrusion_time 3.98
+wandb:       final_no_noise/mean_abs_turn_deg 27.68169
+wandb:        final_no_noise/n_agent_episodes 100
+wandb:  final_no_noise/restricted_area_events 0.13
+wandb:      final_no_noise/sector_exit_events 0
+wandb: final_no_noise/time_in_restricted_area 1.47
+wandb:                                    +19 ...
+wandb: 
+wandb: 🚀 View run ma10_tf_los_speed_s0 at: https://forge.coreweave.com/wandb/lego_block/bluesky-rl-transformer/runs/ma10_tf_los_speed_s0
+wandb: ⭐️ View project at: https://forge.coreweave.com/wandb/lego_block/bluesky-rl-transformer
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 2 other file(s)
+wandb: Find logs at: ./wandb/run-20261112_114413-ma10_tf_los_speed_s0/logs
+Saved models/ma10_tf_los_speed_s0.pt
+Reading config from /home/thomas/bluesky/settings.cfg
+Using compiled geo functions
+Reading magnetic variation data
+Warning: RTree could not be loaded. areafilter get_intersecting and get_knearest won't work
+Loading global navigation database...
+Reading cache: /home/thomas/bluesky/cache/navdata.p
+Successfully loaded OpenAP performance model
+Failed to load BADA performance model
+Successfully loaded legacy performance model
+Successfully loaded plugin AREA
+Successfully loaded plugin DATAFEED
+Wrote results/ma10_tf_los_speed_s0_summary.json
+/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+Reading config from /home/thomas/bluesky/settings.cfg
+Using compiled geo functions
+Reading magnetic variation data
+Warning: RTree could not be loaded. areafilter get_intersecting and get_knearest won't work
+Loading global navigation database...
+Reading cache: /home/thomas/bluesky/cache/navdata.p
+Successfully loaded OpenAP performance model
+Failed to load BADA performance model
+Successfully loaded legacy performance model
+Successfully loaded plugin AREA
+Successfully loaded plugin DATAFEED
+
+ma10_tf_los_speed_s0: setting multi, aircraft 10, status EXPLORATORY
+seed aircraft     waypoint_reached          flight_time     intrusion_events       intrusion_time restricted_area_even time_in_restricted_a   sector_exit_events  time_outside_sector            ep_return    mean_abs_turn_deg  turn_sign_flip_rate
+900000000    KL002                 1.00               869.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -14.67                28.31                 0.94
+900000000    KL003                 1.00              1174.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -20.23                28.98                 0.96
+900000000    KL001                 1.00              1208.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -21.12                34.17                 0.94
+900000000    KL008                 1.00              1436.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -38.92                35.38                 0.87
+900000000    KL006                 1.00              1462.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -44.84                29.54                 0.90
+900000000    KL007                 1.00              1756.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -43.93                28.25                 0.92
+900000000    KL004                 1.00              2459.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -79.19                31.33                 0.97
+900000000    KL005                 1.00              2807.00                 0.00                 0.00                 1.00                 6.00                 0.00                 0.00               -98.95                31.72                 0.89
+900000000    KL009                 0.00              3000.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00              -176.74                21.81                 0.66
+900000000   KL0010                 0.00              3000.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00              -163.44                20.21                 0.73
+900000001    KL004                 1.00              1300.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -23.22                28.00                 0.95
+900000001    KL005                 1.00              1374.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -24.93                30.04                 0.97
+900000001    KL008                 1.00              1712.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -38.05                31.75                 0.89
+900000001    KL007                 1.00              1880.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -52.62                28.12                 0.77
+900000001    KL002                 1.00              1881.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -51.02                25.97                 0.84
+900000001    KL006                 1.00              1943.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -34.15                28.93                 0.94
+900000001    KL003                 1.00              1963.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -57.08                28.64                 0.87
+900000001    KL001                 1.00              2035.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -35.84                24.30                 0.86
+900000001    KL009                 1.00              2184.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -44.63                21.03                 0.83
+900000001   KL0010                 0.00              3000.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00              -138.74                16.64                 0.73
+900000002    KL001                 1.00               937.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -15.55                24.72                 0.86
+900000002    KL004                 1.00              1522.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -28.34                33.41                 0.94
+900000002    KL006                 1.00              1584.00                 0.00                 0.00                 1.00                16.00                 0.00                 0.00               -34.45                29.29                 0.91
+900000002    KL002                 1.00              1679.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -30.02                32.08                 0.95
+900000002    KL008                 1.00              1728.00                 0.00                 0.00                 1.00                 3.00                 0.00                 0.00               -40.82                28.57                 0.94
+900000002    KL003                 1.00              1757.00                 0.00                 0.00                 1.00                 5.00                 0.00                 0.00               -63.23                23.58                 0.82
+900000002    KL009                 1.00              1822.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -51.91                37.16                 0.96
+900000002    KL005                 1.00              1855.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -37.32                22.05                 0.85
+900000002   KL0010                 1.00              1966.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -42.06                31.53                 0.89
+900000002    KL007                 1.00              2003.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -43.06                27.80                 0.91
+900000003    KL003                 1.00              1385.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -25.90                29.79                 0.93
+900000003    KL008                 1.00              1688.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -30.99                23.87                 0.87
+900000003    KL007                 1.00              2221.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -87.70                34.75                 0.87
+900000003    KL002                 1.00              2245.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -61.43                28.95                 0.86
+900000003    KL004                 1.00              2919.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00              -120.65                25.18                 0.78
+900000003    KL001                 0.00              3000.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00              -104.77                23.23                 0.79
+900000003    KL005                 0.00              3000.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00              -156.10                24.89                 0.75
+900000003    KL006                 0.00              3000.00                 0.00                 0.00                 1.00                 3.00                 0.00                 0.00              -175.01                20.06                 0.72
+900000003    KL009                 0.00              3000.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00              -175.18                27.04                 0.73
+900000003   KL0010                 0.00              3000.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00              -194.68                19.95                 0.71
+900000004    KL006                 1.00              1108.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -19.74                29.83                 0.93
+900000004    KL009                 1.00              1163.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -20.48                31.76                 0.97
+900000004    KL001                 1.00              1316.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -20.32                12.47                 0.88
+900000004    KL007                 1.00              1511.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -28.34                32.52                 0.97
+900000004   KL0010                 1.00              1858.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -34.85                23.30                 0.89
+900000004    KL002                 0.00              3000.00                 1.00                58.00                 0.00                 0.00                 0.00                 0.00              -210.75                29.28                 0.82
+900000004    KL003                 0.00              3000.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00              -176.48                13.29                 0.79
+900000004    KL004                 0.00              3000.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00              -139.23                30.49                 0.89
+900000004    KL005                 0.00              3000.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00              -185.33                29.78                 0.76
+900000004    KL008                 0.00              3000.00                 1.00                58.00                 0.00                 0.00                 0.00                 0.00              -198.02                22.84                 0.68
+900000005   KL0010                 1.00              1035.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -20.16                32.02                 0.92
+900000005    KL005                 1.00              1260.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -34.12                34.09                 0.87
+900000005    KL008                 1.00              1517.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -26.39                36.86                 0.98
+900000005    KL006                 1.00              1649.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -42.07                33.99                 0.87
+900000005    KL002                 1.00              1763.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -31.37                30.46                 0.94
+900000005    KL004                 1.00              1778.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -43.22                27.01                 0.79
+900000005    KL001                 1.00              1996.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -56.49                25.73                 0.89
+900000005    KL009                 1.00              2163.00                 0.00                 0.00                 3.00                34.00                 0.00                 0.00               -72.19                31.15                 0.87
+900000005    KL007                 1.00              2860.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00              -130.39                24.63                 0.87
+900000005    KL003                 0.00              3000.00                 0.00                 0.00                 2.00                44.00                 0.00                 0.00              -130.18                30.84                 0.81
+900000006    KL001                 1.00              1185.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -22.31                30.71                 0.93
+900000006   KL0010                 1.00              1278.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -24.68                37.98                 0.98
+900000006    KL009                 1.00              1401.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -26.54                28.79                 0.94
+900000006    KL006                 1.00              1470.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -30.40                33.62                 0.97
+900000006    KL003                 1.00              1487.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -31.71                33.56                 0.97
+900000006    KL004                 1.00              1514.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -39.58                27.40                 0.82
+900000006    KL005                 1.00              1632.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -37.93                26.49                 0.94
+900000006    KL002                 1.00              1703.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -51.27                24.94                 0.91
+900000006    KL008                 1.00              1727.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -33.77                27.48                 0.92
+900000006    KL007                 1.00              1732.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -41.58                28.57                 0.93
+900000007    KL005                 1.00              1147.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -20.53                31.23                 0.93
+900000007    KL001                 1.00              1237.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -27.36                29.24                 0.88
+900000007    KL003                 1.00              1484.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -30.63                28.95                 0.93
+900000007    KL008                 1.00              1686.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -40.09                25.50                 0.89
+900000007    KL007                 1.00              1707.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -30.30                29.18                 0.96
+900000007    KL002                 1.00              1743.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -37.00                24.79                 0.86
+900000007   KL0010                 1.00              1833.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -39.45                23.87                 0.86
+900000007    KL004                 1.00              1866.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -44.53                21.93                 0.84
+900000007    KL006                 0.00              3000.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00              -199.77                21.08                 0.85
+900000007    KL009                 0.00              3000.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00              -171.68                15.81                 0.80
+900000008    KL009                 1.00              1532.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -32.69                30.77                 0.92
+900000008    KL005                 1.00              1558.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -42.97                29.65                 0.91
+900000008    KL006                 1.00              1566.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -35.42                31.80                 0.96
+900000008   KL0010                 1.00              1960.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -35.92                23.43                 0.88
+900000008    KL002                 1.00              2126.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -63.13                26.31                 0.88
+900000008    KL001                 1.00              2222.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -72.02                25.06                 0.89
+900000008    KL003                 0.00              3000.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00              -170.14                31.06                 0.86
+900000008    KL004                 0.00              3000.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00              -167.03                18.62                 0.67
+900000008    KL007                 0.00              3000.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00              -177.91                16.46                 0.45
+900000008    KL008                 0.00              3000.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00              -165.11                26.67                 0.74
+900000009    KL009                 1.00               750.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -12.10                26.15                 0.84
+900000009    KL001                 1.00              1265.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -35.40                24.64                 0.70
+900000009   KL0010                 1.00              1339.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -40.67                31.66                 0.85
+900000009    KL008                 1.00              1603.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -39.29                31.03                 0.76
+900000009    KL002                 1.00              1662.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -35.56                33.94                 0.89
+900000009    KL005                 1.00              1703.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -42.79                25.99                 0.86wandb: [wandb.login()] Loaded credentials for https://api.forge.coreweave.com from /home/thomas/.netrc.
+wandb: Currently logged in as: thomas-pioger (lego_block) to https://api.forge.coreweave.com. Use `wandb login --relogin` to force relogin
+wandb: setting up run ma10_tf_los_speed_s0
+wandb: Tracking run with wandb version 0.31.0
+wandb: Run data is saved locally in /home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/bluesky_rl_transformer/wandb/run-20261112_130058-ma10_tf_los_speed_s0
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Resuming run ma10_tf_los_speed_s0
+wandb: ⭐️ View project at https://forge.coreweave.com/wandb/lego_block/bluesky-rl-transformer
+wandb: 🚀 View run at https://forge.coreweave.com/wandb/lego_block/bluesky-rl-transformer/runs/ma10_tf_los_speed_s0
+wandb: updating run metadata; uploading artifact run-ma10_tf_los_speed_s0-held_outper_aircraft-HMxzmA
+wandb: uploading artifact run-ma10_tf_los_speed_s0-held_outper_aircraft-HMxzmA
+wandb: uploading wandb-metadata.json; uploading requirements.txt; uploading media/images/figures/training_curves_500001_a663a8cf549dd9d987e2.png; uploading media/videos/videos/policy_500001_dbf1ebf7f3c2158d2be3.gif; uploading media/table/held_out/per_aircraft_500001_c915ed71efd97b80a16f.table.json (+ 2 more)
+wandb: uploading media/videos/videos/policy_500001_dbf1ebf7f3c2158d2be3.gif
+wandb: uploading history steps 123-123, summary
+wandb: 
+wandb: Run summary:
+wandb:               final_no_noise/ep_return -71.35565
+wandb:           final_no_noise/ep_return_std 59.68073
+wandb:             final_no_noise/flight_time 1978.64
+wandb:        final_no_noise/intrusion_events 0.02
+wandb:          final_no_noise/intrusion_time 3.98
+wandb:       final_no_noise/mean_abs_turn_deg 27.68169
+wandb:        final_no_noise/n_agent_episodes 100
+wandb:  final_no_noise/restricted_area_events 0.13
+wandb:      final_no_noise/sector_exit_events 0
+wandb: final_no_noise/time_in_restricted_area 1.47
+wandb:                                    +32 ...
+wandb: 
+wandb: 🚀 View run ma10_tf_los_speed_s0 at: https://forge.coreweave.com/wandb/lego_block/bluesky-rl-transformer/runs/ma10_tf_los_speed_s0
+wandb: ⭐️ View project at: https://forge.coreweave.com/wandb/lego_block/bluesky-rl-transformer
+wandb: Synced 4 W&B file(s), 3 media file(s), 2 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20261112_130058-ma10_tf_los_speed_s0/logs
+
+900000009    KL003                 1.00              1768.00                 1.00                 7.00                 0.00                 0.00                 0.00                 0.00               -46.11                28.76                 0.86
+900000009    KL006                 1.00              1953.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -49.00                31.89                 0.85
+900000009    KL007                 1.00              2062.00                 0.00                 0.00                 0.00                 0.00                 0.00                 0.00               -47.01                24.67                 0.83
+900000009    KL004                 1.00              2493.00                 1.00                 7.00                 0.00                 0.00                 0.00                 0.00               -95.18                25.19                 0.80
+         mean                 0.80              1951.25                 0.04                 1.30                 0.10                 1.11                 0.00                 0.00               -67.28                27.58                 0.86
+Wrote gifs/ma10_tf_los_speed_s0.gif (144 frames)
+Wrote results/ma10_tf_los_speed_s0_eval.json
+Wrote figures/ma10_tf_los_speed_s0_curves.png
