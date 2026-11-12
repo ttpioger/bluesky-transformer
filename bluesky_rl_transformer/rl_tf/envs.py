@@ -9,7 +9,8 @@ import os
 from collections import deque
 import multiprocessing as mp
 import numpy as np
-from .lidar import Lidar, own_state, state_dim, N_CHANNELS, AC_FEATURES, DIST_NORM_KM, GEOM_KEY, NM2KM, to_own_frame
+from .lidar import (Lidar, own_state, state_dim, extra_dim, N_CHANNELS, ACT_FEATURES, DIST_NORM_KM, GEOM_KEY, NM2KM,
+                    to_own_frame)
 
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")   # no window for rgb_array rendering
 
@@ -174,10 +175,12 @@ class FlightEnv:
             ve, vn = bs.traf.gseast[others] - bs.traf.gseast[idx], bs.traf.gsnorth[others] - bs.traf.gsnorth[idx]
             vel = np.stack([ve * np.sin(h) + vn * np.cos(h), ve * np.cos(h) - vn * np.sin(h)], axis=-1).reshape(-1, 2)
             goal = (inner.goal_lat, inner.goal_lon) if self.setting == "single" else inner._goal[a]
+            t_now = float(inner.metrics[inner.agent]["flight_time"]) if self.setting == "single" else float(inner.sim_time)
             g = dict(zones=[frame(z.vertices) for z in sc.obstacles], sector=frame(sc.sector),
                      aircraft=to_own_frame(bs.traf.lat[others], bs.traf.lon[others], lat0, lon0, hdg).reshape(-1, 2),
                      aircraft_vel=vel, goal=frame([goal])[0], goal_radius=float(inner.distance_margin),
-                     own_lat=lat0, own_lon=lon0, own_hdg=hdg)
+                     own_lat=lat0, own_lon=lon0, own_hdg=hdg,
+                     time_left=float(np.clip(1.0 - t_now / float(inner.episode_time_limit), 0.0, 1.0)))
             self._geom[a] = o[GEOM_KEY] = g
 
     def render(self):
@@ -233,22 +236,34 @@ class ObsBuilder:
         self.frames.clear()
         self.frames.extend([z] * (self.k - 1) + [f])
         self.ac = self.lidar.aircraft_tokens(obs) if self.lidar.ac_tokens else None
+        self.zone = self.lidar.zone_tokens_vec(obs) if self.lidar.zone_tokens else None
+        h = self.lidar.act_tokens                      # last H actions, oldest first; an empty row has flag 0
+        self.acts = deque([(0.0, 0.0, 0.0)] * h, maxlen=h) if h else None
 
     def push(self, obs, action):
         self.frames.append((own_state(obs, action, self.lidar.zone_flag), self.lidar.scan(obs)))
         self.ac = self.lidar.aircraft_tokens(obs) if self.lidar.ac_tokens else None
+        self.zone = self.lidar.zone_tokens_vec(obs) if self.lidar.zone_tokens else None
+        if self.acts is not None:
+            self.acts.append((float(action[0]), float(action[1]), 1.0))
 
     def get(self):
         """state [K * 7] (K * 8 with the inside-zone flag), lidar [K * 3, n_rays] (K * 4 with the speed channel)."""
         state = [f[0] for f in self.frames]
         if self.ac is not None:                        # aircraft tokens of the newest frame, at the end of the state
             state.append(self.ac)
+        if self.zone is not None:                      # restricted-area tokens and the goal token of the newest frame
+            state.append(self.zone)
+        if self.acts is not None:                      # H rows of (turn, speed), then H flags
+            a = np.asarray(self.acts, dtype=np.float32)
+            state.append(np.concatenate([a[:, :ACT_FEATURES].reshape(-1), a[:, ACT_FEATURES]]))
         return (np.concatenate(state), np.concatenate([f[1] for f in self.frames], axis=0))
 
 
 def obs_dims(lidar_cfg, history):
-    k = int(lidar_cfg.get("ac_tokens", 0))            # the state then ends with K aircraft tokens and K flags
-    return dict(state_dim=state_dim(lidar_cfg.get("zone_flag", True)) * history + k * (AC_FEATURES + 1), ac_tokens=k, lidar_ch=(N_CHANNELS + int(bool(lidar_cfg.get("speed", False)))) * history, n_rays=lidar_cfg["n_rays"])
+    tok = {k: int(lidar_cfg.get(k, 0)) for k in ["ac_tokens", "zone_tokens", "act_tokens"]}   # values at the end of the state
+    return dict(state_dim=state_dim(lidar_cfg.get("zone_flag", True)) * history + extra_dim(**tok), **tok,
+                lidar_ch=(N_CHANNELS + int(bool(lidar_cfg.get("speed", False)))) * history, n_rays=lidar_cfg["n_rays"])
 
 
 def potential(obs, time_penalty, speed):

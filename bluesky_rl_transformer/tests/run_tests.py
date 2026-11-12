@@ -112,6 +112,47 @@ def test_aircraft_tokens():
     assert torch.isfinite(pol(s4, l)[0].mean).all()
 
 
+def test_zone_goal_and_action_tokens():
+    from rl_tf.lidar import ZONE_FEATURES as ZF, GOAL_FEATURES as GF, DIST_NORM_KM as N, extra_dim
+    o = fake_obs(zone=(40.0, 0.0, 10.0), goal=(100.0, 0.0), half=500.0)                # square area ahead, goal behind it
+    o[GEOM_KEY]["zones"].append(square(0.0, -80.0, 10.0))                              # second area to port, farther
+    o[GEOM_KEY]["time_left"] = 0.25
+    lid = Lidar(max_range_km=50.0, speed=True, zone_tokens=3, act_tokens=2)
+    t = lid.zone_tokens_vec(o)
+    f, flag, goal = t[:3 * ZF].reshape(3, ZF), t[3 * ZF:3 * ZF + 3], t[3 * ZF + 3:]
+    assert list(flag) == [1.0, 1.0, 0.0] and np.all(f[2] == 0) and len(goal) == GF
+    assert abs(f[0, 0] - 30.0 / N) < 1e-6 and abs(f[0, 1]) < 1e-6 and abs(f[0, 2] - 30.0 / N) < 1e-6   # nearest edge point: 30 km ahead
+    assert f[0, 4] < 0 < f[0, 7] and abs(f[0, 4] + f[0, 7]) < 1e-6                     # port end to port, starboard end to starboard
+    assert abs(f[0, 4] + 10.0 / np.hypot(30.0, 10.0)) < 1e-6                           # port end = the corner (30, -10)
+    assert f[0, 9] == 1.0 and f[0, 10] == 0.0                                          # it blocks the line to the goal; not inside
+    assert f[1, 9] == 0.0 and abs(f[1, 2] - 70.0 / N) < 1e-6                           # the second area does not block
+    assert abs(goal[2] - 100.0 / N) < 1e-6 and goal[3] == 1.0 and abs(goal[5] - 0.25) < 1e-6
+    o_in = fake_obs(zone=(0.0, 0.0, 10.0), half=500.0)
+    assert lid.zone_tokens_vec(o_in)[10] == 1.0 and lid.zone_tokens_vec(o_in)[9] == 1.0   # inside the area
+    d = obs_dims(dict(n_rays=120, speed=True, zone_tokens=3, act_tokens=2), 4)
+    extra = extra_dim(0, 3, 2)
+    assert extra == 3 * (ZF + 1) + GF + 2 * 3 and d["state_dim"] == 32 + extra
+    b = ObsBuilder(lid, 4); b.reset(o)
+    assert b.get()[0].shape == (d["state_dim"],) and np.all(b.get()[0][-6:] == 0)       # no action yet: empty rows
+    b.push(o, (0.5, -0.25)); st = b.get()[0]
+    assert list(st[-6:]) == [0.0, 0.0, 0.5, -0.25, 0.0, 1.0]                            # oldest first; flags last
+    torch.manual_seed(0)
+    pol = Policy(state_dim=d["state_dim"], lidar_ch=16, n_rays=120, zone_tokens=3, act_tokens=2)
+    s, l = torch.as_tensor(st)[None, None], torch.as_tensor(b.get()[1])[None, None]
+    m0 = pol(s, l)[0].mean
+    z0 = 32
+    s2 = s.clone(); s2[..., z0 + 2 * ZF:z0 + 3 * ZF] = 7.0                              # values in the empty area row
+    s2[..., -6:-4] = 7.0                                                                # values in the empty action row
+    assert torch.allclose(m0, pol(s2, l)[0].mean, atol=1e-6)                            # masked: no effect
+    for i in [z0 + 9, z0 + 3 * ZF + 3 + 5, -3]:                                         # blocks flag, time left, last turn
+        s3 = s.clone(); s3[..., i] += 0.5
+        assert not torch.allclose(m0, pol(s3, l)[0].mean, atol=1e-6)                    # used
+    torch.manual_seed(0); base = Policy(state_dim=32, lidar_ch=16, n_rays=120)
+    torch.manual_seed(0); new = Policy(state_dim=d["state_dim"], lidar_ch=16, n_rays=120, zone_tokens=3, act_tokens=2)
+    sb, sn = base.state_dict(), new.state_dict()
+    assert all(torch.equal(sb[k], sn[k]) for k in sb if k.startswith("encoder."))       # the shared encoder layers start as the baseline
+
+
 def test_frame_stack():
     lid = Lidar(n_rays=16)
     b = ObsBuilder(lid, history=4)

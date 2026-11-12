@@ -9,8 +9,9 @@ import argparse
 from pathlib import Path
 import numpy as np
 from rl_tf.envs import FlightEnv, REWARD_DEFAULTS, METRIC_KEYS, controller, rollout_episode, turn_stats
-from rl_tf.lidar import Lidar, NM2KM, DEG2KM
-from rl_tf.common import setup_torch, write_json, window_stats, policy_fn_from, wandb_init, add_wandb_args
+from rl_tf.lidar import Lidar, NM2KM, DEG2KM, token_cfg
+from rl_tf.common import (setup_torch, write_json, window_stats, policy_fn_from, wandb_init, add_wandb_args,
+                          summary_table)
 
 
 class TrackRecorder:
@@ -148,6 +149,8 @@ def main(argv=None):
     p.add_argument("--gif-max-frames", type=int, default=400,
                    help="Frames per episode GIF. 400 keeps every decision step (an episode has 300 steps at most).")
     p.add_argument("--gif-size", type=int, default=512, help="GIF side length (pixels).")
+    p.add_argument("--no-straight", action="store_true",
+                   help="Do not fly the same scenarios with the zero action (fly straight) for the summary table.")
     p.add_argument("--no-tracks", action="store_true", help="Do not write figures/NAME_tracks.png.")
     p.add_argument("--no-rays", action="store_true", help="GIF without the lidar rays.")
     p.add_argument("--name", default=None, help="Default: model file name or policy name.")
@@ -167,7 +170,7 @@ def main(argv=None):
         rew["goal_distance_penalty"] = 0.0             # a checkpoint without this key had no such term
         rew.update({k: a[k] for k in rew if k in a})
         lidar_cfg = dict(n_rays=a["n_rays"], fov_deg=a["fov_deg"], max_range_km=a["max_range_km"],
-                         zone_flag=bool(a.get("zone_flag", 0)), speed=bool(a.get("lidar_speed", 0)), ac_tokens=int(a.get("ac_tokens", 0)))
+                         zone_flag=bool(a.get("zone_flag", 0)), speed=bool(a.get("lidar_speed", 0)), **token_cfg(a))
         history, n_par = a["history"], ck["n_params"]
         fn = policy_fn_from(policy, args.device, deterministic=not args.stochastic)
         name = args.name or Path(args.model).stem
@@ -192,6 +195,14 @@ def main(argv=None):
             gifs.append(str(Path(args.gif).with_suffix("")) + f"_ep{i}.gif")
             save_gif(fr, gifs[-1], size=args.gif_size, max_frames=args.gif_max_frames, duration=args.gif_ms)
         rows += [{"episode_seed": args.reset_seed + i, "aircraft": a, **r, **turn_stats(turns[a])} for a, r in ep_rows.items()]
+    straight = None                                    # same scenarios, zero action: the reference of the summary table
+    if args.model and not args.no_straight:
+        zero = lambda raw, built: {k: np.zeros(2, dtype=np.float32) for k in raw}
+        s_rows = []
+        for i in range(args.episodes):
+            ep_rows, _, _ = rollout_episode(env, zero, args.reset_seed + i, lidar, history)
+            s_rows += [{"episode_seed": args.reset_seed + i, "aircraft": a, **r} for a, r in ep_rows.items()]
+        straight = window_stats([{c: r[c] for c in METRIC_KEYS + ["ep_return"]} for r in s_rows])
     env.close()
     cols = METRIC_KEYS + ["ep_return", "mean_abs_turn_deg", "turn_sign_flip_rate"]
     print(f"\n{name}: setting {setting}, aircraft {len(env.ids)}, status EXPLORATORY")
@@ -205,7 +216,9 @@ def main(argv=None):
         tracks_figure(tracks, tracks_path, name)
     write_json(Path(args.out_dir) / "results" / f"{name}_eval.json", {
         "status": "EXPLORATORY", "name": name, "setting": setting, "n_aircraft": len(env.ids),
-        "n_params": n_par, "deterministic": not args.stochastic, "reward": rew, "mean": mean, "rows": rows, "gifs": gifs})
+        "n_params": n_par, "deterministic": not args.stochastic, "reward": rew, "mean": mean, "rows": rows, "gifs": gifs,
+        "fly_straight_mean": straight})
+    seed = ck["args"].get("seed", "?") if args.model else "?"
 
     # Training curves (if results/NAME_summary.json exists) and upload. The W&B run id is the name: with the
     # default name (model file name) the figures go to the run of scripts.train.
@@ -216,6 +229,8 @@ def main(argv=None):
         from scripts.compare import curves_figure
         curves_figure(json.loads(summary_path.read_text()), curves_path)
     wb = wandb_init(args.wandb, args.wandb_project, name)
+    if straight is not None:
+        summary_table(straight, mean, seed, wb)
     if wb is not None:
         import wandb
         media = {}

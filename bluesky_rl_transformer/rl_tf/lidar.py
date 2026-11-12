@@ -25,6 +25,9 @@ DIST_NORM_KM = 170.0                                   # waypoint distance unit 
 GEOM_KEY = "lidar_geometry"
 N_CHANNELS = 3                                         # zone, boundary, aircraft (as the reference)
 AC_FEATURES = 6                                        # aircraft token: x, y, vx, vy, distance, closing speed
+ZONE_FEATURES = 11                                     # restricted-area token, see Lidar.zone_tokens_vec
+GOAL_FEATURES = 6                                      # goal token: x, y, distance, cos and sin of the bearing, time left
+ACT_FEATURES = 2                                       # action-history token: turn, speed
 SPEED_NORM_MS = 350.0                                  # closing-speed unit: largest value measured was 314 m/s (2026-11-12)
 N_TYPES = 4                                            # the 3 channels + the own goal (no channel)
 TYPE_NAMES = ["zone", "boundary", "aircraft", "goal"]
@@ -35,6 +38,19 @@ STATE_DIM = len(OWN_KEYS) + 2                          # own features + previous
 def state_dim(zone_flag=True):
     """Size of the own state of one frame. zone_flag adds the inside-zone flag (2026-11-11)."""
     return STATE_DIM + int(bool(zone_flag))
+
+
+def extra_dim(ac_tokens=0, zone_tokens=0, act_tokens=0):
+    """Size of the token values at the end of the state array. Order: K aircraft rows and K flags; Z restricted-area
+    rows, Z flags and one goal row; H action rows and H flags."""
+    k, z, h = int(ac_tokens), int(zone_tokens), int(act_tokens)
+    return k * (AC_FEATURES + 1) + (z * (ZONE_FEATURES + 1) + GOAL_FEATURES if z else 0) + h * (ACT_FEATURES + 1)
+
+
+def token_cfg(a):
+    """Token options from the arguments of a checkpoint. A key that is not there is 0 (checkpoint from before the flag)."""
+    return dict(ac_tokens=int(a.get("ac_tokens", 0)), zone_tokens=int(a.get("zone_tokens", 0)),
+                act_tokens=int(a.get("act_tokens", 0)))
 
 
 def ray_circles(u, c, r):
@@ -86,12 +102,14 @@ def to_own_frame(lat, lon, lat0, lon0, hdg_deg):
 
 class Lidar:
     def __init__(self, n_rays=120, fov_deg=360.0, max_range_km=100.0, ac_radius_km=5.0 * NM2KM, zone_flag=True,
-                 speed=False, ac_tokens=0):
+                 speed=False, ac_tokens=0, zone_tokens=0, act_tokens=0):
         self.n_rays, self.fov_deg, self.max_range, self.ac_radius = n_rays, fov_deg, max_range_km, ac_radius_km
         self.zone_flag = bool(zone_flag)               # the own state has the inside-zone flag
         self.speed = bool(speed)                       # 4th channel: closing speed of the aircraft that the ray hits
         self.n_channels = N_CHANNELS + int(self.speed)
         self.ac_tokens = int(ac_tokens)                # aircraft tokens: the K nearest aircraft that the lidar can see
+        self.zone_tokens = int(zone_tokens)            # restricted-area tokens: the Z nearest areas, plus one goal token
+        self.act_tokens = int(act_tokens)              # action-history tokens: the last H own actions (ObsBuilder)
         if fov_deg >= 360.0:
             ang = -180.0 + 360.0 * np.arange(n_rays) / n_rays          # ring, no doubled ray
         else:
@@ -161,6 +179,52 @@ class Lidar:
                                            np.clip(closing / SPEED_NORM_MS, -1.0, 1.0)[:, None]], axis=1)
                 flag[:n] = 1.0
         return np.concatenate([feat.reshape(-1), flag])
+
+    def zone_tokens_vec(self, obs):
+        """The Z = zone_tokens nearest restricted areas (all areas of the scenario, no range limit), nearest first,
+        then one goal row. Returns [Z * ZONE_FEATURES + Z + GOAL_FEATURES] float32.
+        One area row, own frame (x = nose, y = starboard), lengths divided by DIST_NORM_KM:
+          0-1  x, y of the nearest point of the area edge;      2  distance to that point;
+          3-5  cos, sin of the bearing of the port-side end of the area as seen from the own aircraft, and the
+               distance to that corner;                          6-8  the same for the starboard-side end;
+          9    1 = the straight line to the goal crosses the area (or the own aircraft is inside it);
+          10   1 = the own aircraft is inside the area.
+        The two ends are the corners with the smallest and the largest bearing relative to the bearing of the area
+        centre. For an area that goes around the own aircraft by more than 180 degrees this is approximate.
+        Then Z flags (1 = a real area, 0 = empty row). Goal row: x, y, distance (divided by DIST_NORM_KM), cos and
+        sin of the bearing, share of the episode time that is left (geometry key "time_left", 1 if not there)."""
+        Z = self.zone_tokens
+        feat, flag = np.zeros((Z, ZONE_FEATURES), dtype=np.float32), np.zeros(Z, dtype=np.float32)
+        g = obs[GEOM_KEY]
+        goal = np.asarray(g["goal"], dtype=np.float64).reshape(2)
+        gd = float(np.linalg.norm(goal))
+        rows = []
+        for poly in g["zones"]:
+            v = np.asarray(poly, dtype=np.float64).reshape(-1, 2)
+            p, q = v, np.roll(v, -1, axis=0)
+            d = q - p
+            s = np.clip(-(p * d).sum(1) / np.maximum((d * d).sum(1), 1e-12), 0.0, 1.0)
+            c = p + s[:, None] * d                                         # nearest point of each edge
+            dist = np.linalg.norm(c, axis=1)
+            j = int(dist.argmin())
+            inside = int(np.isfinite(ray_segments(np.array([[1.0, 0.0]]), p, q)).sum()) % 2 == 1
+            cen = v.mean(axis=0)
+            ang = np.arctan2(v[:, 1], v[:, 0])                             # positive = starboard
+            rel = (ang - np.arctan2(cen[1], cen[0]) + np.pi) % (2.0 * np.pi) - np.pi
+            il, ir = int(rel.argmin()), int(rel.argmax())
+            blocks = inside or (gd > 1e-9 and bool((ray_segments((goal / gd)[None], p, q)[0] <= gd).any()))
+            n = DIST_NORM_KM
+            rows.append((dist[j], [c[j, 0] / n, c[j, 1] / n, dist[j] / n,
+                                   np.cos(ang[il]), np.sin(ang[il]), np.linalg.norm(v[il]) / n,
+                                   np.cos(ang[ir]), np.sin(ang[ir]), np.linalg.norm(v[ir]) / n,
+                                   float(blocks), float(inside)]))
+        order = np.argsort([r[0] for r in rows], kind="stable")[:Z] if rows else []
+        for i, j in enumerate(order):
+            feat[i], flag[i] = rows[j][1], 1.0
+        bearing = goal / gd if gd > 1e-9 else np.array([1.0, 0.0])
+        goal_row = np.array([goal[0] / DIST_NORM_KM, goal[1] / DIST_NORM_KM, gd / DIST_NORM_KM, bearing[0], bearing[1],
+                             float(g.get("time_left", 1.0))], dtype=np.float32)
+        return np.concatenate([feat.reshape(-1), flag, goal_row])
 
     def closing_speed(self, obs, kind):
         """Per ray whose nearest hit is an aircraft: the rate at which the distance between the own aircraft and

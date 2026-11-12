@@ -19,8 +19,8 @@ import multiprocessing as mp
 from pathlib import Path
 import numpy as np
 from rl_tf.envs import FlightEnv, REWARD_DEFAULTS, METRIC_KEYS, ObsBuilder, metrics_row, turn_stats
-from rl_tf.lidar import Lidar, NM2KM, DEG2KM
-from rl_tf.common import setup_torch, write_json, wandb_init, add_wandb_args
+from rl_tf.lidar import Lidar, NM2KM, DEG2KM, token_cfg
+from rl_tf.common import setup_torch, write_json, wandb_init, add_wandb_args, summary_table
 
 EVAL_SEED0 = 900_000_000
 CURVE_KEYS = ["ep_return", "waypoint_reached", "intrusion_time", "sector_exit_events"]
@@ -90,7 +90,7 @@ def _job(job):
     # A checkpoint from before 2026-11-11 has no goal-distance term: 0 keeps the reward of its training.
     rew = {**REWARD_DEFAULTS, "goal_distance_penalty": 0.0, **{k: a[k] for k in REWARD_DEFAULTS if k in a}}
     lidar = Lidar(n_rays=a["n_rays"], fov_deg=a["fov_deg"], max_range_km=a["max_range_km"],
-                  zone_flag=bool(a.get("zone_flag", 0)), speed=bool(a.get("lidar_speed", 0)), ac_tokens=int(a.get("ac_tokens", 0)))          # no key: checkpoint from before the flag
+                  zone_flag=bool(a.get("zone_flag", 0)), speed=bool(a.get("lidar_speed", 0)), **token_cfg(a))          # no key: checkpoint from before the flag
     fns = {"straight": lambda raw, built: {k: np.zeros(2, dtype=np.float32) for k in raw},
            "policy": policy_fn_from(policy, device, deterministic=True)}
     with contextlib.redirect_stdout(io.StringIO()):
@@ -292,6 +292,11 @@ def main(argv=None):
         "held_out": agg, "rows": rows})
 
     wb = wandb_init(args.wandb, args.wandb_project, name)
+    if agg:
+        import torch
+        seed = torch.load(args.model, map_location="cpu", weights_only=False)["args"].get("seed", "?")
+        summary_table({k: v["mean"] for k, v in agg["straight"].items()}, {k: v["mean"] for k, v in agg["policy"].items()},
+                      seed, wb)
     if wb is not None:
         import wandb
         media = {"figures/tracks": wandb.Image(str(out / "figures" / f"{name}_tracks.png"))}

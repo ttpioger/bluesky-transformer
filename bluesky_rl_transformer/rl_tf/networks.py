@@ -21,14 +21,23 @@ class LidarTransformerEncoder(nn.Module):
     ac_tokens = K > 0 (2026-11-12): the state ends with K rows of AC_FEATURES values and K flags (Lidar.aircraft_tokens).
     Each row becomes one more token (a small MLP plus one learned "aircraft" vector, no position vector: the
     rows are a set). An empty row is masked: no token attends to it. K = 0 gives the encoder of before.
+
+    zone_tokens = Z > 0 (2026-11-12): after the aircraft rows the state has Z restricted-area rows, Z flags and one
+    goal row (Lidar.zone_tokens_vec). Each area row is one token (MLP plus one learned "area" vector, empty rows
+    masked); the goal row is one token (MLP plus one learned "goal" vector).
+    act_tokens = H > 0 (2026-11-12): the state then ends with the last H own actions (H rows of turn and speed, H
+    flags; ObsBuilder). Each row is one token (MLP plus one learned vector per place in time, empty rows masked).
     """
 
     def __init__(self, state_dim, lidar_ch, n_rays, patch=4, d_model=64, n_heads=4, n_layers=2,
-                 state_hidden=128, features_dim=256, ac_tokens=0):
+                 state_hidden=128, features_dim=256, ac_tokens=0, zone_tokens=0, act_tokens=0):
         super().__init__()
-        from .lidar import AC_FEATURES
+        from .lidar import AC_FEATURES, ZONE_FEATURES, GOAL_FEATURES, ACT_FEATURES, extra_dim
         self.k, self.ac_f = int(ac_tokens), AC_FEATURES
-        state_dim = state_dim - self.k * (AC_FEATURES + 1)              # size of the own state alone
+        self.z, self.zone_f, self.goal_f = int(zone_tokens), ZONE_FEATURES, GOAL_FEATURES
+        self.h, self.act_f = int(act_tokens), ACT_FEATURES
+        self.extra = extra_dim(self.k, self.z, self.h)
+        state_dim = state_dim - self.extra                              # size of the own state alone
         if n_rays % patch:
             raise ValueError("n_rays must be a multiple of patch")
         self.patch, self.n_tok, self.out_dim = patch, n_rays // patch, features_dim
@@ -48,6 +57,16 @@ class LidarTransformerEncoder(nn.Module):
             self.ac_embed = nn.Sequential(nn.Linear(AC_FEATURES, d_model), nn.GELU(), nn.Linear(d_model, d_model))
             self.ac_type = nn.Parameter(torch.zeros(1, 1, d_model))
             nn.init.trunc_normal_(self.ac_type, std=0.02)
+        mlp = lambda n: nn.Sequential(nn.Linear(n, d_model), nn.GELU(), nn.Linear(d_model, d_model))
+        if self.z:
+            self.zone_embed, self.goal_embed = mlp(ZONE_FEATURES), mlp(GOAL_FEATURES)
+            self.zone_type, self.goal_type = (nn.Parameter(torch.zeros(1, 1, d_model)) for _ in range(2))
+            nn.init.trunc_normal_(self.zone_type, std=0.02)
+            nn.init.trunc_normal_(self.goal_type, std=0.02)
+        if self.h:
+            self.act_embed = mlp(ACT_FEATURES)
+            self.act_pos = nn.Parameter(torch.zeros(1, self.h, d_model))    # place in time of each action
+            nn.init.trunc_normal_(self.act_pos, std=0.02)
 
     def tokens(self, lidar):
         b, c, r = lidar.shape
@@ -55,18 +74,34 @@ class LidarTransformerEncoder(nn.Module):
         return self.patch_embed(x) + self.pos
 
     def forward(self, state, lidar):
-        if not self.k:
+        if not self.extra:
             s = self.state_net(state)
             x = torch.cat([self.state_token(s).unsqueeze(1), self.tokens(lidar)], dim=1)
             x = self.blocks(x)
             return self.dense(torch.cat([self.norm(x[:, 0]), s], dim=1))
-        b, own = state.shape[0], state.shape[1] - self.k * (self.ac_f + 1)
-        s = self.state_net(state[:, :own])
-        ac = state[:, own:own + self.k * self.ac_f].reshape(b, self.k, self.ac_f)
-        empty = state[:, own + self.k * self.ac_f:] < 0.5                                 # [B, K] True = no aircraft
-        x = torch.cat([self.state_token(s).unsqueeze(1), self.tokens(lidar), self.ac_embed(ac) + self.ac_type], dim=1)
-        pad = torch.cat([torch.zeros(b, 1 + self.n_tok, dtype=torch.bool, device=state.device), empty], dim=1)
-        x = self.blocks(x, src_key_padding_mask=pad)
+        b, o = state.shape[0], state.shape[1] - self.extra
+        s = self.state_net(state[:, :o])
+        toks = [self.state_token(s).unsqueeze(1), self.tokens(lidar)]
+        pads = [torch.zeros(b, 1 + self.n_tok, dtype=torch.bool, device=state.device)]
+
+        def rows(o, n, f):                             # n rows of f values, then n flags -> rows, empty mask, new offset
+            return (state[:, o:o + n * f].reshape(b, n, f), state[:, o + n * f:o + n * (f + 1)] < 0.5, o + n * (f + 1))
+
+        if self.k:
+            ac, empty, o = rows(o, self.k, self.ac_f)                    # empty [B, K]: True = no aircraft
+            toks.append(self.ac_embed(ac) + self.ac_type)
+            pads.append(empty)
+        if self.z:
+            zone, empty, o = rows(o, self.z, self.zone_f)
+            toks += [self.zone_embed(zone) + self.zone_type,
+                     self.goal_embed(state[:, o:o + self.goal_f]).unsqueeze(1) + self.goal_type]
+            pads += [empty, torch.zeros(b, 1, dtype=torch.bool, device=state.device)]
+            o += self.goal_f
+        if self.h:
+            act, empty, o = rows(o, self.h, self.act_f)
+            toks.append(self.act_embed(act) + self.act_pos)
+            pads.append(empty)
+        x = self.blocks(torch.cat(toks, dim=1), src_key_padding_mask=torch.cat(pads, dim=1))
         return self.dense(torch.cat([self.norm(x[:, 0]), s], dim=1))
 
 
@@ -89,10 +124,11 @@ class AttentionCritic(nn.Module):
 
 class Policy(nn.Module):
     def __init__(self, state_dim, lidar_ch, n_rays, action_dim=2, patch=4, d_model=64, n_heads=4, n_layers=2,
-                 features_dim=256, hidden=64, log_std_init=0.0, ac_tokens=0):
+                 features_dim=256, hidden=64, log_std_init=0.0, ac_tokens=0, zone_tokens=0, act_tokens=0):
         super().__init__()
         self.encoder = LidarTransformerEncoder(state_dim, lidar_ch, n_rays, patch, d_model, n_heads, n_layers,
-                                               features_dim=features_dim, ac_tokens=ac_tokens)
+                                               features_dim=features_dim, ac_tokens=ac_tokens,
+                                               zone_tokens=zone_tokens, act_tokens=act_tokens)
         self.actor = nn.Sequential(nn.Linear(features_dim, hidden), nn.Tanh(), nn.Linear(hidden, hidden), nn.Tanh(),
                                    nn.Linear(hidden, action_dim), nn.Tanh())
         self.log_std = nn.Parameter(torch.full((action_dim,), float(log_std_init)))
@@ -123,6 +159,7 @@ NET_KEYS = ["patch", "d_model", "n_heads", "n_layers", "features_dim", "log_std_
 
 def build_policy(dims, args):
     return Policy(dims["state_dim"], dims["lidar_ch"], dims["n_rays"], ac_tokens=dims.get("ac_tokens", 0),
+                  zone_tokens=dims.get("zone_tokens", 0), act_tokens=dims.get("act_tokens", 0),
                   **{k: args[k] for k in NET_KEYS})
 
 

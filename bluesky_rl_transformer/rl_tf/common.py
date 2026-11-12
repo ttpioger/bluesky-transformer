@@ -83,6 +83,27 @@ def wandb_upload(wb, path):
         wb.save(str(path), base_path=str(Path(path).parent.parent), policy="now")
 
 
+SUMMARY_ROWS = [("waypoint_reached", "goal completed (share of flights)"), ("flight_time", "flight time (s)"),
+                ("intrusion_events", "intrusion events"), ("intrusion_time", "intrusion time (s)"),
+                ("restricted_area_events", "restricted area events"), ("time_in_restricted_area", "restricted area time (s)"),
+                ("sector_exit_events", "sector exit events"), ("time_outside_sector", "time outside sector (s)")]
+
+
+def summary_table(straight, policy, seed, wb=None):
+    """Table of the mean metrics per flight: metric | fly straight | seed N (our Transformer), same scenarios.
+    straight and policy: {metric key: mean}. Prints the table, sends it to W&B (key held_out/summary) if wb is
+    given, and returns (columns, rows)."""
+    cols = ["metric", "fly straight", f"seed {seed} (our Transformer)"]
+    rows = [[label, round(float(straight[k]), 2), round(float(policy[k]), 2)] for k, label in SUMMARY_ROWS]
+    print(f"\n{cols[0]:<36} {cols[1]:>14} {cols[2]:>28}")
+    for r in rows:
+        print(f"{r[0]:<36} {r[1]:>14.2f} {r[2]:>28.2f}")
+    if wb is not None:
+        import wandb
+        wb.log({"held_out/summary": wandb.Table(columns=cols, data=rows)})
+    return cols, rows
+
+
 def add_wandb_args(p):
     p.add_argument("--wandb", choices=["off", "online", "offline"], default="off",
                    help="Send the main metrics (and in scripts.compare the figures and GIFs) to Weights & Biases.")
