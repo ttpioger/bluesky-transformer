@@ -9,7 +9,7 @@ import os
 from collections import deque
 import multiprocessing as mp
 import numpy as np
-from .lidar import Lidar, own_state, state_dim, N_CHANNELS, DIST_NORM_KM, GEOM_KEY, NM2KM, to_own_frame
+from .lidar import Lidar, own_state, state_dim, N_CHANNELS, AC_FEATURES, DIST_NORM_KM, GEOM_KEY, NM2KM, to_own_frame
 
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")   # no window for rgb_array rendering
 
@@ -232,17 +232,23 @@ class ObsBuilder:
         z = (np.zeros_like(f[0]), np.zeros_like(f[1]))
         self.frames.clear()
         self.frames.extend([z] * (self.k - 1) + [f])
+        self.ac = self.lidar.aircraft_tokens(obs) if self.lidar.ac_tokens else None
 
     def push(self, obs, action):
         self.frames.append((own_state(obs, action, self.lidar.zone_flag), self.lidar.scan(obs)))
+        self.ac = self.lidar.aircraft_tokens(obs) if self.lidar.ac_tokens else None
 
     def get(self):
         """state [K * 7] (K * 8 with the inside-zone flag), lidar [K * 3, n_rays] (K * 4 with the speed channel)."""
-        return (np.concatenate([f[0] for f in self.frames]), np.concatenate([f[1] for f in self.frames], axis=0))
+        state = [f[0] for f in self.frames]
+        if self.ac is not None:                        # aircraft tokens of the newest frame, at the end of the state
+            state.append(self.ac)
+        return (np.concatenate(state), np.concatenate([f[1] for f in self.frames], axis=0))
 
 
 def obs_dims(lidar_cfg, history):
-    return dict(state_dim=state_dim(lidar_cfg.get("zone_flag", True)) * history, lidar_ch=(N_CHANNELS + int(bool(lidar_cfg.get("speed", False)))) * history, n_rays=lidar_cfg["n_rays"])
+    k = int(lidar_cfg.get("ac_tokens", 0))            # the state then ends with K aircraft tokens and K flags
+    return dict(state_dim=state_dim(lidar_cfg.get("zone_flag", True)) * history + k * (AC_FEATURES + 1), ac_tokens=k, lidar_ch=(N_CHANNELS + int(bool(lidar_cfg.get("speed", False)))) * history, n_rays=lidar_cfg["n_rays"])
 
 
 def potential(obs, time_penalty, speed):

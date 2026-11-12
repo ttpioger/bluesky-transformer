@@ -10,7 +10,7 @@ from pathlib import Path
 import numpy as np
 from rl_tf.envs import FlightEnv, REWARD_DEFAULTS, METRIC_KEYS, controller, rollout_episode, turn_stats
 from rl_tf.lidar import Lidar
-from rl_tf.common import setup_torch, write_json, window_stats, policy_fn_from
+from rl_tf.common import setup_torch, write_json, window_stats, policy_fn_from, wandb_init, add_wandb_args
 
 
 def save_gif(frames, path, size=384, max_frames=150, duration=80):
@@ -37,6 +37,7 @@ def main(argv=None):
     p.add_argument("--name", default=None, help="Default: model file name or policy name.")
     p.add_argument("--device", default="cpu")
     p.add_argument("--out-dir", default=".")
+    add_wandb_args(p)
     args = p.parse_args(argv)
     if (args.model is None) == (args.policy is None):
         p.error("give exactly one of --model and --policy")
@@ -50,7 +51,7 @@ def main(argv=None):
         rew["goal_distance_penalty"] = 0.0             # a checkpoint without this key had no such term
         rew.update({k: a[k] for k in rew if k in a})
         lidar_cfg = dict(n_rays=a["n_rays"], fov_deg=a["fov_deg"], max_range_km=a["max_range_km"],
-                         zone_flag=bool(a.get("zone_flag", 0)), speed=bool(a.get("lidar_speed", 0)))
+                         zone_flag=bool(a.get("zone_flag", 0)), speed=bool(a.get("lidar_speed", 0)), ac_tokens=int(a.get("ac_tokens", 0)))
         history, n_par = a["history"], ck["n_params"]
         fn = policy_fn_from(policy, args.device, deterministic=not args.stochastic)
         name = args.name or Path(args.model).stem
@@ -80,6 +81,30 @@ def main(argv=None):
     write_json(Path(args.out_dir) / "results" / f"{name}_eval.json", {
         "status": "EXPLORATORY", "name": name, "setting": setting, "n_aircraft": len(env.ids),
         "n_params": n_par, "deterministic": not args.stochastic, "reward": rew, "mean": mean, "rows": rows, "gif": args.gif})
+
+    # Training curves (if results/NAME_summary.json exists) and upload. The W&B run id is the name: with the
+    # default name (model file name) the figures go to the run of scripts.train.
+    import json
+    out = Path(args.out_dir)
+    summary_path, curves_path = out / "results" / f"{name}_summary.json", out / "figures" / f"{name}_curves.png"
+    if summary_path.exists():
+        from scripts.compare import curves_figure
+        curves_figure(json.loads(summary_path.read_text()), curves_path)
+    wb = wandb_init(args.wandb, args.wandb_project, name)
+    if wb is not None:
+        import wandb
+        media = {}
+        if summary_path.exists():
+            media["figures/training_curves"] = wandb.Image(str(curves_path))
+        if args.gif:
+            media["videos/policy"] = wandb.Video(args.gif, format="gif")
+        table = wandb.Table(columns=["episode_seed", "aircraft"] + cols)
+        for r in rows:
+            table.add_data(r["episode_seed"], r["aircraft"], *[r[c] for c in cols])
+        media["held_out/per_aircraft"] = table
+        wb.log(media)
+        wb.summary.update({f"held_out/{k}": v for k, v in mean.items()})
+        wb.finish()
 
 
 if __name__ == "__main__":

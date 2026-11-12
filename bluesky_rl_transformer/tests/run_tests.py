@@ -87,6 +87,31 @@ def test_lidar_speed_channel_and_radius():
     assert obs_dims(dict(n_rays=120, speed=True), 4)["lidar_ch"] == 16 and obs_dims(dict(n_rays=120), 4)["lidar_ch"] == 12
 
 
+def test_aircraft_tokens():
+    o = fake_obs(ac=(30.0, 0.0), half=500.0)
+    o[GEOM_KEY]["aircraft"] = np.array([[30.0, 0.0], [0.0, -10.0], [200.0, 0.0]])     # the third is out of the lidar radius
+    o[GEOM_KEY]["aircraft_vel"] = np.array([[-175.0, 0.0], [0.0, 0.0], [0.0, 0.0]])
+    lid = Lidar(max_range_km=50.0, speed=True, ac_tokens=4)
+    t = lid.aircraft_tokens(o); f, flag = t[:24].reshape(4, 6), t[24:]
+    reach = 50.0 + lid.ac_radius
+    assert list(flag) == [1.0, 1.0, 0.0, 0.0] and np.all(f[2:] == 0)                   # 2 aircraft in reach, nearest first
+    assert abs(f[0, 1] + 10.0 / reach) < 1e-6 and abs(f[0, 4] - 10.0 / reach) < 1e-6   # row 0: 10 km to port
+    assert abs(f[1, 0] - 30.0 / reach) < 1e-6 and abs(f[1, 5] - 0.5) < 1e-6            # row 1: ahead, closing 175 / 350
+    d = obs_dims(dict(n_rays=120, speed=True, ac_tokens=4), 4)
+    b = ObsBuilder(lid, 4); b.reset(o)
+    assert d["state_dim"] == 32 + 28 and b.get()[0].shape == (60,) and d["ac_tokens"] == 4
+    torch.manual_seed(0)
+    pol = Policy(state_dim=60, lidar_ch=16, n_rays=120, ac_tokens=4)
+    s, l = torch.as_tensor(b.get()[0])[None, None], torch.as_tensor(b.get()[1])[None, None]
+    m0 = pol(s, l)[0].mean
+    s2 = s.clone(); s2[..., 32 + 12:32 + 24] = 7.0                                     # values in the two empty rows
+    assert torch.allclose(m0, pol(s2, l)[0].mean, atol=1e-6)                           # masked: no effect
+    s3 = s.clone(); s3[..., 32 + 5] = -0.5                                             # closing speed of a real aircraft
+    assert not torch.allclose(m0, pol(s3, l)[0].mean, atol=1e-6)                       # used
+    s4 = s.clone(); s4[..., 32 + 24:] = 0.0                                            # no aircraft at all: no NaN
+    assert torch.isfinite(pol(s4, l)[0].mean).all()
+
+
 def test_frame_stack():
     lid = Lidar(n_rays=16)
     b = ObsBuilder(lid, history=4)

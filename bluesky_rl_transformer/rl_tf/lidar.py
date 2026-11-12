@@ -24,6 +24,7 @@ DEG2KM = 111.32                                        # flat-earth factor of co
 DIST_NORM_KM = 170.0                                   # waypoint distance unit of the observation (potential shaping)
 GEOM_KEY = "lidar_geometry"
 N_CHANNELS = 3                                         # zone, boundary, aircraft (as the reference)
+AC_FEATURES = 6                                        # aircraft token: x, y, vx, vy, distance, closing speed
 SPEED_NORM_MS = 350.0                                  # closing-speed unit: largest value measured was 314 m/s (2026-11-12)
 N_TYPES = 4                                            # the 3 channels + the own goal (no channel)
 TYPE_NAMES = ["zone", "boundary", "aircraft", "goal"]
@@ -85,11 +86,12 @@ def to_own_frame(lat, lon, lat0, lon0, hdg_deg):
 
 class Lidar:
     def __init__(self, n_rays=120, fov_deg=360.0, max_range_km=100.0, ac_radius_km=5.0 * NM2KM, zone_flag=True,
-                 speed=False):
+                 speed=False, ac_tokens=0):
         self.n_rays, self.fov_deg, self.max_range, self.ac_radius = n_rays, fov_deg, max_range_km, ac_radius_km
         self.zone_flag = bool(zone_flag)               # the own state has the inside-zone flag
         self.speed = bool(speed)                       # 4th channel: closing speed of the aircraft that the ray hits
         self.n_channels = N_CHANNELS + int(self.speed)
+        self.ac_tokens = int(ac_tokens)                # aircraft tokens: the K nearest aircraft that the lidar can see
         if fov_deg >= 360.0:
             ang = -180.0 + 360.0 * np.arange(n_rays) / n_rays          # ring, no doubled ray
         else:
@@ -133,6 +135,32 @@ class Lidar:
         if self.speed:
             out[N_CHANNELS] = self.closing_speed(obs, kind)
         return out
+
+    def aircraft_tokens(self, obs):
+        """The K = ac_tokens nearest other aircraft whose 5 NM disc is within the lidar radius, nearest first.
+        Returns [K * AC_FEATURES + K] float32: K rows of (x, y, vx, vy, distance, closing speed), then K flags
+        (1 = a real aircraft, 0 = empty row). Own frame (x = nose, y = starboard). Positions and the distance are
+        divided by (lidar radius + disc radius); velocities (other minus own) and the closing speed by
+        SPEED_NORM_MS. Empty rows are 0."""
+        K = self.ac_tokens
+        feat, flag = np.zeros((K, AC_FEATURES), dtype=np.float32), np.zeros(K, dtype=np.float32)
+        g = obs[GEOM_KEY]
+        ac = np.asarray(g["aircraft"], dtype=np.float64).reshape(-1, 2)
+        if K and len(ac):
+            vel = g.get("aircraft_vel")
+            vel = np.zeros_like(ac) if vel is None else np.asarray(vel, dtype=np.float64).reshape(-1, 2)
+            reach = self.max_range + self.ac_radius
+            dist = np.linalg.norm(ac, axis=1)
+            order = np.argsort(dist, kind="stable")
+            order = order[dist[order] <= reach][:K]
+            n = len(order)
+            if n:
+                c, v, d = ac[order], vel[order], np.maximum(dist[order], 1e-9)
+                closing = -(c * v).sum(axis=1) / d
+                feat[:n] = np.concatenate([c / reach, np.clip(v / SPEED_NORM_MS, -2.0, 2.0), (d / reach)[:, None],
+                                           np.clip(closing / SPEED_NORM_MS, -1.0, 1.0)[:, None]], axis=1)
+                flag[:n] = 1.0
+        return np.concatenate([feat.reshape(-1), flag])
 
     def closing_speed(self, obs, kind):
         """Per ray whose nearest hit is an aircraft: the rate at which the distance between the own aircraft and

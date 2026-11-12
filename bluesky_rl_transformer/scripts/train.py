@@ -43,6 +43,8 @@ def build_parser():
     p.add_argument("--fov-deg", type=float, default=360.0)
     p.add_argument("--max-range-km", type=float, default=50.0,
                    help="Lidar radius around the aircraft, km. A ray sees nothing beyond it (100 before 2026-11-12).")
+    p.add_argument("--ac-tokens", type=int, default=0,
+                   help="K > 0: K more Transformer tokens, one per aircraft that the lidar can see (the K nearest). 0: baseline.")
     p.add_argument("--lidar-speed", type=int, choices=[0, 1], default=1,
                    help="1: 4th lidar channel with the closing speed of the aircraft that the ray hits.")
     p.add_argument("--history", type=int, default=4, help="Stacked frames (reference: 4).")
@@ -82,7 +84,7 @@ def main(argv=None):
     out = Path(args.out_dir)
     (out / "models").mkdir(parents=True, exist_ok=True)
     lidar_cfg = dict(n_rays=args.n_rays, fov_deg=args.fov_deg, max_range_km=args.max_range_km,
-                     zone_flag=bool(args.zone_flag), speed=bool(args.lidar_speed))
+                     zone_flag=bool(args.zone_flag), speed=bool(args.lidar_speed), ac_tokens=args.ac_tokens)
     cfg = dict(setting=args.setting, n_agents=args.n_agents, reward=reward_kwargs(args), lidar=lidar_cfg,
                history=args.history, shaping=args.shaping == "potential", shaping_speed=args.shaping_speed,
                seed=args.seed, reset_seed=reset_seed)
