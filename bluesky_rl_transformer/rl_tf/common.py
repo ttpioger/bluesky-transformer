@@ -89,9 +89,9 @@ SUMMARY_ROWS = [("waypoint_reached", "goal completed (share of flights)"), ("fli
                 ("sector_exit_events", "sector exit events"), ("time_outside_sector", "time outside sector (s)")]
 
 
-def summary_table(straight, policy, seed, wb=None):
+def summary_table(straight, policy, seed, wb=None, key="held_out/summary"):
     """Table of the mean metrics per flight: metric | fly straight | seed N (our Transformer), same scenarios.
-    straight and policy: {metric key: mean}. Prints the table, sends it to W&B (key held_out/summary) if wb is
+    straight and policy: {metric key: mean}. Prints the table, sends it to W&B (under `key`) if wb is
     given, and returns (columns, rows)."""
     cols = ["metric", "fly straight", f"seed {seed} (our Transformer)"]
     rows = [[label, round(float(straight[k]), 2), round(float(policy[k]), 2)] for k, label in SUMMARY_ROWS]
@@ -100,7 +100,7 @@ def summary_table(straight, policy, seed, wb=None):
         print(f"{r[0]:<36} {r[1]:>14.2f} {r[2]:>28.2f}")
     if wb is not None:
         import wandb
-        wb.log({"held_out/summary": wandb.Table(columns=cols, data=rows)})
+        wb.log({key: wandb.Table(columns=cols, data=rows)})
     return cols, rows
 
 
