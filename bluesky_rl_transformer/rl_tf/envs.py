@@ -239,11 +239,13 @@ class ObsBuilder:
         self.zone = self.lidar.zone_tokens_vec(obs) if self.lidar.zone_tokens else None
         h = self.lidar.act_tokens                      # last H actions, oldest first; an empty row has flag 0
         self.acts = deque([(0.0, 0.0, 0.0)] * h, maxlen=h) if h else None
+        self.edge = self.lidar.edge_tokens_vec(obs) if self.lidar.edge_tokens else None
 
     def push(self, obs, action):
         self.frames.append((own_state(obs, action, self.lidar.zone_flag), self.lidar.scan(obs)))
         self.ac = self.lidar.aircraft_tokens(obs) if self.lidar.ac_tokens else None
         self.zone = self.lidar.zone_tokens_vec(obs) if self.lidar.zone_tokens else None
+        self.edge = self.lidar.edge_tokens_vec(obs) if self.lidar.edge_tokens else None
         if self.acts is not None:
             self.acts.append((float(action[0]), float(action[1]), 1.0))
 
@@ -257,11 +259,13 @@ class ObsBuilder:
         if self.acts is not None:                      # H rows of (turn, speed), then H flags
             a = np.asarray(self.acts, dtype=np.float32)
             state.append(np.concatenate([a[:, :ACT_FEATURES].reshape(-1), a[:, ACT_FEATURES]]))
+        if self.edge is not None:                      # sector-edge tokens of the newest frame
+            state.append(self.edge)
         return (np.concatenate(state), np.concatenate([f[1] for f in self.frames], axis=0))
 
 
 def obs_dims(lidar_cfg, history):
-    tok = {k: int(lidar_cfg.get(k, 0)) for k in ["ac_tokens", "zone_tokens", "act_tokens"]}   # values at the end of the state
+    tok = {k: int(lidar_cfg.get(k, 0)) for k in ["ac_tokens", "zone_tokens", "act_tokens", "edge_tokens", "ac_cpa"]}   # values at the end of the state
     return dict(state_dim=state_dim(lidar_cfg.get("zone_flag", True)) * history + extra_dim(**tok), **tok,
                 lidar_ch=(N_CHANNELS + int(bool(lidar_cfg.get("speed", False)))) * history, n_rays=lidar_cfg["n_rays"])
 

@@ -153,6 +153,47 @@ def test_zone_goal_and_action_tokens():
     assert all(torch.equal(sb[k], sn[k]) for k in sb if k.startswith("encoder."))       # the shared encoder layers start as the baseline
 
 
+def test_edge_cpa_fourier_and_readout_tokens():
+    from rl_tf.lidar import EDGE_FEATURES as EF, AC_FEATURES as AF, DIST_NORM_KM as N, CPA_NORM_S, NM2KM, extra_dim
+    o = fake_obs(half=500.0)
+    o[GEOM_KEY]["aircraft"] = np.array([[20.0, 0.0], [0.0, 30.0]])                     # one ahead, one to starboard
+    o[GEOM_KEY]["aircraft_vel"] = np.array([[-100.0, 0.0], [0.0, 50.0]])               # the first comes, the second goes
+    lid = Lidar(max_range_km=50.0, speed=True, ac_tokens=3, ac_cpa=1, edge_tokens=8)
+    reach = 50.0 + 5.0 * NM2KM
+    t = lid.aircraft_tokens(o); f = t[:3 * (AF + 2)].reshape(3, AF + 2)
+    assert abs(f[0, 6] - 200.0 / CPA_NORM_S) < 1e-6 and abs(f[0, 7]) < 1e-6            # 20 km at 100 m/s: 200 s, distance 0
+    assert f[1, 6] == 0.0 and abs(f[1, 7] - 30.0 / reach) < 1e-6                       # goes away: time 0, distance of now
+    e = lid.edge_tokens_vec(o); ef, flag = e[:8 * EF].reshape(8, EF), e[8 * EF:]
+    assert list(flag) == [1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0]                      # square sector: ahead, starboard, behind, port
+    assert abs(ef[0, 0] - 500.0 / N) < 1e-6 and abs(ef[0, 2] - 500.0 / N) < 1e-6 and ef[0, 3] == 1.0 and ef[0, 5] == 0.0
+    assert abs(ef[2, 1] - 500.0 / N) < 1e-6 and abs(ef[6, 1] + 500.0 / N) < 1e-6       # bin 2 = starboard, bin 6 = port
+    o["inside_sector"] = np.zeros(1)
+    assert lid.edge_tokens_vec(o)[5] == 1.0                                            # outside flag
+    o["inside_sector"] = np.ones(1)
+    cfg = dict(n_rays=120, speed=True, ac_tokens=3, ac_cpa=1, edge_tokens=8)
+    d = obs_dims(cfg, 4)
+    assert d["state_dim"] == 32 + extra_dim(3, 0, 0, 8, 1) == 32 + 3 * 9 + 8 * 7
+    b = ObsBuilder(lid, 4); b.reset(o); st = b.get()[0]
+    assert st.shape == (d["state_dim"],)
+    s, l = torch.as_tensor(st)[None, None], torch.as_tensor(b.get()[1])[None, None]
+    for kw in [dict(), dict(fourier=4), dict(cls_token=1), dict(fourier=4, cls_token=1, d_model=128, n_layers=3)]:
+        torch.manual_seed(0)
+        pol = Policy(state_dim=d["state_dim"], lidar_ch=16, n_rays=120, ac_tokens=3, ac_cpa=1, edge_tokens=8, **kw)
+        m0 = pol(s, l)[0].mean
+        assert torch.isfinite(m0).all()
+        s2 = s.clone(); s2[..., 32 + 2 * 8:32 + 3 * 8] = 7.0                            # empty aircraft row
+        s2[..., 32 + 27 + EF:32 + 27 + 2 * EF] = 7.0                                    # empty edge row (bin 1)
+        assert torch.allclose(m0, pol(s2, l)[0].mean, atol=1e-6)                        # masked: no effect
+        for i in [32 + 6, 32 + 27 + 2]:                                                 # time to closest point; edge distance
+            s3 = s.clone(); s3[..., i] += 0.5
+            assert not torch.allclose(m0, pol(s3, l)[0].mean, atol=1e-6)                # used
+    torch.manual_seed(0); old = Policy(state_dim=32 + 3 * 7, lidar_ch=16, n_rays=120, ac_tokens=3)
+    torch.manual_seed(0); new = Policy(state_dim=32 + 3 * 7, lidar_ch=16, n_rays=120, ac_tokens=3, edge_tokens=0,
+                                       ac_cpa=0, fourier=0, cls_token=0)
+    so, sn = old.state_dict(), new.state_dict()
+    assert so.keys() == sn.keys() and all(torch.equal(so[k], sn[k]) for k in so)       # options at 0: the same model
+
+
 def test_frame_stack():
     lid = Lidar(n_rays=16)
     b = ObsBuilder(lid, history=4)

@@ -50,6 +50,11 @@ def build_parser():
                         "plus one goal token with the time left. A scenario has 5 areas. 0 = off.")
     p.add_argument("--act-tokens", type=int, default=0,
                    help="Action-history tokens: the last H own actions, one token each. 0 = off.")
+    p.add_argument("--edge-tokens", type=int, default=0,
+                   help="Sector-edge tokens: E direction bins around the aircraft, each with the nearest point of the "
+                        "sector edge in that direction (no range limit). 0 = off.")
+    p.add_argument("--ac-cpa", type=int, choices=[0, 1], default=0,
+                   help="1: each aircraft token also has the time to the closest point of approach and the distance there.")
     p.add_argument("--lidar-speed", type=int, choices=[0, 1], default=1,
                    help="1: 4th lidar channel with the closing speed of the aircraft that the ray hits.")
     p.add_argument("--history", type=int, default=4, help="Stacked frames (reference: 4).")
@@ -61,6 +66,11 @@ def build_parser():
     p.add_argument("--n-heads", type=int, default=4)
     p.add_argument("--n-layers", type=int, default=2)
     p.add_argument("--features-dim", type=int, default=256)
+    p.add_argument("--fourier", type=int, default=0,
+                   help="F > 0: the object tokens (aircraft, area, goal, sector edge) get sin and cos of each value at F "
+                        "frequencies (pi, 2 pi, 4 pi, ...) in addition to the value. 0 = off.")
+    p.add_argument("--cls-token", type=int, choices=[0, 1], default=0,
+                   help="1: a learned read-out token collects the result; the own-state token then only carries the state.")
     p.add_argument("--log-std-init", type=float, default=0.0, help="Start exploration noise (reference: 0.0).")
     # reward
     p.add_argument("--reward-scale", type=float, default=0.0002, help="Scale of the reward used for learning only.")
@@ -90,7 +100,8 @@ def main(argv=None):
     (out / "models").mkdir(parents=True, exist_ok=True)
     lidar_cfg = dict(n_rays=args.n_rays, fov_deg=args.fov_deg, max_range_km=args.max_range_km,
                      zone_flag=bool(args.zone_flag), speed=bool(args.lidar_speed), ac_tokens=args.ac_tokens,
-                     zone_tokens=args.zone_tokens, act_tokens=args.act_tokens)
+                     zone_tokens=args.zone_tokens, act_tokens=args.act_tokens,
+                     edge_tokens=args.edge_tokens, ac_cpa=args.ac_cpa)
     cfg = dict(setting=args.setting, n_agents=args.n_agents, reward=reward_kwargs(args), lidar=lidar_cfg,
                history=args.history, shaping=args.shaping == "potential", shaping_speed=args.shaping_speed,
                seed=args.seed, reset_seed=reset_seed)

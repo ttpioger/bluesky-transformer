@@ -1,0 +1,93 @@
+{
+ "status": "EXPLORATORY",
+ "max_steps": 2000000,
+ "window": 200,
+ "runs": {
+  "sa_tf_los_speed_s0": {
+   "safe_exploration": {
+    "training_flights": 6153,
+    "env_steps": 1998336,
+    "flights_with_a_violation": 0.7303754266211604,
+    "total_hours": {
+     "intrusion_time": 201.2263888888889,
+     "time_in_restricted_area": 128.16333333333333,
+     "time_outside_sector": 27.94611111111111
+    },
+    "total_events": {
+     "intrusion_events": 7682.0,
+     "restricted_area_events": 1939.0,
+     "sector_exit_events": 257.0
+    },
+    "violation_s_per_flight_by_quarter": [
+     323.99068100358426,
+     197.13234421364984,
+     171.78491065519523,
+     155.38220230473752
+    ],
+    "steps_to_below_60s_per_flight": null
+   },
+   "turn": {
+    "mean_abs_turn_deg": 3.3853731775750804,
+    "turn_sign_flip_rate": 0.18047696917871134
+   },
+   "reward_hacking": {
+    "source": "greedy_eval of the summary",
+    "flights": 10,
+    "goal_not_reached": 1,
+    "at_time_limit": 1,
+    "not_reached_before_limit": 0,
+    "flights_that_leave_sector": 0,
+    "outside_sector_s_in_these": 0.0,
+    "longest_outside_sector_s": 0.0,
+    "intrusion_s_exit_flights": null,
+    "intrusion_s_other_flights": 107.8,
+    "goal_reached_in_exit_flights": null,
+    "return_vs_violation_spearman": -0.6606060606060605
+   }
+  },
+  "sa_tf_tok3_s0": {
+   "safe_exploration": {
+    "training_flights": 16398,
+    "env_steps": 1999848,
+    "flights_with_a_violation": 0.5545798268081473,
+    "total_hours": {
+     "intrusion_time": 119.38777777777777,
+     "time_in_restricted_area": 139.20472222222222,
+     "time_outside_sector": 57.881388888888885
+    },
+    "total_events": {
+     "intrusion_events": 8926.0,
+     "restricted_area_events": 5713.0,
+     "sector_exit_events": 869.0
+    },
+    "violation_s_per_flight_by_quarter": [
+     141.28990133488102,
+     63.15381051656243,
+     48.952690166975884,
+     39.02428868841083
+    ],
+    "steps_to_below_60s_per_flight": 550088
+   },
+   "turn": {
+    "mean_abs_turn_deg": 8.907421009547667,
+    "turn_sign_flip_rate": 0.6083053947257862
+   },
+   "reward_hacking": {
+    "source": "sa_tf_tok3_s0_competition_sa.json",
+    "flights": 1000,
+    "goal_not_reached": 6,
+    "at_time_limit": 6,
+    "not_reached_before_limit": 0,
+    "flights_that_leave_sector": 39,
+    "outside_sector_s_in_these": 296.9230769230769,
+    "longest_outside_sector_s": 2248.0,
+    "intrusion_s_exit_flights": 36.15384615384615,
+    "intrusion_s_other_flights": 15.170655567117587,
+    "goal_reached_in_exit_flights": 0.9487179487179487,
+    "return_vs_violation_spearman": -0.6845323085323086,
+    "flights_longer_than_1.5x_straight": 161,
+    "flights_longer_than_2x_straight": 67
+   }
+  }
+ }
+}

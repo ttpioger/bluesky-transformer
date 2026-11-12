@@ -28,6 +28,9 @@ AC_FEATURES = 6                                        # aircraft token: x, y, v
 ZONE_FEATURES = 11                                     # restricted-area token, see Lidar.zone_tokens_vec
 GOAL_FEATURES = 6                                      # goal token: x, y, distance, cos and sin of the bearing, time left
 ACT_FEATURES = 2                                       # action-history token: turn, speed
+CPA_FEATURES = 2                                       # more aircraft-token values: time to the closest point, distance there
+CPA_NORM_S = 300.0                                     # time unit of the closest-point value (30 decision steps)
+EDGE_FEATURES = 6                                      # sector-edge token, see Lidar.edge_tokens_vec
 SPEED_NORM_MS = 350.0                                  # closing-speed unit: largest value measured was 314 m/s (2026-11-12)
 N_TYPES = 4                                            # the 3 channels + the own goal (no channel)
 TYPE_NAMES = ["zone", "boundary", "aircraft", "goal"]
@@ -40,17 +43,20 @@ def state_dim(zone_flag=True):
     return STATE_DIM + int(bool(zone_flag))
 
 
-def extra_dim(ac_tokens=0, zone_tokens=0, act_tokens=0):
+def extra_dim(ac_tokens=0, zone_tokens=0, act_tokens=0, edge_tokens=0, ac_cpa=0):
     """Size of the token values at the end of the state array. Order: K aircraft rows and K flags; Z restricted-area
-    rows, Z flags and one goal row; H action rows and H flags."""
-    k, z, h = int(ac_tokens), int(zone_tokens), int(act_tokens)
-    return k * (AC_FEATURES + 1) + (z * (ZONE_FEATURES + 1) + GOAL_FEATURES if z else 0) + h * (ACT_FEATURES + 1)
+    rows, Z flags and one goal row; H action rows and H flags; E sector-edge rows and E flags.
+    ac_cpa = 1: each aircraft row has CPA_FEATURES more values."""
+    k, z, h, e = int(ac_tokens), int(zone_tokens), int(act_tokens), int(edge_tokens)
+    return (k * (AC_FEATURES + CPA_FEATURES * int(bool(ac_cpa)) + 1) + (z * (ZONE_FEATURES + 1) + GOAL_FEATURES if z else 0)
+            + h * (ACT_FEATURES + 1) + e * (EDGE_FEATURES + 1))
 
 
 def token_cfg(a):
     """Token options from the arguments of a checkpoint. A key that is not there is 0 (checkpoint from before the flag)."""
     return dict(ac_tokens=int(a.get("ac_tokens", 0)), zone_tokens=int(a.get("zone_tokens", 0)),
-                act_tokens=int(a.get("act_tokens", 0)))
+                act_tokens=int(a.get("act_tokens", 0)), edge_tokens=int(a.get("edge_tokens", 0)),
+                ac_cpa=int(a.get("ac_cpa", 0)))
 
 
 def ray_circles(u, c, r):
@@ -102,7 +108,7 @@ def to_own_frame(lat, lon, lat0, lon0, hdg_deg):
 
 class Lidar:
     def __init__(self, n_rays=120, fov_deg=360.0, max_range_km=100.0, ac_radius_km=5.0 * NM2KM, zone_flag=True,
-                 speed=False, ac_tokens=0, zone_tokens=0, act_tokens=0):
+                 speed=False, ac_tokens=0, zone_tokens=0, act_tokens=0, edge_tokens=0, ac_cpa=0):
         self.n_rays, self.fov_deg, self.max_range, self.ac_radius = n_rays, fov_deg, max_range_km, ac_radius_km
         self.zone_flag = bool(zone_flag)               # the own state has the inside-zone flag
         self.speed = bool(speed)                       # 4th channel: closing speed of the aircraft that the ray hits
@@ -110,6 +116,9 @@ class Lidar:
         self.ac_tokens = int(ac_tokens)                # aircraft tokens: the K nearest aircraft that the lidar can see
         self.zone_tokens = int(zone_tokens)            # restricted-area tokens: the Z nearest areas, plus one goal token
         self.act_tokens = int(act_tokens)              # action-history tokens: the last H own actions (ObsBuilder)
+        self.edge_tokens = int(edge_tokens)            # sector-edge tokens: E direction bins around the aircraft
+        self.ac_cpa = int(bool(ac_cpa))                # aircraft tokens also give the closest point of approach
+        self.ac_f = AC_FEATURES + CPA_FEATURES * self.ac_cpa
         if fov_deg >= 360.0:
             ang = -180.0 + 360.0 * np.arange(n_rays) / n_rays          # ring, no doubled ray
         else:
@@ -159,9 +168,12 @@ class Lidar:
         Returns [K * AC_FEATURES + K] float32: K rows of (x, y, vx, vy, distance, closing speed), then K flags
         (1 = a real aircraft, 0 = empty row). Own frame (x = nose, y = starboard). Positions and the distance are
         divided by (lidar radius + disc radius); velocities (other minus own) and the closing speed by
-        SPEED_NORM_MS. Empty rows are 0."""
+        SPEED_NORM_MS. Empty rows are 0.
+        With ac_cpa: 2 more values per row, for straight flight of the two aircraft at the velocities of now:
+        the time to the closest point (0 if the aircraft goes away; divided by CPA_NORM_S, at most 2) and the
+        distance at that point (divided as the positions). The row size is then self.ac_f = 8."""
         K = self.ac_tokens
-        feat, flag = np.zeros((K, AC_FEATURES), dtype=np.float32), np.zeros(K, dtype=np.float32)
+        feat, flag = np.zeros((K, self.ac_f), dtype=np.float32), np.zeros(K, dtype=np.float32)
         g = obs[GEOM_KEY]
         ac = np.asarray(g["aircraft"], dtype=np.float64).reshape(-1, 2)
         if K and len(ac):
@@ -175,8 +187,14 @@ class Lidar:
             if n:
                 c, v, d = ac[order], vel[order], np.maximum(dist[order], 1e-9)
                 closing = -(c * v).sum(axis=1) / d
-                feat[:n] = np.concatenate([c / reach, np.clip(v / SPEED_NORM_MS, -2.0, 2.0), (d / reach)[:, None],
-                                           np.clip(closing / SPEED_NORM_MS, -1.0, 1.0)[:, None]], axis=1)
+                feat[:n, :AC_FEATURES] = np.concatenate(
+                    [c / reach, np.clip(v / SPEED_NORM_MS, -2.0, 2.0), (d / reach)[:, None],
+                     np.clip(closing / SPEED_NORM_MS, -1.0, 1.0)[:, None]], axis=1)
+                if self.ac_cpa:                                            # c in km, v in m/s
+                    t = np.clip(-(c * 1000.0 * v).sum(axis=1) / np.maximum((v * v).sum(axis=1), 1e-9),
+                                0.0, 2.0 * CPA_NORM_S)
+                    d_cpa = np.linalg.norm(c + v * t[:, None] / 1000.0, axis=1)
+                    feat[:n, AC_FEATURES:] = np.stack([t / CPA_NORM_S, d_cpa / reach], axis=1)
                 flag[:n] = 1.0
         return np.concatenate([feat.reshape(-1), flag])
 
@@ -225,6 +243,34 @@ class Lidar:
         goal_row = np.array([goal[0] / DIST_NORM_KM, goal[1] / DIST_NORM_KM, gd / DIST_NORM_KM, bearing[0], bearing[1],
                              float(g.get("time_left", 1.0))], dtype=np.float32)
         return np.concatenate([feat.reshape(-1), flag, goal_row])
+
+    def edge_tokens_vec(self, obs):
+        """Sector-edge tokens: the circle around the own aircraft is cut into E = edge_tokens direction bins of equal
+        width (bin 0 is centred on the nose, then clockwise). Each bin gives the nearest point of the sector edge
+        whose bearing is in the bin (no range limit). The candidate points are the nearest point of each edge
+        segment of the sector polygon. Returns [E * EDGE_FEATURES + E] float32.
+        One row, own frame: x, y of the point and its distance (divided by DIST_NORM_KM), cos and sin of its bearing,
+        and 1 if the own aircraft is outside the sector. Then E flags (1 = the bin has a point, 0 = empty row)."""
+        E = self.edge_tokens
+        feat, flag = np.zeros((E, EDGE_FEATURES), dtype=np.float32), np.zeros(E, dtype=np.float32)
+        v = np.asarray(obs[GEOM_KEY]["sector"], dtype=np.float64).reshape(-1, 2)
+        if E and len(v) >= 2:
+            p, d = v, np.roll(v, -1, axis=0) - v
+            s = np.clip(-(p * d).sum(1) / np.maximum((d * d).sum(1), 1e-12), 0.0, 1.0)
+            c = p + s[:, None] * d                                         # nearest point of each edge segment
+            dist = np.linalg.norm(c, axis=1)
+            ang = np.arctan2(c[:, 1], c[:, 0])                             # positive = starboard
+            width = 2.0 * np.pi / E
+            bins = (np.floor(((ang + width / 2.0) % (2.0 * np.pi)) / width).astype(int)) % E
+            outside = 1.0 - float(np.asarray(obs["inside_sector"]).reshape(-1)[0])
+            for b in range(E):
+                m = np.flatnonzero(bins == b)
+                if len(m):
+                    j = m[dist[m].argmin()]
+                    n = DIST_NORM_KM
+                    feat[b] = [c[j, 0] / n, c[j, 1] / n, dist[j] / n, np.cos(ang[j]), np.sin(ang[j]), outside]
+                    flag[b] = 1.0
+        return np.concatenate([feat.reshape(-1), flag])
 
     def closing_speed(self, obs, kind):
         """Per ray whose nearest hit is an aircraft: the rate at which the distance between the own aircraft and
