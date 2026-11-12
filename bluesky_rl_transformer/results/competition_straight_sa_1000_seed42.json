@@ -1,0 +1,30 @@
+{
+ "policy": "fly straight (zero action)",
+ "kind": "sa",
+ "episodes": 1000,
+ "seed": 42,
+ "n_flights": 1000,
+ "mean": {
+  "waypoint_reached": 1.0,
+  "flight_time": 852.011,
+  "intrusion_events": 1.127,
+  "intrusion_time": 96.319,
+  "restricted_area_events": 0.813,
+  "time_in_restricted_area": 129.934,
+  "sector_exit_events": 0.0,
+  "time_outside_sector": 0.0,
+  "ep_return": -9618.611466342478
+ },
+ "std": {
+  "waypoint_reached": 0.0,
+  "flight_time": 134.9812167636668,
+  "intrusion_events": 1.1335215039865807,
+  "intrusion_time": 146.55775393680133,
+  "restricted_area_events": 0.8854552501397234,
+  "time_in_restricted_area": 163.2111749973022,
+  "sector_exit_events": 0.0,
+  "time_outside_sector": 0.0,
+  "ep_return": 2826.551196431053
+ },
+ "note": "ep_return uses the default reward weights of this folder"
+}

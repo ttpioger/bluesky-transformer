@@ -1538,5 +1538,18 @@
  "gifs": [
   "gifs/ma10_tf_los_speed_s0_ep3.gif",
   "gifs/ma10_tf_los_speed_s0_ep4.gif"
- ]
+ ],
+ "fly_straight_mean": {
+  "n_agent_episodes": 100,
+  "waypoint_reached": 1.0,
+  "flight_time": 825.91,
+  "intrusion_events": 0.94,
+  "intrusion_time": 73.68,
+  "restricted_area_events": 0.81,
+  "time_in_restricted_area": 109.61,
+  "sector_exit_events": 0.0,
+  "time_outside_sector": 0.0,
+  "ep_return": -86.55794937925782,
+  "ep_return_std": 56.26096077154292
+ }
 }

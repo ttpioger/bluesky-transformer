@@ -1,0 +1,697 @@
+wandb: [wandb.login()] Loaded credentials for https://api.forge.coreweave.com from /home/thomas/.netrc.
+wandb: Currently logged in as: thomas-pioger (lego_block) to https://api.forge.coreweave.com. Use `wandb login --relogin` to force relogin
+wandb: setting up run sa_tf_tok3_s0
+wandb: Tracking run with wandb version 0.31.0
+wandb: Run data is saved locally in /home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/bluesky_rl_transformer/wandb/run-20261112_144044-sa_tf_tok3_s0
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run sa_tf_tok3_s0
+wandb: ⭐️ View project at https://forge.coreweave.com/wandb/lego_block/bluesky-rl-transformer
+wandb: 🚀 View run at https://forge.coreweave.com/wandb/lego_block/bluesky-rl-transformer/runs/sa_tf_tok3_s0
+/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+sa_tf_tok3_s0: setting single, aircraft 1, workers 8, n_params {'policy': 327237, 'encoder': 236288, 'actor_head': 20740, 'critic_head': 70209}
+env_steps=4096 policy_loss=1.4214 value_loss=0.2296 log_std=0.01 | eps=8 ep_return=-530.3 waypoint=0.12 intrusions=1.38 zones=1.38 sector_exit=1.00 flight_time=2907
+env_steps=8192 policy_loss=1.0766 value_loss=0.4009 log_std=0.02 | eps=11 ep_return=-483.4 waypoint=0.27 intrusions=1.36 zones=2.27 sector_exit=0.91 flight_time=2488
+env_steps=12288 policy_loss=1.0656 value_loss=0.6928 log_std=0.02 | eps=8 ep_return=-585.3 waypoint=0.00 intrusions=1.00 zones=1.12 sector_exit=0.88 flight_time=3000
+env_steps=16384 policy_loss=0.7721 value_loss=0.3940 log_std=0.03 | eps=8 ep_return=-477.5 waypoint=0.00 intrusions=1.00 zones=1.50 sector_exit=0.50 flight_time=3000
+Traceback (most recent call last):
+  File "/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/bluesky/stack/simstack.py", line 73, in process
+    success, echotext = cmdobj(argstring)
+                        ^^^^^^^^^^^^^^^^^
+  File "/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/bluesky/stack/cmdparser.py", line 70, in __call__
+    result = param(argstring)
+             ^^^^^^^^^^^^^^^^
+  File "/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/bluesky/stack/argparser.py", line 87, in __call__
+    raise ArgumentError(error)
+bluesky.stack.argparser.ArgumentError: 
+txt2hdg needs either a float, optionally with an M/T prefix or a position
+env_steps=20480 policy_loss=0.4844 value_loss=0.4070 log_std=0.03 | eps=9 ep_return=-437.3 waypoint=0.22 intrusions=1.11 zones=1.44 sector_exit=0.67 flight_time=2794
+env_steps=24576 policy_loss=0.3839 value_loss=0.3918 log_std=0.03 | eps=10 ep_return=-406.3 waypoint=0.30 intrusions=0.90 zones=1.50 sector_exit=1.00 flight_time=2750
+env_steps=28672 policy_loss=0.2294 value_loss=0.3171 log_std=0.03 | eps=8 ep_return=-415.0 waypoint=0.12 intrusions=1.62 zones=1.50 sector_exit=1.00 flight_time=2955
+env_steps=32768 policy_loss=0.4804 value_loss=0.2950 log_std=0.03 | eps=10 ep_return=-443.4 waypoint=0.20 intrusions=1.90 zones=2.70 sector_exit=0.70 flight_time=2635
+env_steps=36864 policy_loss=-0.0176 value_loss=0.3601 log_std=0.03 | eps=8 ep_return=-401.6 waypoint=0.12 intrusions=1.38 zones=3.12 sector_exit=0.25 flight_time=2910
+env_steps=40960 policy_loss=-0.1566 value_loss=0.4632 log_std=0.03 | eps=12 ep_return=-232.0 waypoint=0.75 intrusions=1.25 zones=1.25 sector_exit=0.58 flight_time=2296
+env_steps=45056 policy_loss=-0.3338 value_loss=0.3241 log_std=0.02 | eps=14 ep_return=-246.9 waypoint=0.57 intrusions=1.29 zones=0.79 sector_exit=0.57 flight_time=2244
+env_steps=49152 policy_loss=-0.1626 value_loss=0.2943 log_std=0.01 | eps=16 ep_return=-222.5 waypoint=0.62 intrusions=1.81 zones=1.00 sector_exit=0.12 flight_time=2232
+env_steps=53248 policy_loss=-0.1267 value_loss=0.3705 log_std=0.01 | eps=15 ep_return=-229.5 waypoint=0.80 intrusions=2.00 zones=0.87 sector_exit=0.40 flight_time=2118
+env_steps=57344 policy_loss=-0.1077 value_loss=0.6091 log_std=0.01 | eps=14 ep_return=-241.9 waypoint=0.79 intrusions=0.57 zones=1.79 sector_exit=0.36 flight_time=2180
+env_steps=61440 policy_loss=-0.2461 value_loss=0.3627 log_std=0.01 | eps=15 ep_return=-219.8 waypoint=0.87 intrusions=1.33 zones=1.13 sector_exit=0.27 flight_time=2231
+env_steps=65536 policy_loss=-0.3126 value_loss=0.1902 log_std=0.01 | eps=16 ep_return=-221.7 waypoint=0.88 intrusions=2.00 zones=0.69 sector_exit=0.38 flight_time=2057
+env_steps=69632 policy_loss=-0.2405 value_loss=0.5720 log_std=0.00 | eps=19 ep_return=-166.4 waypoint=0.95 intrusions=1.68 zones=0.21 sector_exit=0.21 flight_time=1703
+env_steps=73728 policy_loss=-0.0994 value_loss=0.2464 log_std=0.00 | eps=16 ep_return=-196.3 waypoint=0.81 intrusions=2.00 zones=1.12 sector_exit=0.06 flight_time=2028
+env_steps=77824 policy_loss=-0.4119 value_loss=0.2707 log_std=-0.00 | eps=21 ep_return=-172.0 waypoint=0.95 intrusions=1.67 zones=0.67 sector_exit=0.14 flight_time=1650
+env_steps=81920 policy_loss=-0.1044 value_loss=0.3204 log_std=-0.00 | eps=19 ep_return=-134.2 waypoint=0.95 intrusions=1.37 zones=0.47 sector_exit=0.21 flight_time=1700
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+env_steps=86016 policy_loss=-0.1807 value_loss=0.2404 log_std=-0.01 | eps=24 ep_return=-131.4 waypoint=0.92 intrusions=1.38 zones=0.62 sector_exit=0.08 flight_time=1531
+env_steps=90112 policy_loss=-0.1932 value_loss=0.1878 log_std=-0.01 | eps=23 ep_return=-118.5 waypoint=0.96 intrusions=1.04 zones=0.57 sector_exit=0.17 flight_time=1508
+env_steps=94208 policy_loss=-0.0009 value_loss=0.2040 log_std=-0.02 | eps=27 ep_return=-104.2 waypoint=0.96 intrusions=1.22 zones=0.37 sector_exit=0.22 flight_time=1358
+env_steps=98304 policy_loss=-0.0685 value_loss=0.0953 log_std=-0.02 | eps=25 ep_return=-98.5 waypoint=0.96 intrusions=1.04 zones=0.40 sector_exit=0.08 flight_time=1337
+env_steps=102400 policy_loss=0.0589 value_loss=0.1100 log_std=-0.02 | eps=23 ep_return=-120.5 waypoint=1.00 intrusions=0.96 zones=0.65 sector_exit=0.13 flight_time=1438
+env_steps=106496 policy_loss=0.0291 value_loss=0.0956 log_std=-0.02 | eps=27 ep_return=-97.8 waypoint=0.96 intrusions=1.30 zones=0.48 sector_exit=0.04 flight_time=1320
+env_steps=110592 policy_loss=0.0815 value_loss=0.1364 log_std=-0.02 | eps=24 ep_return=-126.2 waypoint=0.96 intrusions=0.96 zones=0.42 sector_exit=0.33 flight_time=1428
+env_steps=114688 policy_loss=-0.1449 value_loss=0.1028 log_std=-0.02 | eps=24 ep_return=-121.0 waypoint=0.96 intrusions=0.83 zones=0.83 sector_exit=0.38 flight_time=1503
+env_steps=118784 policy_loss=-0.0011 value_loss=0.1437 log_std=-0.02 | eps=23 ep_return=-121.6 waypoint=0.96 intrusions=0.57 zones=0.83 sector_exit=0.09 flight_time=1463
+env_steps=122880 policy_loss=0.0697 value_loss=0.1770 log_std=-0.02 | eps=27 ep_return=-98.0 waypoint=1.00 intrusions=0.89 zones=0.85 sector_exit=0.07 flight_time=1251
+env_steps=126976 policy_loss=-0.0638 value_loss=0.1283 log_std=-0.02 | eps=30 ep_return=-103.5 waypoint=1.00 intrusions=1.40 zones=0.53 sector_exit=0.13 flight_time=1232
+env_steps=131072 policy_loss=-0.1617 value_loss=0.1557 log_std=-0.03 | eps=33 ep_return=-89.1 waypoint=1.00 intrusions=1.06 zones=0.85 sector_exit=0.03 flight_time=1108
+env_steps=135168 policy_loss=0.0294 value_loss=0.0760 log_std=-0.03 | eps=32 ep_return=-103.1 waypoint=1.00 intrusions=1.38 zones=0.50 sector_exit=0.06 flight_time=1092
+env_steps=139264 policy_loss=0.0816 value_loss=0.1721 log_std=-0.03 | eps=34 ep_return=-94.0 waypoint=1.00 intrusions=0.85 zones=0.79 sector_exit=0.00 flight_time=1029
+env_steps=143360 policy_loss=-0.0067 value_loss=0.1133 log_std=-0.03 | eps=27 ep_return=-120.8 waypoint=1.00 intrusions=1.11 zones=0.70 sector_exit=0.04 flight_time=1328
+env_steps=147456 policy_loss=0.0241 value_loss=0.1044 log_std=-0.03 | eps=28 ep_return=-94.6 waypoint=1.00 intrusions=1.11 zones=0.36 sector_exit=0.18 flight_time=1202
+env_steps=151552 policy_loss=0.1428 value_loss=0.1201 log_std=-0.03 | eps=28 ep_return=-102.5 waypoint=0.96 intrusions=1.29 zones=0.54 sector_exit=0.11 flight_time=1312
+env_steps=155648 policy_loss=0.1439 value_loss=0.1175 log_std=-0.03 | eps=25 ep_return=-131.4 waypoint=0.92 intrusions=1.04 zones=0.40 sector_exit=0.28 flight_time=1359
+env_steps=159744 policy_loss=0.2142 value_loss=0.1562 log_std=-0.04 | eps=25 ep_return=-115.1 waypoint=1.00 intrusions=1.00 zones=0.68 sector_exit=0.20 flight_time=1386
+env_steps=163840 policy_loss=0.1196 value_loss=0.1345 log_std=-0.04 | eps=21 ep_return=-115.9 waypoint=0.90 intrusions=1.10 zones=0.43 sector_exit=0.14 flight_time=1526
+env_steps=167936 policy_loss=0.0637 value_loss=0.0728 log_std=-0.05 | eps=21 ep_return=-107.9 waypoint=0.90 intrusions=0.95 zones=0.24 sector_exit=0.19 flight_time=1408
+env_steps=172032 policy_loss=-0.0368 value_loss=0.0624 log_std=-0.05 | eps=24 ep_return=-89.3 waypoint=1.00 intrusions=0.58 zones=0.42 sector_exit=0.12 flight_time=1365
+env_steps=176128 policy_loss=0.0985 value_loss=0.0722 log_std=-0.05 | eps=28 ep_return=-114.0 waypoint=0.96 intrusions=1.18 zones=0.54 sector_exit=0.18 flight_time=1278
+env_steps=180224 policy_loss=-0.1657 value_loss=0.1045 log_std=-0.05 | eps=27 ep_return=-57.1 waypoint=0.96 intrusions=0.26 zones=0.22 sector_exit=0.07 flight_time=1196
+env_steps=184320 policy_loss=0.0431 value_loss=0.1406 log_std=-0.05 | eps=30 ep_return=-80.1 waypoint=0.97 intrusions=0.80 zones=0.43 sector_exit=0.03 flight_time=1153
+env_steps=188416 policy_loss=0.1525 value_loss=0.1035 log_std=-0.04 | eps=36 ep_return=-75.4 waypoint=1.00 intrusions=1.31 zones=0.25 sector_exit=0.08 flight_time=1034
+env_steps=192512 policy_loss=0.0361 value_loss=0.0641 log_std=-0.05 | eps=28 ep_return=-66.6 waypoint=1.00 intrusions=0.68 zones=0.32 sector_exit=0.07 flight_time=1167
+env_steps=196608 policy_loss=0.1300 value_loss=0.1171 log_std=-0.05 | eps=30 ep_return=-82.4 waypoint=0.97 intrusions=0.93 zones=0.20 sector_exit=0.17 flight_time=1169
+env_steps=200704 policy_loss=0.1754 value_loss=0.1348 log_std=-0.04 | eps=27 ep_return=-106.0 waypoint=0.96 intrusions=1.19 zones=0.52 sector_exit=0.07 flight_time=1175
+env_steps=204800 policy_loss=0.1254 value_loss=0.1271 log_std=-0.04 | eps=29 ep_return=-97.9 waypoint=0.93 intrusions=0.93 zones=0.34 sector_exit=0.10 flight_time=1311
+env_steps=208896 policy_loss=-0.0102 value_loss=0.1173 log_std=-0.03 | eps=30 ep_return=-85.3 waypoint=1.00 intrusions=0.73 zones=0.60 sector_exit=0.10 flight_time=1220
+env_steps=212992 policy_loss=0.0125 value_loss=0.1448 log_std=-0.04 | eps=32 ep_return=-69.4 waypoint=1.00 intrusions=0.56 zones=0.59 sector_exit=0.03 flight_time=1094
+env_steps=217088 policy_loss=0.1109 value_loss=0.0978 log_std=-0.04 | eps=32 ep_return=-78.2 waypoint=1.00 intrusions=0.78 zones=0.59 sector_exit=0.09 flight_time=1067
+env_steps=221184 policy_loss=0.0939 value_loss=0.1020 log_std=-0.05 | eps=32 ep_return=-68.7 waypoint=1.00 intrusions=0.59 zones=0.56 sector_exit=0.09 flight_time=1159
+env_steps=225280 policy_loss=0.1349 value_loss=0.1097 log_std=-0.05 | eps=30 ep_return=-110.6 waypoint=0.97 intrusions=1.03 zones=0.73 sector_exit=0.10 flight_time=1211
+env_steps=229376 policy_loss=0.1975 value_loss=0.1685 log_std=-0.04 | eps=29 ep_return=-103.8 waypoint=1.00 intrusions=0.93 zones=0.93 sector_exit=0.00 flight_time=1172
+env_steps=233472 policy_loss=-0.0834 value_loss=0.1147 log_std=-0.04 | eps=28 ep_return=-84.4 waypoint=1.00 intrusions=0.93 zones=0.54 sector_exit=0.04 flight_time=1214
+env_steps=237568 policy_loss=-0.0213 value_loss=0.0866 log_std=-0.05 | eps=31 ep_return=-72.0 waypoint=1.00 intrusions=0.55 zones=0.52 sector_exit=0.10 flight_time=1154
+env_steps=241664 policy_loss=-0.0336 value_loss=0.0991 log_std=-0.05 | eps=37 ep_return=-74.5 waypoint=1.00 intrusions=0.97 zones=0.41 sector_exit=0.05 flight_time=968
+env_steps=245760 policy_loss=0.0604 value_loss=0.1051 log_std=-0.05 | eps=30 ep_return=-86.6 waypoint=0.97 intrusions=1.10 zones=0.47 sector_exit=0.00 flight_time=1194
+env_steps=249856 policy_loss=-0.0266 value_loss=0.0461 log_std=-0.05 | eps=30 ep_return=-76.6 waypoint=1.00 intrusions=0.77 zones=0.67 sector_exit=0.10 flight_time=1198
+env_steps=253952 policy_loss=0.0781 value_loss=0.1061 log_std=-0.05 | eps=32 ep_return=-94.5 waypoint=1.00 intrusions=1.03 zones=0.72 sector_exit=0.00 flight_time=1057
+env_steps=258048 policy_loss=0.0500 value_loss=0.1123 log_std=-0.04 | eps=29 ep_return=-97.0 waypoint=1.00 intrusions=1.00 zones=0.52 sector_exit=0.28 flight_time=1240
+env_steps=262144 policy_loss=-0.0697 value_loss=0.0761 log_std=-0.04 | eps=27 ep_return=-75.1 waypoint=0.93 intrusions=0.85 zones=0.30 sector_exit=0.11 flight_time=1276
+env_steps=266240 policy_loss=0.0403 value_loss=0.1330 log_std=-0.05 | eps=31 ep_return=-92.6 waypoint=0.97 intrusions=0.90 zones=0.71 sector_exit=0.16 flight_time=1160
+env_steps=270336 policy_loss=-0.0795 value_loss=0.0659 log_std=-0.06 | eps=31 ep_return=-59.8 waypoint=0.97 intrusions=0.58 zones=0.39 sector_exit=0.06 flight_time=1138
+env_steps=274432 policy_loss=-0.0357 value_loss=0.0483 log_std=-0.07 | eps=25 ep_return=-69.6 waypoint=0.96 intrusions=0.72 zones=0.12 sector_exit=0.00 flight_time=1243
+env_steps=278528 policy_loss=-0.0254 value_loss=0.0717 log_std=-0.06 | eps=29 ep_return=-55.7 waypoint=1.00 intrusions=0.31 zones=0.34 sector_exit=0.03 flight_time=1127
+env_steps=282624 policy_loss=0.0697 value_loss=0.0791 log_std=-0.06 | eps=26 ep_return=-81.8 waypoint=0.92 intrusions=0.65 zones=0.31 sector_exit=0.12 flight_time=1309
+env_steps=286720 policy_loss=-0.0002 value_loss=0.0719 log_std=-0.06 | eps=31 ep_return=-74.5 waypoint=1.00 intrusions=0.81 zones=0.35 sector_exit=0.06 flight_time=1150
+env_steps=290816 policy_loss=0.0481 value_loss=0.0584 log_std=-0.07 | eps=28 ep_return=-61.2 waypoint=1.00 intrusions=0.79 zones=0.21 sector_exit=0.07 flight_time=1098
+env_steps=294912 policy_loss=0.0716 value_loss=0.1070 log_std=-0.07 | eps=32 ep_return=-63.5 waypoint=0.97 intrusions=0.97 zones=0.19 sector_exit=0.03 flight_time=1123
+env_steps=299008 policy_loss=0.1428 value_loss=0.0686 log_std=-0.07 | eps=33 ep_return=-84.4 waypoint=1.00 intrusions=0.70 zones=0.55 sector_exit=0.03 flight_time=1164
+env_steps=303104 policy_loss=0.0059 value_loss=0.0793 log_std=-0.06 | eps=32 ep_return=-75.1 waypoint=0.97 intrusions=0.81 zones=0.38 sector_exit=0.03 flight_time=1114
+env_steps=307200 policy_loss=0.0250 value_loss=0.0987 log_std=-0.07 | eps=36 ep_return=-69.3 waypoint=1.00 intrusions=0.67 zones=0.56 sector_exit=0.00 flight_time=994
+env_steps=311296 policy_loss=0.1102 value_loss=0.1326 log_std=-0.07 | eps=36 ep_return=-71.5 waypoint=1.00 intrusions=0.67 zones=0.67 sector_exit=0.00 flight_time=1027
+env_steps=315392 policy_loss=0.0322 value_loss=0.0944 log_std=-0.08 | eps=34 ep_return=-61.2 waypoint=1.00 intrusions=0.62 zones=0.59 sector_exit=0.03 flight_time=1044
+env_steps=319488 policy_loss=0.0468 value_loss=0.0885 log_std=-0.08 | eps=38 ep_return=-61.6 waypoint=1.00 intrusions=0.55 zones=0.58 sector_exit=0.03 flight_time=984
+env_steps=323584 policy_loss=0.0916 value_loss=0.0806 log_std=-0.08 | eps=34 ep_return=-75.6 waypoint=1.00 intrusions=0.62 zones=0.56 sector_exit=0.03 flight_time=1032
+env_steps=327680 policy_loss=-0.0289 value_loss=0.0617 log_std=-0.08 | eps=32 ep_return=-82.3 waypoint=1.00 intrusions=0.75 zones=0.69 sector_exit=0.06 flight_time=1088
+env_steps=331776 policy_loss=0.1458 value_loss=0.0674 log_std=-0.07 | eps=31 ep_return=-87.0 waypoint=1.00 intrusions=0.58 zones=0.87 sector_exit=0.00 flight_time=1141
+env_steps=335872 policy_loss=-0.0344 value_loss=0.0602 log_std=-0.08 | eps=35 ep_return=-56.6 waypoint=1.00 intrusions=0.63 zones=0.29 sector_exit=0.11 flight_time=1049
+env_steps=339968 policy_loss=-0.0347 value_loss=0.0308 log_std=-0.09 | eps=36 ep_return=-61.5 waypoint=1.00 intrusions=0.58 zones=0.61 sector_exit=0.00 flight_time=1051
+env_steps=344064 policy_loss=0.0982 value_loss=0.0819 log_std=-0.09 | eps=31 ep_return=-64.6 waypoint=1.00 intrusions=0.42 zones=0.61 sector_exit=0.00 flight_time=1116
+env_steps=348160 policy_loss=0.0150 value_loss=0.0573 log_std=-0.09 | eps=32 ep_return=-63.6 waypoint=1.00 intrusions=0.44 zones=0.53 sector_exit=0.00 flight_time=1119
+env_steps=352256 policy_loss=0.0841 value_loss=0.0757 log_std=-0.10 | eps=30 ep_return=-68.5 waypoint=1.00 intrusions=0.77 zones=0.50 sector_exit=0.00 flight_time=1131
+env_steps=356352 policy_loss=0.0182 value_loss=0.0832 log_std=-0.10 | eps=33 ep_return=-58.5 waypoint=1.00 intrusions=0.70 zones=0.30 sector_exit=0.03 flight_time=1045
+env_steps=360448 policy_loss=-0.0872 value_loss=0.1161 log_std=-0.10 | eps=34 ep_return=-72.0 waypoint=1.00 intrusions=0.71 zones=0.59 sector_exit=0.00 flight_time=1023
+env_steps=364544 policy_loss=-0.0851 value_loss=0.0831 log_std=-0.10 | eps=36 ep_return=-62.5 waypoint=1.00 intrusions=0.78 zones=0.67 sector_exit=0.00 flight_time=1024
+env_steps=368640 policy_loss=-0.0419 value_loss=0.0782 log_std=-0.10 | eps=36 ep_return=-63.5 waypoint=1.00 intrusions=0.61 zones=0.58 sector_exit=0.03 flight_time=1031
+env_steps=372736 policy_loss=0.0245 value_loss=0.0970 log_std=-0.10 | eps=34 ep_return=-67.2 waypoint=0.97 intrusions=0.71 zones=0.56 sector_exit=0.03 flight_time=1076
+env_steps=376832 policy_loss=-0.0437 value_loss=0.0722 log_std=-0.10 | eps=34 ep_return=-47.7 waypoint=1.00 intrusions=0.47 zones=0.18 sector_exit=0.06 flight_time=1032
+env_steps=380928 policy_loss=0.0422 value_loss=0.0741 log_std=-0.10 | eps=32 ep_return=-67.2 waypoint=1.00 intrusions=0.66 zones=0.56 sector_exit=0.03 flight_time=1078
+env_steps=385024 policy_loss=0.0113 value_loss=0.0839 log_std=-0.11 | eps=28 ep_return=-66.9 waypoint=1.00 intrusions=0.54 zones=0.25 sector_exit=0.21 flight_time=1240
+env_steps=389120 policy_loss=0.0983 value_loss=0.0786 log_std=-0.10 | eps=33 ep_return=-69.8 waypoint=1.00 intrusions=0.70 zones=0.58 sector_exit=0.03 flight_time=1070
+env_steps=393216 policy_loss=-0.0145 value_loss=0.0838 log_std=-0.10 | eps=37 ep_return=-58.3 waypoint=1.00 intrusions=0.78 zones=0.35 sector_exit=0.08 flight_time=958
+env_steps=397312 policy_loss=0.0588 value_loss=0.0603 log_std=-0.10 | eps=34 ep_return=-72.0 waypoint=1.00 intrusions=0.79 zones=0.35 sector_exit=0.18 flight_time=1131
+env_steps=401408 policy_loss=-0.0298 value_loss=0.0366 log_std=-0.11 | eps=33 ep_return=-58.3 waypoint=0.94 intrusions=0.58 zones=0.27 sector_exit=0.03 flight_time=1108
+env_steps=405504 policy_loss=-0.0319 value_loss=0.0679 log_std=-0.11 | eps=33 ep_return=-70.6 waypoint=1.00 intrusions=0.88 zones=0.45 sector_exit=0.00 flight_time=1063
+env_steps=409600 policy_loss=-0.0555 value_loss=0.0734 log_std=-0.11 | eps=37 ep_return=-48.8 waypoint=1.00 intrusions=0.54 zones=0.22 sector_exit=0.11 flight_time=974
+env_steps=413696 policy_loss=-0.0441 value_loss=0.0659 log_std=-0.11 | eps=30 ep_return=-73.6 waypoint=0.97 intrusions=0.57 zones=0.67 sector_exit=0.00 flight_time=1168
+env_steps=417792 policy_loss=-0.0580 value_loss=0.0675 log_std=-0.11 | eps=32 ep_return=-63.6 waypoint=1.00 intrusions=0.59 zones=0.50 sector_exit=0.03 flight_time=1099
+env_steps=421888 policy_loss=0.0202 value_loss=0.0893 log_std=-0.12 | eps=30 ep_return=-66.5 waypoint=1.00 intrusions=0.63 zones=0.37 sector_exit=0.00 flight_time=1174
+env_steps=425984 policy_loss=-0.0456 value_loss=0.0427 log_std=-0.12 | eps=35 ep_return=-55.6 waypoint=1.00 intrusions=0.69 zones=0.26 sector_exit=0.06 flight_time=1017
+env_steps=430080 policy_loss=0.0428 value_loss=0.1007 log_std=-0.12 | eps=36 ep_return=-65.0 waypoint=1.00 intrusions=0.44 zones=0.69 sector_exit=0.06 flight_time=1036
+env_steps=434176 policy_loss=0.0289 value_loss=0.0631 log_std=-0.12 | eps=36 ep_return=-55.8 waypoint=1.00 intrusions=0.58 zones=0.50 sector_exit=0.03 flight_time=1004
+env_steps=438272 policy_loss=0.0465 value_loss=0.0971 log_std=-0.12 | eps=35 ep_return=-57.6 waypoint=1.00 intrusions=0.49 zones=0.51 sector_exit=0.03 flight_time=1031
+env_steps=442368 policy_loss=0.0561 value_loss=0.0716 log_std=-0.12 | eps=33 ep_return=-63.3 waypoint=1.00 intrusions=0.52 zones=0.61 sector_exit=0.03 flight_time=1038
+env_steps=446464 policy_loss=0.0074 value_loss=0.0574 log_std=-0.12 | eps=34 ep_return=-57.1 waypoint=1.00 intrusions=0.65 zones=0.41 sector_exit=0.03 flight_time=1048
+env_steps=450560 policy_loss=0.0184 value_loss=0.0698 log_std=-0.11 | eps=33 ep_return=-49.4 waypoint=1.00 intrusions=0.70 zones=0.18 sector_exit=0.06 flight_time=1009
+env_steps=454656 policy_loss=0.0364 value_loss=0.0715 log_std=-0.11 | eps=36 ep_return=-61.6 waypoint=1.00 intrusions=0.72 zones=0.72 sector_exit=0.00 flight_time=1007
+env_steps=458752 policy_loss=0.0664 value_loss=0.0787 log_std=-0.10 | eps=38 ep_return=-65.9 waypoint=1.00 intrusions=0.79 zones=0.45 sector_exit=0.08 flight_time=995
+env_steps=462848 policy_loss=0.0193 value_loss=0.0922 log_std=-0.10 | eps=37 ep_return=-60.1 waypoint=1.00 intrusions=0.76 zones=0.32 sector_exit=0.03 flight_time=975
+env_steps=466944 policy_loss=-0.0268 value_loss=0.1051 log_std=-0.10 | eps=38 ep_return=-60.4 waypoint=1.00 intrusions=0.66 zones=0.47 sector_exit=0.00 flight_time=974
+env_steps=471040 policy_loss=-0.0088 value_loss=0.0735 log_std=-0.10 | eps=37 ep_return=-60.6 waypoint=1.00 intrusions=0.57 zones=0.59 sector_exit=0.03 flight_time=1032
+env_steps=475136 policy_loss=0.0157 value_loss=0.0783 log_std=-0.10 | eps=34 ep_return=-55.7 waypoint=1.00 intrusions=0.62 zones=0.44 sector_exit=0.00 flight_time=1026
+env_steps=479232 policy_loss=0.0798 value_loss=0.0675 log_std=-0.10 | eps=36 ep_return=-62.0 waypoint=1.00 intrusions=0.75 zones=0.56 sector_exit=0.06 flight_time=1053
+env_steps=483328 policy_loss=0.0466 value_loss=0.0696 log_std=-0.10 | eps=35 ep_return=-64.0 waypoint=1.00 intrusions=0.63 zones=0.49 sector_exit=0.00 flight_time=1026
+env_steps=487424 policy_loss=0.0150 value_loss=0.0387 log_std=-0.10 | eps=38 ep_return=-67.0 waypoint=1.00 intrusions=0.87 zones=0.37 sector_exit=0.03 flight_time=972
+env_steps=491520 policy_loss=-0.0306 value_loss=0.0720 log_std=-0.09 | eps=33 ep_return=-70.7 waypoint=1.00 intrusions=0.67 zones=0.45 sector_exit=0.06 flight_time=1093
+env_steps=495616 policy_loss=0.1031 value_loss=0.0783 log_std=-0.09 | eps=39 ep_return=-51.3 waypoint=1.00 intrusions=0.56 zones=0.28 sector_exit=0.03 flight_time=941
+env_steps=499712 policy_loss=0.0266 value_loss=0.0627 log_std=-0.08 | eps=38 ep_return=-47.4 waypoint=1.00 intrusions=0.82 zones=0.13 sector_exit=0.11 flight_time=911
+env_steps=503808 policy_loss=0.1327 value_loss=0.0899 log_std=-0.08 | eps=34 ep_return=-83.7 waypoint=1.00 intrusions=1.00 zones=0.53 sector_exit=0.06 flight_time=1087
+env_steps=507904 policy_loss=-0.0734 value_loss=0.0683 log_std=-0.08 | eps=37 ep_return=-55.3 waypoint=1.00 intrusions=0.62 zones=0.46 sector_exit=0.03 flight_time=952
+env_steps=512000 policy_loss=0.0577 value_loss=0.0605 log_std=-0.07 | eps=41 ep_return=-56.7 waypoint=1.00 intrusions=0.78 zones=0.32 sector_exit=0.00 flight_time=917
+env_steps=516096 policy_loss=-0.0407 value_loss=0.1272 log_std=-0.07 | eps=39 ep_return=-70.2 waypoint=1.00 intrusions=0.92 zones=0.33 sector_exit=0.00 flight_time=968
+env_steps=520192 policy_loss=-0.1010 value_loss=0.0892 log_std=-0.08 | eps=37 ep_return=-58.6 waypoint=1.00 intrusions=0.54 zones=0.51 sector_exit=0.00 flight_time=997
+env_steps=524288 policy_loss=-0.0548 value_loss=0.0827 log_std=-0.08 | eps=39 ep_return=-52.6 waypoint=0.97 intrusions=0.67 zones=0.31 sector_exit=0.08 flight_time=939
+env_steps=528384 policy_loss=-0.0108 value_loss=0.0520 log_std=-0.08 | eps=40 ep_return=-58.2 waypoint=1.00 intrusions=0.62 zones=0.47 sector_exit=0.00 flight_time=942
+env_steps=532480 policy_loss=-0.0450 value_loss=0.0468 log_std=-0.09 | eps=36 ep_return=-56.5 waypoint=1.00 intrusions=0.81 zones=0.19 sector_exit=0.00 flight_time=1007
+env_steps=536576 policy_loss=-0.0002 value_loss=0.1143 log_std=-0.10 | eps=37 ep_return=-65.6 waypoint=1.00 intrusions=0.78 zones=0.41 sector_exit=0.00 flight_time=1000
+env_steps=540672 policy_loss=-0.0173 value_loss=0.0551 log_std=-0.10 | eps=35 ep_return=-53.4 waypoint=1.00 intrusions=0.66 zones=0.17 sector_exit=0.06 flight_time=1061
+env_steps=544768 policy_loss=0.0431 value_loss=0.0586 log_std=-0.10 | eps=35 ep_return=-44.3 waypoint=1.00 intrusions=0.54 zones=0.17 sector_exit=0.00 flight_time=1055
+env_steps=548864 policy_loss=-0.0514 value_loss=0.0371 log_std=-0.11 | eps=35 ep_return=-45.9 waypoint=1.00 intrusions=0.20 zones=0.26 sector_exit=0.03 flight_time=1059
+env_steps=552960 policy_loss=0.0861 value_loss=0.0454 log_std=-0.11 | eps=36 ep_return=-48.8 waypoint=1.00 intrusions=0.81 zones=0.06 sector_exit=0.00 flight_time=1020
+env_steps=557056 policy_loss=0.0782 value_loss=0.0686 log_std=-0.10 | eps=32 ep_return=-73.3 waypoint=1.00 intrusions=0.69 zones=0.34 sector_exit=0.03 flight_time=1079
+env_steps=561152 policy_loss=-0.0197 value_loss=0.0331 log_std=-0.10 | eps=37 ep_return=-42.9 waypoint=1.00 intrusions=0.51 zones=0.24 sector_exit=0.03 flight_time=986
+env_steps=565248 policy_loss=0.0303 value_loss=0.0432 log_std=-0.10 | eps=35 ep_return=-44.1 waypoint=0.97 intrusions=0.66 zones=0.09 sector_exit=0.00 flight_time=1012
+env_steps=569344 policy_loss=0.0635 value_loss=0.0508 log_std=-0.10 | eps=38 ep_return=-47.6 waypoint=1.00 intrusions=0.63 zones=0.16 sector_exit=0.00 flight_time=982
+env_steps=573440 policy_loss=0.0456 value_loss=0.0693 log_std=-0.10 | eps=35 ep_return=-58.8 waypoint=1.00 intrusions=0.54 zones=0.46 sector_exit=0.00 flight_time=1017
+env_steps=577536 policy_loss=0.0765 value_loss=0.0486 log_std=-0.10 | eps=34 ep_return=-68.5 waypoint=0.97 intrusions=0.62 zones=0.29 sector_exit=0.12 flight_time=1100
+env_steps=581632 policy_loss=-0.0034 value_loss=0.0533 log_std=-0.10 | eps=33 ep_return=-60.3 waypoint=1.00 intrusions=0.52 zones=0.36 sector_exit=0.03 flight_time=1102
+env_steps=585728 policy_loss=0.0842 value_loss=0.0827 log_std=-0.10 | eps=32 ep_return=-64.1 waypoint=0.97 intrusions=0.59 zones=0.44 sector_exit=0.00 flight_time=1058
+env_steps=589824 policy_loss=0.1057 value_loss=0.1077 log_std=-0.10 | eps=30 ep_return=-73.9 waypoint=1.00 intrusions=0.37 zones=0.23 sector_exit=0.20 flight_time=1202
+env_steps=593920 policy_loss=-0.0851 value_loss=0.0814 log_std=-0.10 | eps=35 ep_return=-53.6 waypoint=1.00 intrusions=0.69 zones=0.31 sector_exit=0.00 flight_time=1078
+env_steps=598016 policy_loss=-0.0033 value_loss=0.0417 log_std=-0.11 | eps=36 ep_return=-47.8 waypoint=1.00 intrusions=0.69 zones=0.22 sector_exit=0.06 flight_time=1025
+env_steps=602112 policy_loss=0.0327 value_loss=0.0773 log_std=-0.11 | eps=37 ep_return=-55.3 waypoint=1.00 intrusions=0.68 zones=0.24 sector_exit=0.00 flight_time=982
+env_steps=606208 policy_loss=-0.0132 value_loss=0.0340 log_std=-0.11 | eps=36 ep_return=-50.6 waypoint=1.00 intrusions=0.44 zones=0.39 sector_exit=0.00 flight_time=1014
+env_steps=610304 policy_loss=0.0117 value_loss=0.0660 log_std=-0.11 | eps=37 ep_return=-49.8 waypoint=1.00 intrusions=0.49 zones=0.22 sector_exit=0.03 flight_time=992
+env_steps=614400 policy_loss=0.0374 value_loss=0.0848 log_std=-0.11 | eps=37 ep_return=-58.1 waypoint=0.97 intrusions=0.70 zones=0.38 sector_exit=0.00 flight_time=949
+env_steps=618496 policy_loss=-0.0088 value_loss=0.1141 log_std=-0.12 | eps=38 ep_return=-50.4 waypoint=1.00 intrusions=0.79 zones=0.18 sector_exit=0.00 flight_time=943
+env_steps=622592 policy_loss=0.0150 value_loss=0.0612 log_std=-0.11 | eps=32 ep_return=-59.2 waypoint=1.00 intrusions=0.59 zones=0.41 sector_exit=0.12 flight_time=1107
+env_steps=626688 policy_loss=0.0038 value_loss=0.0631 log_std=-0.11 | eps=32 ep_return=-57.6 waypoint=1.00 intrusions=0.62 zones=0.38 sector_exit=0.06 flight_time=1126
+env_steps=630784 policy_loss=0.0248 value_loss=0.0684 log_std=-0.12 | eps=33 ep_return=-66.9 waypoint=1.00 intrusions=0.70 zones=0.27 sector_exit=0.15 flight_time=1125
+env_steps=634880 policy_loss=0.0488 value_loss=0.0592 log_std=-0.12 | eps=32 ep_return=-58.1 waypoint=1.00 intrusions=0.56 zones=0.56 sector_exit=0.00 flight_time=1037
+env_steps=638976 policy_loss=-0.0503 value_loss=0.0638 log_std=-0.13 | eps=39 ep_return=-41.6 waypoint=1.00 intrusions=0.49 zones=0.38 sector_exit=0.03 flight_time=928
+env_steps=643072 policy_loss=-0.0594 value_loss=0.0463 log_std=-0.13 | eps=38 ep_return=-46.3 waypoint=1.00 intrusions=0.58 zones=0.26 sector_exit=0.00 flight_time=959
+env_steps=647168 policy_loss=0.1152 value_loss=0.0909 log_std=-0.13 | eps=38 ep_return=-52.7 waypoint=1.00 intrusions=0.63 zones=0.34 sector_exit=0.08 flight_time=923
+env_steps=651264 policy_loss=0.0218 value_loss=0.0892 log_std=-0.13 | eps=37 ep_return=-49.5 waypoint=1.00 intrusions=0.81 zones=0.24 sector_exit=0.00 flight_time=929
+env_steps=655360 policy_loss=0.0482 value_loss=0.0604 log_std=-0.14 | eps=36 ep_return=-53.8 waypoint=1.00 intrusions=0.61 zones=0.28 sector_exit=0.00 flight_time=1010
+env_steps=659456 policy_loss=-0.0076 value_loss=0.0251 log_std=-0.14 | eps=38 ep_return=-44.5 waypoint=1.00 intrusions=0.32 zones=0.58 sector_exit=0.03 flight_time=1035
+env_steps=663552 policy_loss=0.0814 value_loss=0.0544 log_std=-0.14 | eps=37 ep_return=-46.1 waypoint=1.00 intrusions=0.54 zones=0.19 sector_exit=0.03 flight_time=998
+env_steps=667648 policy_loss=0.0951 value_loss=0.0874 log_std=-0.15 | eps=38 ep_return=-47.7 waypoint=1.00 intrusions=0.55 zones=0.37 sector_exit=0.08 flight_time=966
+env_steps=671744 policy_loss=0.0785 value_loss=0.0530 log_std=-0.15 | eps=35 ep_return=-52.2 waypoint=1.00 intrusions=0.34 zones=0.54 sector_exit=0.03 flight_time=997
+env_steps=675840 policy_loss=0.0151 value_loss=0.0280 log_std=-0.14 | eps=36 ep_return=-46.0 waypoint=1.00 intrusions=0.31 zones=0.36 sector_exit=0.00 flight_time=958
+env_steps=679936 policy_loss=0.0837 value_loss=0.0617 log_std=-0.15 | eps=30 ep_return=-50.4 waypoint=1.00 intrusions=0.23 zones=0.50 sector_exit=0.03 flight_time=1125
+env_steps=684032 policy_loss=0.1429 value_loss=0.0769 log_std=-0.14 | eps=32 ep_return=-63.4 waypoint=1.00 intrusions=0.12 zones=0.25 sector_exit=0.12 flight_time=1119
+env_steps=688128 policy_loss=0.1576 value_loss=0.1104 log_std=-0.14 | eps=32 ep_return=-61.7 waypoint=0.97 intrusions=0.31 zones=0.50 sector_exit=0.09 flight_time=1139
+env_steps=692224 policy_loss=0.0186 value_loss=0.0527 log_std=-0.14 | eps=34 ep_return=-56.3 waypoint=1.00 intrusions=0.65 zones=0.47 sector_exit=0.03 flight_time=1102
+env_steps=696320 policy_loss=0.0106 value_loss=0.0289 log_std=-0.14 | eps=31 ep_return=-61.9 waypoint=1.00 intrusions=0.39 zones=0.48 sector_exit=0.06 flight_time=1091
+env_steps=700416 policy_loss=-0.0194 value_loss=0.0230 log_std=-0.14 | eps=41 ep_return=-34.9 waypoint=1.00 intrusions=0.27 zones=0.20 sector_exit=0.05 flight_time=922
+env_steps=704512 policy_loss=0.0328 value_loss=0.0265 log_std=-0.14 | eps=32 ep_return=-62.1 waypoint=1.00 intrusions=0.31 zones=0.62 sector_exit=0.03 flight_time=1132
+env_steps=708608 policy_loss=-0.0270 value_loss=0.0374 log_std=-0.14 | eps=35 ep_return=-49.9 waypoint=1.00 intrusions=0.57 zones=0.23 sector_exit=0.06 flight_time=1045
+env_steps=712704 policy_loss=0.0065 value_loss=0.0228 log_std=-0.14 | eps=38 ep_return=-39.6 waypoint=1.00 intrusions=0.39 zones=0.37 sector_exit=0.00 flight_time=937
+env_steps=716800 policy_loss=0.1007 value_loss=0.0451 log_std=-0.14 | eps=37 ep_return=-62.9 waypoint=1.00 intrusions=0.84 zones=0.30 sector_exit=0.03 flight_time=1004
+env_steps=720896 policy_loss=-0.0298 value_loss=0.0462 log_std=-0.14 | eps=37 ep_return=-44.1 waypoint=1.00 intrusions=0.62 zones=0.22 sector_exit=0.03 flight_time=953
+env_steps=724992 policy_loss=-0.0598 value_loss=0.0376 log_std=-0.14 | eps=37 ep_return=-46.6 waypoint=1.00 intrusions=0.65 zones=0.32 sector_exit=0.00 flight_time=961
+env_steps=729088 policy_loss=0.0871 value_loss=0.0526 log_std=-0.14 | eps=35 ep_return=-57.6 waypoint=1.00 intrusions=0.51 zones=0.46 sector_exit=0.00 flight_time=1034
+env_steps=733184 policy_loss=0.0066 value_loss=0.0274 log_std=-0.14 | eps=36 ep_return=-51.7 waypoint=1.00 intrusions=0.53 zones=0.50 sector_exit=0.06 flight_time=1014
+env_steps=737280 policy_loss=0.0236 value_loss=0.0376 log_std=-0.14 | eps=35 ep_return=-52.7 waypoint=1.00 intrusions=0.46 zones=0.43 sector_exit=0.03 flight_time=1061
+env_steps=741376 policy_loss=0.0145 value_loss=0.0908 log_std=-0.15 | eps=37 ep_return=-53.9 waypoint=1.00 intrusions=0.65 zones=0.19 sector_exit=0.11 flight_time=987
+env_steps=745472 policy_loss=0.0031 value_loss=0.0505 log_std=-0.15 | eps=38 ep_return=-48.0 waypoint=1.00 intrusions=0.66 zones=0.42 sector_exit=0.00 flight_time=956
+env_steps=749568 policy_loss=0.0062 value_loss=0.0396 log_std=-0.15 | eps=40 ep_return=-36.9 waypoint=1.00 intrusions=0.57 zones=0.17 sector_exit=0.00 flight_time=915
+env_steps=753664 policy_loss=-0.0291 value_loss=0.0356 log_std=-0.15 | eps=38 ep_return=-38.9 waypoint=1.00 intrusions=0.32 zones=0.42 sector_exit=0.00 flight_time=954
+env_steps=757760 policy_loss=0.0300 value_loss=0.0253 log_std=-0.15 | eps=34 ep_return=-43.7 waypoint=0.97 intrusions=0.41 zones=0.41 sector_exit=0.03 flight_time=1056
+env_steps=761856 policy_loss=0.0032 value_loss=0.0223 log_std=-0.15 | eps=33 ep_return=-54.2 waypoint=1.00 intrusions=0.45 zones=0.55 sector_exit=0.00 flight_time=1097
+env_steps=765952 policy_loss=0.0154 value_loss=0.0636 log_std=-0.15 | eps=38 ep_return=-51.8 waypoint=1.00 intrusions=0.45 zones=0.53 sector_exit=0.00 flight_time=1009
+env_steps=770048 policy_loss=0.0948 value_loss=0.0587 log_std=-0.15 | eps=35 ep_return=-54.3 waypoint=1.00 intrusions=0.49 zones=0.57 sector_exit=0.09 flight_time=1048
+env_steps=774144 policy_loss=-0.0871 value_loss=0.0280 log_std=-0.15 | eps=35 ep_return=-43.6 waypoint=1.00 intrusions=0.37 zones=0.31 sector_exit=0.03 flight_time=983
+env_steps=778240 policy_loss=0.0196 value_loss=0.0416 log_std=-0.15 | eps=36 ep_return=-47.6 waypoint=1.00 intrusions=0.33 zones=0.31 sector_exit=0.06 flight_time=1033
+env_steps=782336 policy_loss=0.0658 value_loss=0.0662 log_std=-0.15 | eps=34 ep_return=-52.8 waypoint=1.00 intrusions=0.68 zones=0.24 sector_exit=0.03 flight_time=1052
+env_steps=786432 policy_loss=0.1324 value_loss=0.0749 log_std=-0.15 | eps=35 ep_return=-60.5 waypoint=1.00 intrusions=0.89 zones=0.29 sector_exit=0.06 flight_time=972
+env_steps=790528 policy_loss=0.1612 value_loss=0.1127 log_std=-0.14 | eps=37 ep_return=-69.9 waypoint=1.00 intrusions=0.97 zones=0.49 sector_exit=0.00 flight_time=993
+env_steps=794624 policy_loss=0.0900 value_loss=0.1127 log_std=-0.14 | eps=36 ep_return=-75.5 waypoint=1.00 intrusions=1.25 zones=0.42 sector_exit=0.03 flight_time=1050
+env_steps=798720 policy_loss=0.0517 value_loss=0.0850 log_std=-0.13 | eps=32 ep_return=-79.3 waypoint=0.97 intrusions=1.06 zones=0.44 sector_exit=0.03 flight_time=1148
+env_steps=802816 policy_loss=0.0511 value_loss=0.1034 log_std=-0.12 | eps=32 ep_return=-64.9 waypoint=1.00 intrusions=0.91 zones=0.28 sector_exit=0.06 flight_time=1090
+env_steps=806912 policy_loss=0.0640 value_loss=0.1685 log_std=-0.12 | eps=36 ep_return=-58.8 waypoint=1.00 intrusions=0.92 zones=0.42 sector_exit=0.00 flight_time=994
+env_steps=811008 policy_loss=0.1324 value_loss=0.1631 log_std=-0.12 | eps=33 ep_return=-76.3 waypoint=1.00 intrusions=0.94 zones=0.55 sector_exit=0.00 flight_time=1086
+env_steps=815104 policy_loss=-0.0146 value_loss=0.1014 log_std=-0.12 | eps=31 ep_return=-71.8 waypoint=0.97 intrusions=0.55 zones=0.45 sector_exit=0.06 flight_time=1115
+env_steps=819200 policy_loss=-0.0146 value_loss=0.1224 log_std=-0.12 | eps=35 ep_return=-66.0 waypoint=1.00 intrusions=0.94 zones=0.26 sector_exit=0.06 flight_time=1000
+env_steps=823296 policy_loss=0.1719 value_loss=0.1039 log_std=-0.12 | eps=35 ep_return=-72.2 waypoint=1.00 intrusions=1.03 zones=0.29 sector_exit=0.03 flight_time=1056
+env_steps=827392 policy_loss=0.0224 value_loss=0.0869 log_std=-0.11 | eps=32 ep_return=-73.7 waypoint=1.00 intrusions=0.66 zones=0.47 sector_exit=0.03 flight_time=1137
+env_steps=831488 policy_loss=-0.0477 value_loss=0.0565 log_std=-0.12 | eps=33 ep_return=-45.4 waypoint=1.00 intrusions=0.64 zones=0.15 sector_exit=0.03 flight_time=1017
+env_steps=835584 policy_loss=0.0331 value_loss=0.0682 log_std=-0.12 | eps=36 ep_return=-63.2 waypoint=1.00 intrusions=0.78 zones=0.42 sector_exit=0.08 flight_time=1039
+env_steps=839680 policy_loss=0.0230 value_loss=0.0335 log_std=-0.12 | eps=34 ep_return=-68.1 waypoint=0.97 intrusions=1.12 zones=0.21 sector_exit=0.03 flight_time=1037
+env_steps=843776 policy_loss=-0.0076 value_loss=0.0594 log_std=-0.12 | eps=38 ep_return=-40.6 waypoint=1.00 intrusions=0.37 zones=0.26 sector_exit=0.00 flight_time=954
+env_steps=847872 policy_loss=0.0392 value_loss=0.0564 log_std=-0.12 | eps=36 ep_return=-42.2 waypoint=1.00 intrusions=0.39 zones=0.33 sector_exit=0.08 flight_time=948
+env_steps=851968 policy_loss=-0.0182 value_loss=0.0431 log_std=-0.13 | eps=36 ep_return=-51.8 waypoint=1.00 intrusions=0.36 zones=0.58 sector_exit=0.00 flight_time=1000
+env_steps=856064 policy_loss=0.0068 value_loss=0.0666 log_std=-0.13 | eps=37 ep_return=-54.3 waypoint=1.00 intrusions=0.62 zones=0.27 sector_exit=0.00 flight_time=976
+env_steps=860160 policy_loss=0.1172 value_loss=0.0405 log_std=-0.12 | eps=36 ep_return=-54.0 waypoint=1.00 intrusions=0.61 zones=0.44 sector_exit=0.08 flight_time=989
+env_steps=864256 policy_loss=0.0405 value_loss=0.0567 log_std=-0.12 | eps=33 ep_return=-70.0 waypoint=1.00 intrusions=0.64 zones=0.42 sector_exit=0.18 flight_time=1080
+env_steps=868352 policy_loss=0.0131 value_loss=0.0490 log_std=-0.12 | eps=38 ep_return=-47.5 waypoint=1.00 intrusions=0.61 zones=0.24 sector_exit=0.13 flight_time=994
+env_steps=872448 policy_loss=0.0831 value_loss=0.0630 log_std=-0.12 | eps=35 ep_return=-57.7 waypoint=0.97 intrusions=0.34 zones=0.26 sector_exit=0.14 flight_time=1040
+env_steps=876544 policy_loss=0.0862 value_loss=0.1267 log_std=-0.13 | eps=33 ep_return=-46.6 waypoint=1.00 intrusions=0.30 zones=0.18 sector_exit=0.18 flight_time=1066
+env_steps=880640 policy_loss=0.1088 value_loss=0.0619 log_std=-0.13 | eps=30 ep_return=-59.2 waypoint=1.00 intrusions=0.30 zones=0.30 sector_exit=0.13 flight_time=1155
+env_steps=884736 policy_loss=-0.0352 value_loss=0.0939 log_std=-0.12 | eps=31 ep_return=-68.7 waypoint=1.00 intrusions=0.74 zones=0.29 sector_exit=0.10 flight_time=1190
+env_steps=888832 policy_loss=-0.0909 value_loss=0.0313 log_std=-0.13 | eps=32 ep_return=-52.4 waypoint=1.00 intrusions=0.50 zones=0.19 sector_exit=0.06 flight_time=1111
+env_steps=892928 policy_loss=-0.0048 value_loss=0.0314 log_std=-0.14 | eps=37 ep_return=-51.5 waypoint=1.00 intrusions=0.59 zones=0.22 sector_exit=0.08 flight_time=999
+env_steps=897024 policy_loss=0.0380 value_loss=0.0606 log_std=-0.14 | eps=35 ep_return=-42.1 waypoint=1.00 intrusions=0.49 zones=0.17 sector_exit=0.09 flight_time=991
+env_steps=901120 policy_loss=0.0158 value_loss=0.0663 log_std=-0.14 | eps=39 ep_return=-56.7 waypoint=1.00 intrusions=0.67 zones=0.36 sector_exit=0.03 flight_time=972
+env_steps=905216 policy_loss=0.0115 value_loss=0.0575 log_std=-0.14 | eps=35 ep_return=-57.0 waypoint=1.00 intrusions=0.66 zones=0.40 sector_exit=0.06 flight_time=1012
+env_steps=909312 policy_loss=-0.0322 value_loss=0.0571 log_std=-0.14 | eps=34 ep_return=-55.3 waypoint=0.97 intrusions=0.56 zones=0.29 sector_exit=0.03 flight_time=1091
+env_steps=913408 policy_loss=-0.0190 value_loss=0.0501 log_std=-0.14 | eps=33 ep_return=-48.6 waypoint=0.97 intrusions=0.58 zones=0.15 sector_exit=0.00 flight_time=1070
+env_steps=917504 policy_loss=-0.0564 value_loss=0.0494 log_std=-0.14 | eps=39 ep_return=-45.1 waypoint=1.00 intrusions=0.56 zones=0.28 sector_exit=0.00 flight_time=955
+env_steps=921600 policy_loss=0.1275 value_loss=0.0414 log_std=-0.14 | eps=35 ep_return=-53.6 waypoint=1.00 intrusions=0.86 zones=0.31 sector_exit=0.00 flight_time=1018
+env_steps=925696 policy_loss=0.0661 value_loss=0.0496 log_std=-0.14 | eps=34 ep_return=-54.6 waypoint=1.00 intrusions=0.38 zones=0.38 sector_exit=0.12 flight_time=1050
+env_steps=929792 policy_loss=-0.0064 value_loss=0.0734 log_std=-0.13 | eps=36 ep_return=-54.3 waypoint=1.00 intrusions=0.56 zones=0.28 sector_exit=0.03 flight_time=1027
+env_steps=933888 policy_loss=0.0025 value_loss=0.0395 log_std=-0.13 | eps=38 ep_return=-46.9 waypoint=1.00 intrusions=0.50 zones=0.16 sector_exit=0.05 flight_time=999
+env_steps=937984 policy_loss=0.0575 value_loss=0.0374 log_std=-0.13 | eps=35 ep_return=-50.2 waypoint=1.00 intrusions=0.26 zones=0.46 sector_exit=0.09 flight_time=1036
+env_steps=942080 policy_loss=0.0930 value_loss=0.0705 log_std=-0.13 | eps=30 ep_return=-58.8 waypoint=0.97 intrusions=0.33 zones=0.37 sector_exit=0.00 flight_time=1234
+env_steps=946176 policy_loss=-0.0532 value_loss=0.0607 log_std=-0.13 | eps=36 ep_return=-37.7 waypoint=1.00 intrusions=0.39 zones=0.17 sector_exit=0.03 flight_time=1005
+env_steps=950272 policy_loss=-0.0212 value_loss=0.0237 log_std=-0.13 | eps=38 ep_return=-41.4 waypoint=1.00 intrusions=0.42 zones=0.21 sector_exit=0.00 flight_time=984
+env_steps=954368 policy_loss=-0.0263 value_loss=0.0560 log_std=-0.13 | eps=38 ep_return=-38.5 waypoint=1.00 intrusions=0.37 zones=0.24 sector_exit=0.00 flight_time=898
+env_steps=958464 policy_loss=0.0765 value_loss=0.0600 log_std=-0.13 | eps=36 ep_return=-45.9 waypoint=1.00 intrusions=0.53 zones=0.25 sector_exit=0.06 flight_time=958
+env_steps=962560 policy_loss=-0.0724 value_loss=0.0395 log_std=-0.13 | eps=37 ep_return=-43.2 waypoint=1.00 intrusions=0.49 zones=0.30 sector_exit=0.16 flight_time=992
+env_steps=966656 policy_loss=-0.0328 value_loss=0.0271 log_std=-0.13 | eps=35 ep_return=-47.3 waypoint=1.00 intrusions=0.43 zones=0.34 sector_exit=0.00 flight_time=1021
+env_steps=970752 policy_loss=-0.0396 value_loss=0.0170 log_std=-0.13 | eps=29 ep_return=-45.6 waypoint=1.00 intrusions=0.38 zones=0.17 sector_exit=0.03 flight_time=1141
+env_steps=974848 policy_loss=0.0894 value_loss=0.0725 log_std=-0.14 | eps=38 ep_return=-47.8 waypoint=1.00 intrusions=0.55 zones=0.47 sector_exit=0.08 flight_time=993
+env_steps=978944 policy_loss=0.0956 value_loss=0.0515 log_std=-0.13 | eps=34 ep_return=-51.7 waypoint=1.00 intrusions=0.59 zones=0.41 sector_exit=0.03 flight_time=1058
+env_steps=983040 policy_loss=0.0167 value_loss=0.0544 log_std=-0.13 | eps=35 ep_return=-46.4 waypoint=1.00 intrusions=0.46 zones=0.31 sector_exit=0.09 flight_time=1002
+env_steps=987136 policy_loss=-0.0313 value_loss=0.0410 log_std=-0.13 | eps=35 ep_return=-43.1 waypoint=1.00 intrusions=0.60 zones=0.20 sector_exit=0.06 flight_time=999
+env_steps=991232 policy_loss=0.0982 value_loss=0.0715 log_std=-0.13 | eps=35 ep_return=-52.6 waypoint=0.97 intrusions=0.37 zones=0.31 sector_exit=0.06 flight_time=1020
+env_steps=995328 policy_loss=0.0433 value_loss=0.0204 log_std=-0.13 | eps=33 ep_return=-46.9 waypoint=1.00 intrusions=0.45 zones=0.15 sector_exit=0.03 flight_time=1085
+env_steps=999424 policy_loss=-0.0552 value_loss=0.0319 log_std=-0.13 | eps=39 ep_return=-40.3 waypoint=1.00 intrusions=0.41 zones=0.15 sector_exit=0.13 flight_time=961
+env_steps=1003520 policy_loss=0.0366 value_loss=0.0673 log_std=-0.13 | eps=37 ep_return=-52.7 waypoint=1.00 intrusions=0.62 zones=0.38 sector_exit=0.00 flight_time=1021
+env_steps=1007616 policy_loss=-0.0728 value_loss=0.0380 log_std=-0.14 | eps=36 ep_return=-45.2 waypoint=1.00 intrusions=0.56 zones=0.14 sector_exit=0.03 flight_time=1023
+env_steps=1011712 policy_loss=0.0237 value_loss=0.0372 log_std=-0.14 | eps=34 ep_return=-49.9 waypoint=1.00 intrusions=0.59 zones=0.12 sector_exit=0.09 flight_time=1048
+env_steps=1015808 policy_loss=0.0333 value_loss=0.0420 log_std=-0.14 | eps=33 ep_return=-49.1 waypoint=1.00 intrusions=0.45 zones=0.39 sector_exit=0.00 flight_time=1111
+env_steps=1019904 policy_loss=0.1366 value_loss=0.0379 log_std=-0.14 | eps=34 ep_return=-48.0 waypoint=1.00 intrusions=0.53 zones=0.32 sector_exit=0.00 flight_time=1060
+env_steps=1024000 policy_loss=0.0366 value_loss=0.0330 log_std=-0.15 | eps=37 ep_return=-33.1 waypoint=1.00 intrusions=0.27 zones=0.24 sector_exit=0.03 flight_time=938
+env_steps=1028096 policy_loss=-0.0103 value_loss=0.0187 log_std=-0.15 | eps=38 ep_return=-41.4 waypoint=1.00 intrusions=0.55 zones=0.13 sector_exit=0.03 flight_time=938
+env_steps=1032192 policy_loss=0.0801 value_loss=0.0812 log_std=-0.15 | eps=37 ep_return=-47.7 waypoint=1.00 intrusions=0.57 zones=0.14 sector_exit=0.11 flight_time=970
+env_steps=1036288 policy_loss=0.0586 value_loss=0.0425 log_std=-0.15 | eps=28 ep_return=-63.4 waypoint=1.00 intrusions=0.57 zones=0.43 sector_exit=0.04 flight_time=1264
+env_steps=1040384 policy_loss=0.1377 value_loss=0.0482 log_std=-0.15 | eps=34 ep_return=-53.9 waypoint=0.97 intrusions=0.29 zones=0.62 sector_exit=0.06 flight_time=1063
+env_steps=1044480 policy_loss=0.0928 value_loss=0.0928 log_std=-0.15 | eps=35 ep_return=-49.1 waypoint=1.00 intrusions=0.43 zones=0.23 sector_exit=0.17 flight_time=1028
+env_steps=1048576 policy_loss=-0.0410 value_loss=0.0552 log_std=-0.15 | eps=34 ep_return=-51.9 waypoint=1.00 intrusions=0.65 zones=0.21 sector_exit=0.12 flight_time=1072
+env_steps=1052672 policy_loss=0.0574 value_loss=0.0936 log_std=-0.14 | eps=34 ep_return=-68.9 waypoint=0.97 intrusions=0.76 zones=0.74 sector_exit=0.00 flight_time=1084
+env_steps=1056768 policy_loss=-0.0660 value_loss=0.0265 log_std=-0.14 | eps=36 ep_return=-37.9 waypoint=1.00 intrusions=0.31 zones=0.25 sector_exit=0.03 flight_time=994
+env_steps=1060864 policy_loss=0.0141 value_loss=0.0383 log_std=-0.15 | eps=37 ep_return=-38.0 waypoint=1.00 intrusions=0.41 zones=0.08 sector_exit=0.00 flight_time=962
+env_steps=1064960 policy_loss=0.0270 value_loss=0.0310 log_std=-0.15 | eps=34 ep_return=-52.1 waypoint=1.00 intrusions=0.44 zones=0.38 sector_exit=0.03 flight_time=1060
+env_steps=1069056 policy_loss=0.0598 value_loss=0.0361 log_std=-0.15 | eps=37 ep_return=-51.1 waypoint=1.00 intrusions=0.76 zones=0.19 sector_exit=0.00 flight_time=1018
+env_steps=1073152 policy_loss=-0.0115 value_loss=0.0323 log_std=-0.15 | eps=34 ep_return=-43.3 waypoint=1.00 intrusions=0.35 zones=0.35 sector_exit=0.00 flight_time=1053
+env_steps=1077248 policy_loss=0.1141 value_loss=0.0723 log_std=-0.15 | eps=36 ep_return=-51.9 waypoint=1.00 intrusions=0.64 zones=0.22 sector_exit=0.08 flight_time=980
+env_steps=1081344 policy_loss=-0.0358 value_loss=0.0188 log_std=-0.15 | eps=36 ep_return=-40.6 waypoint=1.00 intrusions=0.42 zones=0.22 sector_exit=0.03 flight_time=1046
+env_steps=1085440 policy_loss=-0.0606 value_loss=0.0308 log_std=-0.16 | eps=36 ep_return=-38.6 waypoint=1.00 intrusions=0.33 zones=0.14 sector_exit=0.03 flight_time=979
+env_steps=1089536 policy_loss=0.0720 value_loss=0.0419 log_std=-0.15 | eps=32 ep_return=-37.6 waypoint=1.00 intrusions=0.28 zones=0.22 sector_exit=0.06 flight_time=1010
+env_steps=1093632 policy_loss=0.0263 value_loss=0.0305 log_std=-0.16 | eps=35 ep_return=-47.4 waypoint=1.00 intrusions=0.29 zones=0.51 sector_exit=0.03 flight_time=1058
+env_steps=1097728 policy_loss=0.0557 value_loss=0.0428 log_std=-0.16 | eps=37 ep_return=-50.6 waypoint=1.00 intrusions=0.43 zones=0.32 sector_exit=0.03 flight_time=1001
+env_steps=1101824 policy_loss=0.0080 value_loss=0.0460 log_std=-0.16 | eps=36 ep_return=-57.5 waypoint=1.00 intrusions=0.33 zones=0.67 sector_exit=0.06 flight_time=1022
+env_steps=1105920 policy_loss=-0.0007 value_loss=0.0517 log_std=-0.15 | eps=34 ep_return=-54.9 waypoint=1.00 intrusions=0.35 zones=0.56 sector_exit=0.00 flight_time=1046
+env_steps=1110016 policy_loss=0.0108 value_loss=0.0775 log_std=-0.16 | eps=36 ep_return=-57.2 waypoint=1.00 intrusions=0.56 zones=0.44 sector_exit=0.11 flight_time=1032
+env_steps=1114112 policy_loss=0.0978 value_loss=0.0514 log_std=-0.16 | eps=37 ep_return=-55.6 waypoint=1.00 intrusions=0.78 zones=0.41 sector_exit=0.00 flight_time=962
+env_steps=1118208 policy_loss=0.0542 value_loss=0.0829 log_std=-0.15 | eps=34 ep_return=-54.5 waypoint=1.00 intrusions=0.65 zones=0.18 sector_exit=0.09 flight_time=1083
+env_steps=1122304 policy_loss=0.1101 value_loss=0.1078 log_std=-0.15 | eps=34 ep_return=-57.8 waypoint=1.00 intrusions=0.29 zones=0.59 sector_exit=0.06 flight_time=1033
+env_steps=1126400 policy_loss=0.0771 value_loss=0.0578 log_std=-0.15 | eps=35 ep_return=-52.5 waypoint=1.00 intrusions=0.26 zones=0.46 sector_exit=0.03 flight_time=1064
+env_steps=1130496 policy_loss=0.0842 value_loss=0.0792 log_std=-0.16 | eps=39 ep_return=-52.9 waypoint=1.00 intrusions=0.72 zones=0.33 sector_exit=0.00 flight_time=956
+env_steps=1134592 policy_loss=0.0197 value_loss=0.0462 log_std=-0.16 | eps=35 ep_return=-44.9 waypoint=1.00 intrusions=0.31 zones=0.23 sector_exit=0.03 flight_time=1029
+env_steps=1138688 policy_loss=0.0111 value_loss=0.0413 log_std=-0.16 | eps=33 ep_return=-58.2 waypoint=1.00 intrusions=0.36 zones=0.42 sector_exit=0.06 flight_time=1120
+env_steps=1142784 policy_loss=0.1049 value_loss=0.0708 log_std=-0.16 | eps=31 ep_return=-63.8 waypoint=0.97 intrusions=0.26 zones=0.23 sector_exit=0.16 flight_time=1154
+env_steps=1146880 policy_loss=-0.0567 value_loss=0.0579 log_std=-0.16 | eps=35 ep_return=-52.3 waypoint=1.00 intrusions=0.43 zones=0.54 sector_exit=0.00 flight_time=1098
+env_steps=1150976 policy_loss=-0.0032 value_loss=0.0489 log_std=-0.16 | eps=34 ep_return=-48.7 waypoint=1.00 intrusions=0.29 zones=0.26 sector_exit=0.03 flight_time=1064
+env_steps=1155072 policy_loss=0.0270 value_loss=0.0491 log_std=-0.16 | eps=32 ep_return=-53.1 waypoint=1.00 intrusions=0.53 zones=0.31 sector_exit=0.06 flight_time=1105
+env_steps=1159168 policy_loss=-0.0217 value_loss=0.0637 log_std=-0.16 | eps=36 ep_return=-46.5 waypoint=1.00 intrusions=0.33 zones=0.33 sector_exit=0.03 flight_time=1016
+env_steps=1163264 policy_loss=-0.0112 value_loss=0.0607 log_std=-0.17 | eps=33 ep_return=-50.4 waypoint=1.00 intrusions=0.48 zones=0.39 sector_exit=0.09 flight_time=1055
+env_steps=1167360 policy_loss=0.0189 value_loss=0.0385 log_std=-0.17 | eps=35 ep_return=-42.0 waypoint=1.00 intrusions=0.34 zones=0.34 sector_exit=0.03 flight_time=1011
+env_steps=1171456 policy_loss=0.0367 value_loss=0.0274 log_std=-0.17 | eps=31 ep_return=-57.4 waypoint=1.00 intrusions=0.32 zones=0.45 sector_exit=0.03 flight_time=1133
+env_steps=1175552 policy_loss=-0.0144 value_loss=0.0468 log_std=-0.18 | eps=37 ep_return=-33.2 waypoint=1.00 intrusions=0.30 zones=0.22 sector_exit=0.03 flight_time=971
+env_steps=1179648 policy_loss=0.0142 value_loss=0.0273 log_std=-0.18 | eps=38 ep_return=-39.5 waypoint=1.00 intrusions=0.34 zones=0.34 sector_exit=0.00 flight_time=995
+env_steps=1183744 policy_loss=0.0159 value_loss=0.0506 log_std=-0.17 | eps=37 ep_return=-48.0 waypoint=1.00 intrusions=0.76 zones=0.35 sector_exit=0.00 flight_time=983
+env_steps=1187840 policy_loss=-0.0496 value_loss=0.0403 log_std=-0.17 | eps=34 ep_return=-42.7 waypoint=1.00 intrusions=0.29 zones=0.47 sector_exit=0.00 flight_time=1026
+env_steps=1191936 policy_loss=0.0092 value_loss=0.0316 log_std=-0.18 | eps=33 ep_return=-48.3 waypoint=1.00 intrusions=0.42 zones=0.30 sector_exit=0.03 flight_time=1049
+env_steps=1196032 policy_loss=0.0983 value_loss=0.0634 log_std=-0.18 | eps=34 ep_return=-48.5 waypoint=1.00 intrusions=0.44 zones=0.12 sector_exit=0.06 flight_time=1044
+env_steps=1200128 policy_loss=-0.0039 value_loss=0.0320 log_std=-0.18 | eps=37 ep_return=-35.1 waypoint=1.00 intrusions=0.41 zones=0.08 sector_exit=0.03 flight_time=971
+env_steps=1204224 policy_loss=-0.0287 value_loss=0.0343 log_std=-0.19 | eps=36 ep_return=-33.2 waypoint=1.00 intrusions=0.17 zones=0.03 sector_exit=0.03 flight_time=997
+env_steps=1208320 policy_loss=0.0279 value_loss=0.0629 log_std=-0.19 | eps=39 ep_return=-45.5 waypoint=1.00 intrusions=0.54 zones=0.33 sector_exit=0.05 flight_time=948
+env_steps=1212416 policy_loss=0.0548 value_loss=0.0406 log_std=-0.18 | eps=36 ep_return=-45.4 waypoint=1.00 intrusions=0.31 zones=0.42 sector_exit=0.00 flight_time=962
+env_steps=1216512 policy_loss=0.0723 value_loss=0.0551 log_std=-0.17 | eps=38 ep_return=-43.7 waypoint=1.00 intrusions=0.24 zones=0.29 sector_exit=0.05 flight_time=1006
+env_steps=1220608 policy_loss=0.0719 value_loss=0.0650 log_std=-0.18 | eps=36 ep_return=-49.5 waypoint=1.00 intrusions=0.36 zones=0.31 sector_exit=0.11 flight_time=990
+env_steps=1224704 policy_loss=-0.0277 value_loss=0.0220 log_std=-0.18 | eps=38 ep_return=-32.7 waypoint=1.00 intrusions=0.37 zones=0.13 sector_exit=0.00 flight_time=929
+env_steps=1228800 policy_loss=0.0476 value_loss=0.0463 log_std=-0.18 | eps=31 ep_return=-46.2 waypoint=1.00 intrusions=0.35 zones=0.35 sector_exit=0.00 flight_time=1044
+env_steps=1232896 policy_loss=0.0075 value_loss=0.0563 log_std=-0.18 | eps=35 ep_return=-52.5 waypoint=1.00 intrusions=0.46 zones=0.31 sector_exit=0.09 flight_time=1076
+env_steps=1236992 policy_loss=-0.0057 value_loss=0.0283 log_std=-0.18 | eps=32 ep_return=-44.2 waypoint=1.00 intrusions=0.22 zones=0.31 sector_exit=0.06 flight_time=1092
+env_steps=1241088 policy_loss=-0.0121 value_loss=0.0382 log_std=-0.18 | eps=37 ep_return=-41.7 waypoint=1.00 intrusions=0.54 zones=0.24 sector_exit=0.00 flight_time=1017
+env_steps=1245184 policy_loss=0.0130 value_loss=0.0503 log_std=-0.18 | eps=32 ep_return=-49.4 waypoint=1.00 intrusions=0.31 zones=0.22 sector_exit=0.12 flight_time=1145
+env_steps=1249280 policy_loss=-0.0171 value_loss=0.0636 log_std=-0.20 | eps=33 ep_return=-37.6 waypoint=1.00 intrusions=0.24 zones=0.21 sector_exit=0.06 flight_time=1067
+env_steps=1253376 policy_loss=0.0171 value_loss=0.0346 log_std=-0.19 | eps=34 ep_return=-46.5 waypoint=1.00 intrusions=0.21 zones=0.35 sector_exit=0.03 flight_time=1050
+env_steps=1257472 policy_loss=0.1740 value_loss=0.0603 log_std=-0.19 | eps=33 ep_return=-56.6 waypoint=1.00 intrusions=0.52 zones=0.55 sector_exit=0.00 flight_time=1067
+env_steps=1261568 policy_loss=-0.0395 value_loss=0.0408 log_std=-0.20 | eps=34 ep_return=-39.8 waypoint=1.00 intrusions=0.41 zones=0.21 sector_exit=0.03 flight_time=1050
+env_steps=1265664 policy_loss=0.1184 value_loss=0.0799 log_std=-0.20 | eps=33 ep_return=-76.0 waypoint=1.00 intrusions=0.48 zones=0.82 sector_exit=0.06 flight_time=1095
+env_steps=1269760 policy_loss=0.0482 value_loss=0.0455 log_std=-0.20 | eps=36 ep_return=-45.9 waypoint=1.00 intrusions=0.39 zones=0.36 sector_exit=0.03 flight_time=1048
+env_steps=1273856 policy_loss=0.0127 value_loss=0.0565 log_std=-0.19 | eps=38 ep_return=-42.8 waypoint=1.00 intrusions=0.37 zones=0.32 sector_exit=0.03 flight_time=962
+env_steps=1277952 policy_loss=0.1098 value_loss=0.0484 log_std=-0.20 | eps=36 ep_return=-51.8 waypoint=1.00 intrusions=0.50 zones=0.36 sector_exit=0.06 flight_time=973
+env_steps=1282048 policy_loss=0.0372 value_loss=0.0521 log_std=-0.20 | eps=34 ep_return=-39.7 waypoint=1.00 intrusions=0.24 zones=0.18 sector_exit=0.09 flight_time=1010
+env_steps=1286144 policy_loss=-0.0202 value_loss=0.0422 log_std=-0.20 | eps=35 ep_return=-37.3 waypoint=1.00 intrusions=0.26 zones=0.26 sector_exit=0.00 flight_time=1005
+env_steps=1290240 policy_loss=-0.0014 value_loss=0.0317 log_std=-0.20 | eps=36 ep_return=-44.0 waypoint=1.00 intrusions=0.33 zones=0.31 sector_exit=0.06 flight_time=1056
+env_steps=1294336 policy_loss=-0.0114 value_loss=0.0225 log_std=-0.21 | eps=38 ep_return=-44.9 waypoint=1.00 intrusions=0.53 zones=0.24 sector_exit=0.00 flight_time=986
+env_steps=1298432 policy_loss=0.1449 value_loss=0.1032 log_std=-0.19 | eps=33 ep_return=-65.4 waypoint=1.00 intrusions=0.55 zones=0.42 sector_exit=0.06 flight_time=1056
+env_steps=1302528 policy_loss=0.0149 value_loss=0.0785 log_std=-0.19 | eps=35 ep_return=-53.1 waypoint=1.00 intrusions=0.51 zones=0.49 sector_exit=0.06 flight_time=1052
+env_steps=1306624 policy_loss=-0.0702 value_loss=0.0341 log_std=-0.20 | eps=33 ep_return=-48.2 waypoint=1.00 intrusions=0.52 zones=0.30 sector_exit=0.00 flight_time=1075
+env_steps=1310720 policy_loss=0.0870 value_loss=0.0714 log_std=-0.20 | eps=34 ep_return=-59.3 waypoint=1.00 intrusions=0.68 zones=0.56 sector_exit=0.00 flight_time=1021
+env_steps=1314816 policy_loss=0.0361 value_loss=0.0694 log_std=-0.20 | eps=39 ep_return=-50.8 waypoint=1.00 intrusions=0.69 zones=0.26 sector_exit=0.05 flight_time=955
+env_steps=1318912 policy_loss=-0.0180 value_loss=0.0498 log_std=-0.21 | eps=36 ep_return=-47.2 waypoint=1.00 intrusions=0.33 zones=0.31 sector_exit=0.00 flight_time=1003
+env_steps=1323008 policy_loss=-0.0428 value_loss=0.0629 log_std=-0.21 | eps=36 ep_return=-47.4 waypoint=1.00 intrusions=0.56 zones=0.31 sector_exit=0.08 flight_time=962
+env_steps=1327104 policy_loss=-0.0055 value_loss=0.0432 log_std=-0.21 | eps=33 ep_return=-57.1 waypoint=1.00 intrusions=0.52 zones=0.58 sector_exit=0.00 flight_time=1060
+env_steps=1331200 policy_loss=-0.0543 value_loss=0.0389 log_std=-0.22 | eps=40 ep_return=-37.8 waypoint=1.00 intrusions=0.42 zones=0.15 sector_exit=0.03 flight_time=953
+env_steps=1335296 policy_loss=0.0284 value_loss=0.0397 log_std=-0.21 | eps=41 ep_return=-42.2 waypoint=1.00 intrusions=0.49 zones=0.54 sector_exit=0.02 flight_time=930
+env_steps=1339392 policy_loss=-0.0867 value_loss=0.0257 log_std=-0.22 | eps=39 ep_return=-34.0 waypoint=1.00 intrusions=0.33 zones=0.23 sector_exit=0.00 flight_time=951
+env_steps=1343488 policy_loss=0.1719 value_loss=0.0558 log_std=-0.21 | eps=33 ep_return=-47.4 waypoint=1.00 intrusions=0.27 zones=0.33 sector_exit=0.00 flight_time=1055
+env_steps=1347584 policy_loss=-0.0130 value_loss=0.0539 log_std=-0.21 | eps=37 ep_return=-49.9 waypoint=1.00 intrusions=0.43 zones=0.43 sector_exit=0.08 flight_time=948
+env_steps=1351680 policy_loss=0.0115 value_loss=0.0370 log_std=-0.22 | eps=34 ep_return=-48.5 waypoint=1.00 intrusions=0.68 zones=0.38 sector_exit=0.09 flight_time=1022
+env_steps=1355776 policy_loss=0.0088 value_loss=0.0320 log_std=-0.22 | eps=34 ep_return=-41.9 waypoint=1.00 intrusions=0.44 zones=0.35 sector_exit=0.09 flight_time=1038
+env_steps=1359872 policy_loss=-0.0156 value_loss=0.0198 log_std=-0.22 | eps=37 ep_return=-38.9 waypoint=1.00 intrusions=0.43 zones=0.27 sector_exit=0.03 flight_time=993
+env_steps=1363968 policy_loss=0.0954 value_loss=0.0275 log_std=-0.22 | eps=39 ep_return=-45.4 waypoint=1.00 intrusions=0.36 zones=0.41 sector_exit=0.00 flight_time=940
+env_steps=1368064 policy_loss=-0.0034 value_loss=0.0423 log_std=-0.22 | eps=33 ep_return=-48.0 waypoint=1.00 intrusions=0.39 zones=0.27 sector_exit=0.06 flight_time=1103
+env_steps=1372160 policy_loss=0.0821 value_loss=0.0410 log_std=-0.22 | eps=36 ep_return=-41.2 waypoint=1.00 intrusions=0.33 zones=0.17 sector_exit=0.03 flight_time=1025
+env_steps=1376256 policy_loss=-0.0121 value_loss=0.0199 log_std=-0.22 | eps=34 ep_return=-45.5 waypoint=1.00 intrusions=0.18 zones=0.26 sector_exit=0.03 flight_time=1082
+env_steps=1380352 policy_loss=0.0525 value_loss=0.0498 log_std=-0.21 | eps=37 ep_return=-50.6 waypoint=1.00 intrusions=0.49 zones=0.19 sector_exit=0.11 flight_time=1008
+env_steps=1384448 policy_loss=-0.0663 value_loss=0.0343 log_std=-0.22 | eps=37 ep_return=-38.4 waypoint=1.00 intrusions=0.35 zones=0.16 sector_exit=0.03 flight_time=1001
+env_steps=1388544 policy_loss=0.0209 value_loss=0.0451 log_std=-0.22 | eps=37 ep_return=-49.9 waypoint=1.00 intrusions=0.51 zones=0.38 sector_exit=0.05 flight_time=1028
+env_steps=1392640 policy_loss=0.0244 value_loss=0.0388 log_std=-0.22 | eps=36 ep_return=-46.4 waypoint=1.00 intrusions=0.39 zones=0.28 sector_exit=0.00 flight_time=965
+env_steps=1396736 policy_loss=-0.0305 value_loss=0.0228 log_std=-0.22 | eps=41 ep_return=-38.1 waypoint=1.00 intrusions=0.37 zones=0.29 sector_exit=0.00 flight_time=911
+env_steps=1400832 policy_loss=-0.0574 value_loss=0.0200 log_std=-0.22 | eps=36 ep_return=-38.8 waypoint=1.00 intrusions=0.50 zones=0.14 sector_exit=0.08 flight_time=965
+env_steps=1404928 policy_loss=-0.0242 value_loss=0.0310 log_std=-0.22 | eps=38 ep_return=-40.3 waypoint=1.00 intrusions=0.45 zones=0.24 sector_exit=0.05 flight_time=949
+env_steps=1409024 policy_loss=0.0504 value_loss=0.0471 log_std=-0.22 | eps=34 ep_return=-59.6 waypoint=1.00 intrusions=0.59 zones=0.56 sector_exit=0.12 flight_time=1041
+env_steps=1413120 policy_loss=0.1219 value_loss=0.0488 log_std=-0.21 | eps=40 ep_return=-41.6 waypoint=1.00 intrusions=0.33 zones=0.23 sector_exit=0.05 flight_time=945
+env_steps=1417216 policy_loss=0.0737 value_loss=0.1019 log_std=-0.21 | eps=36 ep_return=-48.1 waypoint=1.00 intrusions=0.28 zones=0.44 sector_exit=0.00 flight_time=1004
+env_steps=1421312 policy_loss=0.0841 value_loss=0.0401 log_std=-0.21 | eps=32 ep_return=-54.8 waypoint=1.00 intrusions=0.38 zones=0.25 sector_exit=0.06 flight_time=1136
+env_steps=1425408 policy_loss=0.0921 value_loss=0.0441 log_std=-0.20 | eps=36 ep_return=-48.9 waypoint=1.00 intrusions=0.69 zones=0.14 sector_exit=0.06 flight_time=1032
+env_steps=1429504 policy_loss=0.0757 value_loss=0.0584 log_std=-0.20 | eps=33 ep_return=-43.2 waypoint=1.00 intrusions=0.30 zones=0.36 sector_exit=0.06 flight_time=1018
+env_steps=1433600 policy_loss=0.0108 value_loss=0.0306 log_std=-0.21 | eps=37 ep_return=-40.5 waypoint=1.00 intrusions=0.54 zones=0.11 sector_exit=0.08 flight_time=978
+env_steps=1437696 policy_loss=0.0321 value_loss=0.0493 log_std=-0.20 | eps=33 ep_return=-48.1 waypoint=1.00 intrusions=0.45 zones=0.45 sector_exit=0.00 flight_time=1018
+env_steps=1441792 policy_loss=0.0599 value_loss=0.0424 log_std=-0.20 | eps=36 ep_return=-44.0 waypoint=1.00 intrusions=0.36 zones=0.25 sector_exit=0.03 flight_time=978
+env_steps=1445888 policy_loss=-0.0404 value_loss=0.0396 log_std=-0.19 | eps=38 ep_return=-32.0 waypoint=1.00 intrusions=0.47 zones=0.16 sector_exit=0.00 flight_time=918
+env_steps=1449984 policy_loss=-0.0103 value_loss=0.0357 log_std=-0.20 | eps=35 ep_return=-41.3 waypoint=1.00 intrusions=0.40 zones=0.20 sector_exit=0.03 flight_time=1062
+env_steps=1454080 policy_loss=0.2357 value_loss=0.0597 log_std=-0.19 | eps=35 ep_return=-40.9 waypoint=1.00 intrusions=0.40 zones=0.26 sector_exit=0.03 flight_time=1042
+env_steps=1458176 policy_loss=0.0018 value_loss=0.0551 log_std=-0.20 | eps=40 ep_return=-43.8 waypoint=1.00 intrusions=0.62 zones=0.23 sector_exit=0.00 flight_time=943
+env_steps=1462272 policy_loss=-0.0204 value_loss=0.0763 log_std=-0.19 | eps=38 ep_return=-44.9 waypoint=1.00 intrusions=0.39 zones=0.21 sector_exit=0.03 flight_time=1007
+env_steps=1466368 policy_loss=0.1187 value_loss=0.0515 log_std=-0.19 | eps=33 ep_return=-60.4 waypoint=1.00 intrusions=0.52 zones=0.42 sector_exit=0.12 flight_time=1124
+env_steps=1470464 policy_loss=0.0807 value_loss=0.0438 log_std=-0.19 | eps=31 ep_return=-64.8 waypoint=1.00 intrusions=0.45 zones=0.19 sector_exit=0.13 flight_time=1167
+env_steps=1474560 policy_loss=0.0410 value_loss=0.1060 log_std=-0.18 | eps=36 ep_return=-48.6 waypoint=1.00 intrusions=0.47 zones=0.33 sector_exit=0.03 flight_time=1035
+env_steps=1478656 policy_loss=0.0693 value_loss=0.0401 log_std=-0.18 | eps=33 ep_return=-54.4 waypoint=1.00 intrusions=0.52 zones=0.24 sector_exit=0.15 flight_time=1026
+env_steps=1482752 policy_loss=-0.0520 value_loss=0.0435 log_std=-0.18 | eps=35 ep_return=-55.9 waypoint=1.00 intrusions=0.63 zones=0.31 sector_exit=0.03 flight_time=1067
+env_steps=1486848 policy_loss=-0.0364 value_loss=0.0410 log_std=-0.18 | eps=33 ep_return=-44.8 waypoint=1.00 intrusions=0.42 zones=0.15 sector_exit=0.03 flight_time=1051
+env_steps=1490944 policy_loss=-0.0165 value_loss=0.0164 log_std=-0.18 | eps=36 ep_return=-33.0 waypoint=0.97 intrusions=0.19 zones=0.11 sector_exit=0.06 flight_time=994
+env_steps=1495040 policy_loss=0.0234 value_loss=0.0313 log_std=-0.18 | eps=35 ep_return=-44.7 waypoint=0.97 intrusions=0.43 zones=0.23 sector_exit=0.03 flight_time=1037
+env_steps=1499136 policy_loss=0.0742 value_loss=0.0438 log_std=-0.18 | eps=36 ep_return=-54.7 waypoint=1.00 intrusions=0.53 zones=0.47 sector_exit=0.03 flight_time=1000
+env_steps=1503232 policy_loss=0.0493 value_loss=0.0610 log_std=-0.18 | eps=38 ep_return=-46.8 waypoint=1.00 intrusions=0.45 zones=0.39 sector_exit=0.03 flight_time=946
+env_steps=1507328 policy_loss=0.0689 value_loss=0.0965 log_std=-0.18 | eps=32 ep_return=-73.3 waypoint=1.00 intrusions=0.81 zones=0.53 sector_exit=0.03 flight_time=1116
+env_steps=1511424 policy_loss=0.0186 value_loss=0.0747 log_std=-0.17 | eps=33 ep_return=-53.5 waypoint=1.00 intrusions=0.18 zones=0.55 sector_exit=0.06 flight_time=1159
+env_steps=1515520 policy_loss=0.0151 value_loss=0.0749 log_std=-0.17 | eps=31 ep_return=-48.4 waypoint=1.00 intrusions=0.29 zones=0.23 sector_exit=0.03 flight_time=1160
+env_steps=1519616 policy_loss=0.0154 value_loss=0.0322 log_std=-0.17 | eps=31 ep_return=-51.1 waypoint=1.00 intrusions=0.16 zones=0.48 sector_exit=0.06 flight_time=1107
+env_steps=1523712 policy_loss=-0.0041 value_loss=0.0392 log_std=-0.18 | eps=31 ep_return=-48.0 waypoint=1.00 intrusions=0.29 zones=0.19 sector_exit=0.06 flight_time=1101
+env_steps=1527808 policy_loss=0.0531 value_loss=0.0390 log_std=-0.18 | eps=31 ep_return=-51.5 waypoint=1.00 intrusions=0.39 zones=0.10 sector_exit=0.03 flight_time=1158
+env_steps=1531904 policy_loss=0.0640 value_loss=0.0407 log_std=-0.17 | eps=37 ep_return=-41.0 waypoint=1.00 intrusions=0.65 zones=0.27 sector_exit=0.00 flight_time=996
+env_steps=1536000 policy_loss=-0.0488 value_loss=0.0177 log_std=-0.17 | eps=33 ep_return=-47.6 waypoint=1.00 intrusions=0.45 zones=0.18 sector_exit=0.03 flight_time=1116
+env_steps=1540096 policy_loss=0.1004 value_loss=0.0505 log_std=-0.17 | eps=35 ep_return=-49.0 waypoint=1.00 intrusions=0.43 zones=0.29 sector_exit=0.03 flight_time=1064
+env_steps=1544192 policy_loss=0.0001 value_loss=0.0121 log_std=-0.18 | eps=35 ep_return=-39.6 waypoint=1.00 intrusions=0.17 zones=0.31 sector_exit=0.00 flight_time=1066
+env_steps=1548288 policy_loss=-0.0337 value_loss=0.0314 log_std=-0.18 | eps=34 ep_return=-42.3 waypoint=1.00 intrusions=0.18 zones=0.29 sector_exit=0.21 flight_time=1081
+env_steps=1552384 policy_loss=-0.0200 value_loss=0.0215 log_std=-0.18 | eps=35 ep_return=-49.3 waypoint=1.00 intrusions=0.43 zones=0.29 sector_exit=0.03 flight_time=1031
+env_steps=1556480 policy_loss=0.0701 value_loss=0.0330 log_std=-0.18 | eps=36 ep_return=-39.9 waypoint=1.00 intrusions=0.36 zones=0.28 sector_exit=0.03 flight_time=1005
+env_steps=1560576 policy_loss=0.0547 value_loss=0.0168 log_std=-0.18 | eps=32 ep_return=-41.8 waypoint=1.00 intrusions=0.28 zones=0.22 sector_exit=0.09 flight_time=1059
+env_steps=1564672 policy_loss=0.0217 value_loss=0.0188 log_std=-0.18 | eps=39 ep_return=-38.6 waypoint=1.00 intrusions=0.54 zones=0.03 sector_exit=0.05 flight_time=978
+env_steps=1568768 policy_loss=-0.0035 value_loss=0.0162 log_std=-0.18 | eps=36 ep_return=-36.8 waypoint=1.00 intrusions=0.44 zones=0.08 sector_exit=0.00 flight_time=996
+env_steps=1572864 policy_loss=-0.0298 value_loss=0.0197 log_std=-0.19 | eps=38 ep_return=-31.8 waypoint=1.00 intrusions=0.21 zones=0.08 sector_exit=0.00 flight_time=976
+env_steps=1576960 policy_loss=0.0414 value_loss=0.0395 log_std=-0.18 | eps=36 ep_return=-45.4 waypoint=1.00 intrusions=0.39 zones=0.19 sector_exit=0.03 flight_time=1031
+env_steps=1581056 policy_loss=0.0862 value_loss=0.0313 log_std=-0.18 | eps=36 ep_return=-43.2 waypoint=1.00 intrusions=0.50 zones=0.17 sector_exit=0.11 flight_time=997
+env_steps=1585152 policy_loss=0.0495 value_loss=0.0342 log_std=-0.19 | eps=36 ep_return=-46.0 waypoint=1.00 intrusions=0.56 zones=0.22 sector_exit=0.11 flight_time=994
+env_steps=1589248 policy_loss=0.0384 value_loss=0.0489 log_std=-0.19 | eps=33 ep_return=-51.0 waypoint=0.97 intrusions=0.27 zones=0.36 sector_exit=0.06 flight_time=1140
+env_steps=1593344 policy_loss=-0.0260 value_loss=0.0443 log_std=-0.19 | eps=33 ep_return=-41.4 waypoint=1.00 intrusions=0.30 zones=0.45 sector_exit=0.00 flight_time=1052
+env_steps=1597440 policy_loss=0.0362 value_loss=0.0620 log_std=-0.19 | eps=35 ep_return=-40.7 waypoint=1.00 intrusions=0.31 zones=0.40 sector_exit=0.00 flight_time=1044
+env_steps=1601536 policy_loss=-0.0296 value_loss=0.0302 log_std=-0.18 | eps=32 ep_return=-43.3 waypoint=1.00 intrusions=0.31 zones=0.25 sector_exit=0.00 flight_time=1092
+env_steps=1605632 policy_loss=0.0028 value_loss=0.0252 log_std=-0.18 | eps=36 ep_return=-53.9 waypoint=1.00 intrusions=0.44 zones=0.42 sector_exit=0.03 flight_time=1023
+env_steps=1609728 policy_loss=-0.0217 value_loss=0.0272 log_std=-0.18 | eps=37 ep_return=-44.2 waypoint=1.00 intrusions=0.43 zones=0.22 sector_exit=0.05 flight_time=1002
+env_steps=1613824 policy_loss=-0.0063 value_loss=0.0358 log_std=-0.18 | eps=36 ep_return=-35.6 waypoint=1.00 intrusions=0.11 zones=0.39 sector_exit=0.00 flight_time=1015
+env_steps=1617920 policy_loss=0.0795 value_loss=0.0466 log_std=-0.18 | eps=33 ep_return=-56.8 waypoint=1.00 intrusions=0.58 zones=0.58 sector_exit=0.09 flight_time=1112
+env_steps=1622016 policy_loss=0.0547 value_loss=0.0197 log_std=-0.17 | eps=34 ep_return=-47.6 waypoint=1.00 intrusions=0.38 zones=0.38 sector_exit=0.06 flight_time=1087
+env_steps=1626112 policy_loss=0.0166 value_loss=0.0434 log_std=-0.17 | eps=36 ep_return=-34.2 waypoint=1.00 intrusions=0.22 zones=0.14 sector_exit=0.06 flight_time=980
+env_steps=1630208 policy_loss=0.0848 value_loss=0.0350 log_std=-0.17 | eps=27 ep_return=-63.1 waypoint=0.96 intrusions=0.52 zones=0.11 sector_exit=0.04 flight_time=1274
+env_steps=1634304 policy_loss=0.0363 value_loss=0.0814 log_std=-0.17 | eps=35 ep_return=-40.5 waypoint=1.00 intrusions=0.40 zones=0.23 sector_exit=0.00 flight_time=1036
+env_steps=1638400 policy_loss=0.0722 value_loss=0.0681 log_std=-0.17 | eps=34 ep_return=-59.6 waypoint=1.00 intrusions=0.50 zones=0.26 sector_exit=0.18 flight_time=1129
+env_steps=1642496 policy_loss=0.0961 value_loss=0.0340 log_std=-0.17 | eps=34 ep_return=-57.3 waypoint=1.00 intrusions=0.76 zones=0.24 sector_exit=0.09 flight_time=1098
+env_steps=1646592 policy_loss=0.0267 value_loss=0.0522 log_std=-0.17 | eps=36 ep_return=-40.9 waypoint=1.00 intrusions=0.39 zones=0.17 sector_exit=0.03 flight_time=931
+env_steps=1650688 policy_loss=-0.0563 value_loss=0.0400 log_std=-0.17 | eps=35 ep_return=-39.4 waypoint=1.00 intrusions=0.26 zones=0.14 sector_exit=0.00 flight_time=1009
+env_steps=1654784 policy_loss=0.0312 value_loss=0.0494 log_std=-0.17 | eps=37 ep_return=-58.2 waypoint=1.00 intrusions=0.84 zones=0.41 sector_exit=0.03 flight_time=958
+env_steps=1658880 policy_loss=-0.0289 value_loss=0.0255 log_std=-0.16 | eps=36 ep_return=-50.2 waypoint=1.00 intrusions=0.64 zones=0.25 sector_exit=0.06 flight_time=1030
+env_steps=1662976 policy_loss=-0.0716 value_loss=0.0175 log_std=-0.16 | eps=36 ep_return=-41.5 waypoint=1.00 intrusions=0.36 zones=0.19 sector_exit=0.03 flight_time=1039
+env_steps=1667072 policy_loss=-0.0155 value_loss=0.0265 log_std=-0.17 | eps=38 ep_return=-34.0 waypoint=1.00 intrusions=0.21 zones=0.24 sector_exit=0.03 flight_time=953
+env_steps=1671168 policy_loss=-0.0105 value_loss=0.0389 log_std=-0.17 | eps=34 ep_return=-50.5 waypoint=1.00 intrusions=0.50 zones=0.56 sector_exit=0.06 flight_time=1030
+env_steps=1675264 policy_loss=0.0350 value_loss=0.0460 log_std=-0.17 | eps=37 ep_return=-40.3 waypoint=1.00 intrusions=0.27 zones=0.38 sector_exit=0.03 flight_time=989
+env_steps=1679360 policy_loss=0.0357 value_loss=0.0289 log_std=-0.18 | eps=37 ep_return=-41.7 waypoint=1.00 intrusions=0.27 zones=0.30 sector_exit=0.00 flight_time=983
+env_steps=1683456 policy_loss=-0.0821 value_loss=0.0266 log_std=-0.18 | eps=36 ep_return=-40.0 waypoint=1.00 intrusions=0.36 zones=0.33 sector_exit=0.06 flight_time=997
+env_steps=1687552 policy_loss=0.0072 value_loss=0.0210 log_std=-0.18 | eps=38 ep_return=-39.5 waypoint=1.00 intrusions=0.45 zones=0.29 sector_exit=0.03 flight_time=958
+env_steps=1691648 policy_loss=0.0788 value_loss=0.0543 log_std=-0.18 | eps=31 ep_return=-71.6 waypoint=0.97 intrusions=0.74 zones=0.45 sector_exit=0.13 flight_time=1188
+env_steps=1695744 policy_loss=-0.0117 value_loss=0.0251 log_std=-0.18 | eps=31 ep_return=-43.3 waypoint=1.00 intrusions=0.26 zones=0.35 sector_exit=0.03 flight_time=1126
+env_steps=1699840 policy_loss=0.0276 value_loss=0.0546 log_std=-0.18 | eps=34 ep_return=-50.6 waypoint=1.00 intrusions=0.38 zones=0.41 sector_exit=0.06 flight_time=1018
+env_steps=1703936 policy_loss=0.0160 value_loss=0.0711 log_std=-0.18 | eps=35 ep_return=-51.6 waypoint=1.00 intrusions=0.51 zones=0.23 sector_exit=0.09 flight_time=1042
+env_steps=1708032 policy_loss=0.0702 value_loss=0.0283 log_std=-0.17 | eps=36 ep_return=-45.0 waypoint=1.00 intrusions=0.47 zones=0.19 sector_exit=0.06 flight_time=986
+env_steps=1712128 policy_loss=0.0298 value_loss=0.0974 log_std=-0.17 | eps=38 ep_return=-43.3 waypoint=1.00 intrusions=0.32 zones=0.32 sector_exit=0.05 flight_time=959
+env_steps=1716224 policy_loss=-0.0518 value_loss=0.0163 log_std=-0.18 | eps=34 ep_return=-36.1 waypoint=1.00 intrusions=0.26 zones=0.41 sector_exit=0.00 flight_time=1031
+env_steps=1720320 policy_loss=-0.0018 value_loss=0.0396 log_std=-0.18 | eps=36 ep_return=-48.8 waypoint=1.00 intrusions=0.67 zones=0.17 sector_exit=0.08 flight_time=1026
+env_steps=1724416 policy_loss=0.0845 value_loss=0.0719 log_std=-0.18 | eps=33 ep_return=-57.7 waypoint=1.00 intrusions=0.55 zones=0.27 sector_exit=0.03 flight_time=1086
+env_steps=1728512 policy_loss=-0.0409 value_loss=0.0318 log_std=-0.18 | eps=37 ep_return=-33.5 waypoint=1.00 intrusions=0.35 zones=0.14 sector_exit=0.00 flight_time=964
+env_steps=1732608 policy_loss=-0.0102 value_loss=0.0206 log_std=-0.19 | eps=37 ep_return=-35.0 waypoint=1.00 intrusions=0.30 zones=0.14 sector_exit=0.05 flight_time=930
+env_steps=1736704 policy_loss=-0.0600 value_loss=0.0393 log_std=-0.19 | eps=36 ep_return=-34.3 waypoint=1.00 intrusions=0.28 zones=0.22 sector_exit=0.00 flight_time=983
+env_steps=1740800 policy_loss=0.0382 value_loss=0.0540 log_std=-0.20 | eps=32 ep_return=-43.4 waypoint=1.00 intrusions=0.19 zones=0.28 sector_exit=0.03 flight_time=1102
+env_steps=1744896 policy_loss=0.0159 value_loss=0.0219 log_std=-0.20 | eps=33 ep_return=-48.4 waypoint=1.00 intrusions=0.42 zones=0.36 sector_exit=0.09 flight_time=1051
+env_steps=1748992 policy_loss=0.0026 value_loss=0.0295 log_std=-0.20 | eps=32 ep_return=-41.4 waypoint=1.00 intrusions=0.47 zones=0.16 sector_exit=0.00 flight_time=1042
+env_steps=1753088 policy_loss=0.0067 value_loss=0.0404 log_std=-0.20 | eps=37 ep_return=-38.6 waypoint=1.00 intrusions=0.38 zones=0.16 sector_exit=0.05 flight_time=998
+env_steps=1757184 policy_loss=0.0315 value_loss=0.0356 log_std=-0.21 | eps=36 ep_return=-38.9 waypoint=1.00 intrusions=0.44 zones=0.22 sector_exit=0.06 flight_time=994
+env_steps=1761280 policy_loss=-0.0032 value_loss=0.0278 log_std=-0.21 | eps=35 ep_return=-36.9 waypoint=1.00 intrusions=0.23 zones=0.43 sector_exit=0.03 flight_time=1024
+env_steps=1765376 policy_loss=-0.0160 value_loss=0.0177 log_std=-0.21 | eps=36 ep_return=-43.7 waypoint=1.00 intrusions=0.33 zones=0.33 sector_exit=0.14 flight_time=1022
+env_steps=1769472 policy_loss=0.0739 value_loss=0.0432 log_std=-0.21 | eps=38 ep_return=-37.2 waypoint=1.00 intrusions=0.39 zones=0.32 sector_exit=0.03 flight_time=986
+env_steps=1773568 policy_loss=-0.0110 value_loss=0.0514 log_std=-0.21 | eps=37 ep_return=-39.2 waypoint=1.00 intrusions=0.46 zones=0.35 sector_exit=0.00 flight_time=996
+env_steps=1777664 policy_loss=-0.0235 value_loss=0.0118 log_std=-0.21 | eps=37 ep_return=-34.5 waypoint=1.00 intrusions=0.32 zones=0.14 sector_exit=0.00 flight_time=942
+env_steps=1781760 policy_loss=0.0034 value_loss=0.0223 log_std=-0.21 | eps=40 ep_return=-33.4 waypoint=1.00 intrusions=0.20 zones=0.50 sector_exit=0.03 flight_time=928
+env_steps=1785856 policy_loss=0.0062 value_loss=0.0170 log_std=-0.21 | eps=38 ep_return=-36.9 waypoint=1.00 intrusions=0.47 zones=0.26 sector_exit=0.03 flight_time=954
+env_steps=1789952 policy_loss=0.0320 value_loss=0.0258 log_std=-0.20 | eps=35 ep_return=-43.4 waypoint=1.00 intrusions=0.29 zones=0.46 sector_exit=0.09 flight_time=1040
+env_steps=1794048 policy_loss=-0.0208 value_loss=0.0140 log_std=-0.20 | eps=37 ep_return=-27.8 waypoint=1.00 intrusions=0.27 zones=0.08 sector_exit=0.00 flight_time=931
+env_steps=1798144 policy_loss=0.0423 value_loss=0.0161 log_std=-0.20 | eps=37 ep_return=-35.1 waypoint=1.00 intrusions=0.24 zones=0.27 sector_exit=0.00 flight_time=979
+env_steps=1802240 policy_loss=-0.0036 value_loss=0.0201 log_std=-0.20 | eps=38 ep_return=-37.2 waypoint=1.00 intrusions=0.21 zones=0.39 sector_exit=0.05 flight_time=987
+env_steps=1806336 policy_loss=0.0331 value_loss=0.0347 log_std=-0.20 | eps=38 ep_return=-32.7 waypoint=1.00 intrusions=0.26 zones=0.24 sector_exit=0.03 flight_time=969
+env_steps=1810432 policy_loss=0.0337 value_loss=0.0531 log_std=-0.20 | eps=39 ep_return=-37.9 waypoint=1.00 intrusions=0.38 zones=0.21 sector_exit=0.05 flight_time=959
+env_steps=1814528 policy_loss=-0.0194 value_loss=0.0278 log_std=-0.21 | eps=36 ep_return=-35.5 waypoint=1.00 intrusions=0.25 zones=0.25 sector_exit=0.03 flight_time=1005
+env_steps=1818624 policy_loss=0.0541 value_loss=0.0435 log_std=-0.20 | eps=34 ep_return=-46.8 waypoint=1.00 intrusions=0.26 zones=0.35 sector_exit=0.18 flight_time=1040
+env_steps=1822720 policy_loss=-0.0115 value_loss=0.0321 log_std=-0.20 | eps=35 ep_return=-44.7 waypoint=1.00 intrusions=0.46 zones=0.31 sector_exit=0.03 flight_time=1036
+env_steps=1826816 policy_loss=-0.0063 value_loss=0.0279 log_std=-0.19 | eps=33 ep_return=-58.5 waypoint=0.97 intrusions=0.67 zones=0.18 sector_exit=0.18 flight_time=1104
+env_steps=1830912 policy_loss=0.0410 value_loss=0.0400 log_std=-0.20 | eps=34 ep_return=-42.9 waypoint=1.00 intrusions=0.26 zones=0.18 sector_exit=0.06 flight_time=1058
+env_steps=1835008 policy_loss=-0.0028 value_loss=0.0289 log_std=-0.20 | eps=38 ep_return=-35.7 waypoint=1.00 intrusions=0.26 zones=0.16 sector_exit=0.05 flight_time=955
+env_steps=1839104 policy_loss=0.0453 value_loss=0.0880 log_std=-0.20 | eps=35 ep_return=-53.7 waypoint=1.00 intrusions=0.57 zones=0.37 sector_exit=0.00 flight_time=1028
+env_steps=1843200 policy_loss=0.0059 value_loss=0.0363 log_std=-0.20 | eps=36 ep_return=-47.8 waypoint=1.00 intrusions=0.61 zones=0.19 sector_exit=0.00 flight_time=1019
+env_steps=1847296 policy_loss=-0.0161 value_loss=0.0479 log_std=-0.20 | eps=39 ep_return=-39.1 waypoint=1.00 intrusions=0.33 zones=0.26 sector_exit=0.00 flight_time=963
+env_steps=1851392 policy_loss=-0.0122 value_loss=0.0219 log_std=-0.21 | eps=37 ep_return=-39.3 waypoint=1.00 intrusions=0.27 zones=0.32 sector_exit=0.00 flight_time=999
+env_steps=1855488 policy_loss=-0.0042 value_loss=0.0355 log_std=-0.20 | eps=37 ep_return=-36.0 waypoint=1.00 intrusions=0.35 zones=0.22 sector_exit=0.00 flight_time=969
+env_steps=1859584 policy_loss=0.0054 value_loss=0.0181 log_std=-0.20 | eps=39 ep_return=-34.4 waypoint=1.00 intrusions=0.13 zones=0.28 sector_exit=0.03 flight_time=970
+env_steps=1863680 policy_loss=-0.0773 value_loss=0.0252 log_std=-0.21 | eps=37 ep_return=-33.4 waypoint=1.00 intrusions=0.43 zones=0.03 sector_exit=0.00 flight_time=1022
+env_steps=1867776 policy_loss=0.0548 value_loss=0.0178 log_std=-0.21 | eps=33 ep_return=-41.7 waypoint=1.00 intrusions=0.36 zones=0.21 sector_exit=0.03 flight_time=1084
+env_steps=1871872 policy_loss=0.0362 value_loss=0.0266 log_std=-0.20 | eps=38 ep_return=-38.8 waypoint=1.00 intrusions=0.50 zones=0.16 sector_exit=0.03 flight_time=983
+env_steps=1875968 policy_loss=-0.0574 value_loss=0.0219 log_std=-0.21 | eps=40 ep_return=-29.5 waypoint=1.00 intrusions=0.23 zones=0.17 sector_exit=0.00 flight_time=921
+env_steps=1880064 policy_loss=0.0778 value_loss=0.0245 log_std=-0.21 | eps=34 ep_return=-45.2 waypoint=1.00 intrusions=0.29 zones=0.32 sector_exit=0.09 flight_time=1024
+env_steps=1884160 policy_loss=-0.0090 value_loss=0.0354 log_std=-0.20 | eps=34 ep_return=-41.7 waypoint=1.00 intrusions=0.26 zones=0.09 sector_exit=0.12 flight_time=1079
+env_steps=1888256 policy_loss=-0.1181 value_loss=0.0246 log_std=-0.21 | eps=37 ep_return=-41.1 waypoint=1.00 intrusions=0.41 zones=0.27 sector_exit=0.05 flight_time=1016
+env_steps=1892352 policy_loss=0.0064 value_loss=0.0297 log_std=-0.21 | eps=37 ep_return=-39.8 waypoint=1.00 intrusions=0.49 zones=0.05 sector_exit=0.08 flight_time=999
+env_steps=1896448 policy_loss=0.0731 value_loss=0.0445 log_std=-0.21 | eps=31 ep_return=-54.8 waypoint=0.97 intrusions=0.29 zones=0.45 sector_exit=0.00 flight_time=1193
+env_steps=1900544 policy_loss=0.0248 value_loss=0.0354 log_std=-0.21 | eps=37 ep_return=-29.9 waypoint=1.00 intrusions=0.14 zones=0.11 sector_exit=0.03 flight_time=985
+env_steps=1904640 policy_loss=0.0148 value_loss=0.0174 log_std=-0.21 | eps=35 ep_return=-44.8 waypoint=1.00 intrusions=0.31 zones=0.31 sector_exit=0.00 flight_time=1076
+env_steps=1908736 policy_loss=0.0079 value_loss=0.0158 log_std=-0.22 | eps=38 ep_return=-33.8 waypoint=1.00 intrusions=0.39 zones=0.05 sector_exit=0.03 flight_time=936
+env_steps=1912832 policy_loss=0.0108 value_loss=0.0288 log_std=-0.21 | eps=37 ep_return=-46.7 waypoint=1.00 intrusions=0.54 zones=0.30 sector_exit=0.03 flight_time=1023
+env_steps=1916928 policy_loss=0.1601 value_loss=0.0297 log_std=-0.21 | eps=37 ep_return=-40.9 waypoint=1.00 intrusions=0.24 zones=0.11 sector_exit=0.03 flight_time=1008
+env_steps=1921024 policy_loss=0.0444 value_loss=0.0318 log_std=-0.21 | eps=37 ep_return=-46.4 waypoint=1.00 intrusions=0.41 zones=0.22 sector_exit=0.00 flight_time=1034
+env_steps=1925120 policy_loss=0.0470 value_loss=0.0441 log_std=-0.22 | eps=35 ep_return=-43.8 waypoint=1.00 intrusions=0.40 zones=0.20 sector_exit=0.00 flight_time=1027
+env_steps=1929216 policy_loss=-0.0082 value_loss=0.0209 log_std=-0.22 | eps=33 ep_return=-51.7 waypoint=0.94 intrusions=0.30 zones=0.24 sector_exit=0.12 flight_time=1149
+env_steps=1933312 policy_loss=0.0450 value_loss=0.0295 log_std=-0.21 | eps=32 ep_return=-54.9 waypoint=1.00 intrusions=0.56 zones=0.16 sector_exit=0.03 flight_time=1118
+env_steps=1937408 policy_loss=0.0595 value_loss=0.0609 log_std=-0.21 | eps=36 ep_return=-47.5 waypoint=1.00 intrusions=0.61 zones=0.14 sector_exit=0.08 flight_time=965
+env_steps=1941504 policy_loss=0.0263 value_loss=0.0303 log_std=-0.21 | eps=38 ep_return=-37.7 waypoint=1.00 intrusions=0.39 zones=0.11 sector_exit=0.05 flight_time=974
+env_steps=1945600 policy_loss=-0.0155 value_loss=0.0298 log_std=-0.21 | eps=36 ep_return=-45.2 waypoint=1.00 intrusions=0.56 zones=0.08 sector_exit=0.14 flight_time=1002
+env_steps=1949696 policy_loss=-0.0034 value_loss=0.0215 log_std=-0.22 | eps=29 ep_return=-52.0 waypoint=1.00 intrusions=0.48 zones=0.24 sector_exit=0.03 flight_time=1125
+env_steps=1953792 policy_loss=0.0893 value_loss=0.0633 log_std=-0.21 | eps=37 ep_return=-49.5 waypoint=0.97 intrusions=0.49 zones=0.19 sector_exit=0.11 flight_time=992
+env_steps=1957888 policy_loss=-0.0144 value_loss=0.0208 log_std=-0.22 | eps=33 ep_return=-44.4 waypoint=1.00 intrusions=0.61 zones=0.21 sector_exit=0.09 flight_time=1017
+env_steps=1961984 policy_loss=0.0357 value_loss=0.0286 log_std=-0.21 | eps=38 ep_return=-45.5 waypoint=0.97 intrusions=0.53 zones=0.24 sector_exit=0.05 flight_time=976
+env_steps=1966080 policy_loss=0.0745 value_loss=0.0604 log_std=-0.21 | eps=34 ep_return=-53.7 waypoint=1.00 intrusions=0.53 zones=0.12 sector_exit=0.12 flight_time=1068
+env_steps=1970176 policy_loss=-0.0209 value_loss=0.0366 log_std=-0.21 | eps=35 ep_return=-49.0 waypoint=1.00 intrusions=0.57 zones=0.20 sector_exit=0.09 flight_time=1045
+env_steps=1974272 policy_loss=-0.0522 value_loss=0.0419 log_std=-0.22 | eps=39 ep_return=-33.9 waypoint=1.00 intrusions=0.36 zones=0.18 sector_exit=0.00 flight_time=929
+env_steps=1978368 policy_loss=0.0024 value_loss=0.0208 log_std=-0.22 | eps=38 ep_return=-43.1 waypoint=1.00 intrusions=0.45 zones=0.21 sector_exit=0.00 flight_time=977
+env_steps=1982464 policy_loss=-0.0532 value_loss=0.0456 log_std=-0.22 | eps=37 ep_return=-44.5 waypoint=1.00 intrusions=0.38 zones=0.30 sector_exit=0.03 flight_time=984
+env_steps=1986560 policy_loss=0.0117 value_loss=0.0429 log_std=-0.23 | eps=37 ep_return=-46.4 waypoint=1.00 intrusions=0.70 zones=0.19 sector_exit=0.03 flight_time=972
+env_steps=1990656 policy_loss=-0.0137 value_loss=0.0323 log_std=-0.22 | eps=37 ep_return=-44.2 waypoint=1.00 intrusions=0.46 zones=0.30 sector_exit=0.00 flight_time=1002
+env_steps=1994752 policy_loss=-0.0131 value_loss=0.0287 log_std=-0.23 | eps=36 ep_return=-41.9 waypoint=1.00 intrusions=0.39 zones=0.22 sector_exit=0.06 flight_time=1037
+env_steps=1998848 policy_loss=0.0064 value_loss=0.0438 log_std=-0.23 | eps=32 ep_return=-43.5 waypoint=1.00 intrusions=0.31 zones=0.28 sector_exit=0.00 flight_time=1108
+env_steps=2000000 policy_loss=0.1083 value_loss=0.0428 log_std=-0.23 | eps=8 ep_return=-32.0 waypoint=1.00 intrusions=0.62 zones=0.00 sector_exit=0.00 flight_time=835
+/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+wandb: updating run metadata
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml; uploading results/sa_tf_tok3_s0_summary.json
+wandb: uploading results/sa_tf_tok3_s0_summary.json
+wandb: 
+wandb: Run history:
+wandb:              train/ep_return ▁▆▆▇▇█▇█████████████████████████████████
+wandb:            train/flight_time ▅█▇▃▅▄▃▃▃▄▂▂▂▁▄▃▁▃▄▃▂▃▁▂▂▃▁▂▄▁▄▃▂▂▄▁▂▂▁▂
+wandb:       train/intrusion_events █▆▆██▄▄▅▅▅▄▃▃▅▇▄▃▂▄▄▂▃▂▃▄▂▃▁▃▁▃▃▂▃▄▃▂▃▄▂
+wandb:         train/intrusion_time █▄▇▆▆▃▃▂▂▃▁▂▂▂▂▄▄▃▂▂▂▁▁▂▂▂▂▁▂▁▃▃▁▁▂▁▂▁▁▁
+wandb:                train/log_std █▇▇▆▆▆▅▄▅▅▅▃▃▃▄▃▄▄▄▃▃▃▃▃▂▁▁▁▁▂▂▂▃▂▂▂▂▁▁▁
+wandb:         train/n_cut_episodes ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:             train/n_episodes ▂▂▂▅▃▁▃▆▄▅▆▅▇█▆▇▇▇█▇▇▆▆▆▅▆▅▅▆▇▆▆▅▇▆█▇▆▆▇
+wandb:            train/policy_loss █▅▃▃▃▃▃▂▂▂▃▄▂▃▁▃▃▃▃▂▂▄▃▃▂▃▂▂▃▂▂▂▃▂▂▂▃▁▃▃
+wandb: train/restricted_area_events ▅█▆▃▃▃▃▂▂▁▂▃▂▁▂▂▁▂▂▂▂▁▂▂▁▂▂▂▃▂▂▂▁▁▂▂▁▁▁▁
+wandb:     train/sector_exit_events ▃█▂▃▃▁▂▂▁▃▂▁▁▂▁▂▁▂▁▁▂▂▂▂▂▂▂▁▃▂▂▂▃▁▁▂▃▁▂▂
+wandb:                           +4 ...
+wandb: 
+wandb: Run summary:
+wandb:               final_no_noise/ep_return -19.37001
+wandb:           final_no_noise/ep_return_std 10.1915
+wandb:             final_no_noise/flight_time 800.8
+wandb:        final_no_noise/intrusion_events 0.4
+wandb:          final_no_noise/intrusion_time 7.5
+wandb:       final_no_noise/mean_abs_turn_deg 8.90742
+wandb:        final_no_noise/n_agent_episodes 10
+wandb:  final_no_noise/restricted_area_events 0
+wandb:      final_no_noise/sector_exit_events 0
+wandb: final_no_noise/time_in_restricted_area 0
+wandb:                                    +19 ...
+wandb: 
+wandb: 🚀 View run sa_tf_tok3_s0 at: https://forge.coreweave.com/wandb/lego_block/bluesky-rl-transformer/runs/sa_tf_tok3_s0
+wandb: ⭐️ View project at: https://forge.coreweave.com/wandb/lego_block/bluesky-rl-transformer
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 2 other file(s)
+wandb: Find logs at: ./wandb/run-20261112_144044-sa_tf_tok3_s0/logs
+timing (s, share of wall): env 5946.0 (84%), inference 790.9 (11%), update 321.4 (5%), other 20.3 (0%)
+Saved models/sa_tf_tok3_s0.pt
+Reading config from /home/thomas/bluesky/settings.cfg
+Using compiled geo functions
+Reading magnetic variation data
+Warning: RTree could not be loaded. areafilter get_intersecting and get_knearest won't work
+Loading global navigation database...
+Reading cache: /home/thomas/bluesky/cache/navdata.p
+Successfully loaded OpenAP performance model
+Failed to load BADA performance model
+Successfully loaded legacy performance model
+Successfully loaded plugin AREA
+Successfully loaded plugin DATAFEED
+Wrote results/sa_tf_tok3_s0_summary.json
+/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+wandb: [wandb.login()] Loaded credentials for https://api.forge.coreweave.com from /home/thomas/.netrc.
+wandb: Currently logged in as: thomas-pioger (lego_block) to https://api.forge.coreweave.com. Use `wandb login --relogin` to force relogin
+wandb: setting up run sa_tf_tok3_s0
+wandb: Tracking run with wandb version 0.31.0
+wandb: Run data is saved locally in /home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/bluesky_rl_transformer/wandb/run-20261112_163947-sa_tf_tok3_s0
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Resuming run sa_tf_tok3_s0
+wandb: ⭐️ View project at https://forge.coreweave.com/wandb/lego_block/bluesky-rl-transformer
+wandb: 🚀 View run at https://forge.coreweave.com/wandb/lego_block/bluesky-rl-transformer/runs/sa_tf_tok3_s0
+wandb: updating run metadata; uploading artifact run-sa_tf_tok3_s0-held_outsummary-D4d4Mg; uploading artifact run-sa_tf_tok3_s0-held_outper_scenario-z1yL1w
+wandb: uploading artifact run-sa_tf_tok3_s0-held_outsummary-D4d4Mg; uploading artifact run-sa_tf_tok3_s0-held_outper_scenario-z1yL1w
+wandb: uploading media/images/figures/tracks_2000002_bb43a5e795b9b92dcf0a.png; uploading media/videos/videos/straight_vs_policy_2000002_d146ffa70ccdc432b836.gif; uploading wandb-summary.json; uploading media/images/figures/training_curves_2000002_f467ceb8ce95f67fe009.png; uploading media/videos/videos/policy_2000002_dd8c6e5eacb5d9395377.gif
+wandb: uploading media/videos/videos/straight_vs_policy_2000002_d146ffa70ccdc432b836.gif
+wandb: 
+wandb: Run summary:
+wandb:               final_no_noise/ep_return -19.37001
+wandb:           final_no_noise/ep_return_std 10.1915
+wandb:             final_no_noise/flight_time 800.8
+wandb:        final_no_noise/intrusion_events 0.4
+wandb:          final_no_noise/intrusion_time 7.5
+wandb:       final_no_noise/mean_abs_turn_deg 8.90742
+wandb:        final_no_noise/n_agent_episodes 10
+wandb:  final_no_noise/restricted_area_events 0
+wandb:      final_no_noise/sector_exit_events 0
+wandb: final_no_noise/time_in_restricted_area 0
+wandb:                                    +72 ...
+wandb: 
+wandb: 🚀 View run sa_tf_tok3_s0 at: https://forge.coreweave.com/wandb/lego_block/bluesky-rl-transformer/runs/sa_tf_tok3_s0
+wandb: ⭐️ View project at: https://forge.coreweave.com/wandb/lego_block/bluesky-rl-transformer
+wandb: Synced 5 W&B file(s), 6 media file(s), 4 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20261112_163947-sa_tf_tok3_s0/logs
+Wrote figures/sa_tf_tok3_s0_tracks.png
+Wrote figures/sa_tf_tok3_s0_curves.png
+Wrote gifs/sa_tf_tok3_s0_sa.gif (180 frames)
+Wrote gifs/sa_tf_tok3_s0_vs_straight.gif (182 frames)
+
+sa_tf_tok3_s0: status EXPLORATORY, single agent, policy without action noise
+      seed    policy   waypoint_reached        flight_time     intrusion_time time_in_restricted time_outside_secto     violation_time
+         2  straight                1.0              831.0                0.0              426.0                0.0              426.0
+         2    policy                1.0             1041.0                0.0                0.0                0.0                0.0
+         3  straight                1.0              817.0                0.0               10.0                0.0               10.0
+         3    policy                1.0              785.0                0.0                3.0                0.0                3.0
+         4  straight                1.0              784.0                0.0              180.0                0.0              180.0
+         4    policy                1.0              771.0                0.0                0.0                0.0                0.0
+         5  straight                1.0              690.0              145.0                0.0                0.0              145.0
+         5    policy                1.0              929.0               34.0                0.0                0.0               34.0
+  held-out  straight       1.0 ±    0.0     825.4 ±  132.9      96.3 ±  134.8      80.8 ±  141.2       0.0 ±    0.0     177.0 ±  165.8
+  held-out    policy       1.0 ±    0.1     970.8 ±  424.2      12.8 ±   21.8       1.2 ±    5.2      20.7 ±   87.4      34.7 ±   93.1
+violation_time, policy minus straight, 50 held-out scenarios: {'mean': -142.32, 'std': 161.96424790675255, 'n_policy_better': 37, 'n_equal': 8, 'n_policy_worse': 5}
+Wrote results/sa_tf_tok3_s0_compare.json
+
+metric                                 fly straight     seed 0 (our Transformer)
+goal completed (share of flights)              1.00                         0.98
+flight time (s)                              825.44                       970.78
+intrusion events                               1.08                         0.50
+intrusion time (s)                            96.26                        12.76
+restricted area events                         0.54                         0.12
+restricted area time (s)                      80.76                         1.20
+sector exit events                             0.00                         0.06
+time outside sector (s)                        0.00                        20.74
+/home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+wandb: [wandb.login()] Loaded credentials for https://api.forge.coreweave.com from /home/thomas/.netrc.
+wandb: Currently logged in as: thomas-pioger (lego_block) to https://api.forge.coreweave.com. Use `wandb login --relogin` to force relogin
+wandb: setting up run sa_tf_tok3_s0
+wandb: Tracking run with wandb version 0.31.0
+wandb: Run data is saved locally in /home/thomas/snap/snapd-desktop-integration/391/Desktop/bluesky-transformer/bluesky_rl_transformer/wandb/run-20261112_172107-sa_tf_tok3_s0
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Resuming run sa_tf_tok3_s0
+wandb: ⭐️ View project at https://forge.coreweave.com/wandb/lego_block/bluesky-rl-transformer
+wandb: 🚀 View run at https://forge.coreweave.com/wandb/lego_block/bluesky-rl-transformer/runs/sa_tf_tok3_s0
+wandb: updating run metadata; uploading artifact run-sa_tf_tok3_s0-competitionsummary-RCORiA
+wandb: uploading artifact run-sa_tf_tok3_s0-competitionsummary-RCORiA
+wandb: uploading history steps 491-491, summary, console lines 518-529
+wandb: 
+wandb: Run summary:
+wandb:              competition/ep_return_mean -40.83391
+wandb:               competition/ep_return_std 45.92594
+wandb:                    competition/episodes 1000
+wandb:            competition/flight_time_mean 1009.539
+wandb:             competition/flight_time_std 395.74581
+wandb:       competition/intrusion_events_mean 0.441
+wandb:        competition/intrusion_events_std 0.74062
+wandb:         competition/intrusion_time_mean 15.989
+wandb:          competition/intrusion_time_std 33.54911
+wandb: competition/restricted_area_events_mean 0.134
+wandb:                                     +98 ...
+wandb: 
+wandb: 🚀 View run sa_tf_tok3_s0 at: https://forge.coreweave.com/wandb/lego_block/bluesky-rl-transformer/runs/sa_tf_tok3_s0
+wandb: ⭐️ View project at: https://forge.coreweave.com/wandb/lego_block/bluesky-rl-transformer
+wandb: Synced 5 W&B file(s), 1 media file(s), 2 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20261112_172107-sa_tf_tok3_s0/logs
+Wrote results/competition_straight_sa_1000_seed42.json
+
+sa_tf_tok3_s0: competition protocol sa, 1000 episodes of seed 42, 1000 episodes, OFFICIAL count, 2470 s
+
+metric                                 fly straight     seed 0 (our Transformer)
+goal completed (share of flights)              1.00                         0.99
+flight time (s)                              852.01                      1009.54
+intrusion events                               1.13                         0.44
+intrusion time (s)                            96.32                        15.99
+restricted area events                         0.81                         0.13
+restricted area time (s)                     129.93                         7.73
+sector exit events                             0.00                         0.05
+time outside sector (s)                        0.00                        11.58
+std over the flights: goal completed (share of flights) 0.08, flight time (s) 395.75, intrusion events 0.74, intrusion time (s) 33.55, restricted area events 0.40, restricted area time (s) 35.82, sector exit events 0.29, time outside sector (s) 103.24
+Wrote results/sa_tf_tok3_s0_competition_sa.json
