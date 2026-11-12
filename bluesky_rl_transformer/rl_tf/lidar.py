@@ -24,6 +24,7 @@ DEG2KM = 111.32                                        # flat-earth factor of co
 DIST_NORM_KM = 170.0                                   # waypoint distance unit of the observation (potential shaping)
 GEOM_KEY = "lidar_geometry"
 N_CHANNELS = 3                                         # zone, boundary, aircraft (as the reference)
+SPEED_NORM_MS = 350.0                                  # closing-speed unit: largest value measured was 314 m/s (2026-11-12)
 N_TYPES = 4                                            # the 3 channels + the own goal (no channel)
 TYPE_NAMES = ["zone", "boundary", "aircraft", "goal"]
 OWN_KEYS = ["airspeed", "inside_sector", "cos_drift", "sin_drift", "waypoint_distance"]
@@ -83,9 +84,12 @@ def to_own_frame(lat, lon, lat0, lon0, hdg_deg):
 
 
 class Lidar:
-    def __init__(self, n_rays=120, fov_deg=360.0, max_range_km=100.0, ac_radius_km=5.0 * NM2KM, zone_flag=True):
+    def __init__(self, n_rays=120, fov_deg=360.0, max_range_km=100.0, ac_radius_km=5.0 * NM2KM, zone_flag=True,
+                 speed=False):
         self.n_rays, self.fov_deg, self.max_range, self.ac_radius = n_rays, fov_deg, max_range_km, ac_radius_km
         self.zone_flag = bool(zone_flag)               # the own state has the inside-zone flag
+        self.speed = bool(speed)                       # 4th channel: closing speed of the aircraft that the ray hits
+        self.n_channels = N_CHANNELS + int(self.speed)
         if fov_deg >= 360.0:
             ang = -180.0 + 360.0 * np.arange(n_rays) / n_rays          # ring, no doubled ray
         else:
@@ -120,11 +124,33 @@ class Lidar:
         return t, kind
 
     def scan(self, obs):
-        """Closeness in [0, 1], one non-zero channel per ray at most. [3, R] float32."""
+        """Closeness in [0, 1], one non-zero channel per ray at most. [3, R] float32.
+        With speed: [4, R]; channel 3 = closing speed of the aircraft that the ray hits, in [-1, 1]."""
         t, kind = self.nearest(obs)
-        out = np.zeros((N_CHANNELS, self.n_rays), dtype=np.float32)
+        out = np.zeros((self.n_channels, self.n_rays), dtype=np.float32)
         r = np.flatnonzero((kind >= 0) & (kind < N_CHANNELS))          # goal hits and misses stay 0
         out[kind[r], r] = (1.0 - t[r] / self.max_range).astype(np.float32)
+        if self.speed:
+            out[N_CHANNELS] = self.closing_speed(obs, kind)
+        return out
+
+    def closing_speed(self, obs, kind):
+        """Per ray whose nearest hit is an aircraft: the rate at which the distance between the own aircraft and
+        that aircraft decreases, divided by SPEED_NORM_MS and clipped to [-1, 1]. Positive = it comes nearer.
+        Other rays: 0. Needs "aircraft_vel" ([M, 2], velocity of each aircraft minus the own velocity, own
+        frame, m/s) in the geometry; without it the channel is 0."""
+        out = np.zeros(self.n_rays, dtype=np.float32)
+        g = obs[GEOM_KEY]
+        r = np.flatnonzero(kind == 2)
+        vel = g.get("aircraft_vel")
+        if len(r) == 0 or vel is None:
+            return out
+        ac = np.asarray(g["aircraft"], dtype=np.float64).reshape(-1, 2)
+        vel = np.asarray(vel, dtype=np.float64).reshape(-1, 2)
+        m = ray_circles(self.u[r], ac, np.full(len(ac), self.ac_radius)).argmin(axis=1)     # the aircraft of each ray
+        dist = np.maximum(np.linalg.norm(ac[m], axis=1), 1e-9)
+        closing = -(ac[m] * vel[m]).sum(axis=1) / dist                                      # m/s
+        out[r] = np.clip(closing / SPEED_NORM_MS, -1.0, 1.0).astype(np.float32)
         return out
 
 

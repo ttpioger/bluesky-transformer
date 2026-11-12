@@ -74,6 +74,19 @@ def test_inside_zone_flag():
     assert own_state(fake_obs(), (0.0, 0.0)).shape == (7,)
 
 
+def test_lidar_speed_channel_and_radius():
+    o = fake_obs(ac=(30.0, 0.0), half=500.0)                            # aircraft 30 km ahead, sector far away
+    o[GEOM_KEY]["aircraft_vel"] = np.array([[-175.0, 40.0]])            # comes nearer at 175 m/s (the side part has no effect)
+    s = Lidar(n_rays=120, max_range_km=50.0, speed=True).scan(o)
+    assert s.shape == (4, 120) and s[2, 60] > 0 and abs(s[3, 60] - 0.5) < 1e-6      # 175 / 350
+    assert np.all(s[3][s[2] == 0] == 0) and s[1].max() == 0            # speed only on aircraft rays; boundary out of range
+    o[GEOM_KEY]["aircraft_vel"] = np.array([[175.0, 0.0]])
+    assert abs(Lidar(max_range_km=50.0, speed=True).scan(o)[3, 60] + 0.5) < 1e-6    # it moves away: negative
+    assert Lidar(max_range_km=20.0, speed=True).scan(o).max() == 0     # 30 km - 9.26 km radius > 20 km: outside the lidar radius
+    assert Lidar(max_range_km=50.0).scan(o).shape == (3, 120)          # no speed channel: 3 channels, as before
+    assert obs_dims(dict(n_rays=120, speed=True), 4)["lidar_ch"] == 16 and obs_dims(dict(n_rays=120), 4)["lidar_ch"] == 12
+
+
 def test_frame_stack():
     lid = Lidar(n_rays=16)
     b = ObsBuilder(lid, history=4)

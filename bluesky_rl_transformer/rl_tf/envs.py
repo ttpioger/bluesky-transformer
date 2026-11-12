@@ -170,10 +170,13 @@ class FlightEnv:
             lat0, lon0, hdg = float(bs.traf.lat[idx]), float(bs.traf.lon[idx]), float(bs.traf.hdg[idx])
             frame = lambda ll: to_own_frame(np.asarray(ll)[:, 0], np.asarray(ll)[:, 1], lat0, lon0, hdg)
             others = np.arange(bs.traf.ntraf) != idx
+            h = np.deg2rad(hdg)                        # velocity of the others minus the own velocity, own frame, m/s
+            ve, vn = bs.traf.gseast[others] - bs.traf.gseast[idx], bs.traf.gsnorth[others] - bs.traf.gsnorth[idx]
+            vel = np.stack([ve * np.sin(h) + vn * np.cos(h), ve * np.cos(h) - vn * np.sin(h)], axis=-1).reshape(-1, 2)
             goal = (inner.goal_lat, inner.goal_lon) if self.setting == "single" else inner._goal[a]
             g = dict(zones=[frame(z.vertices) for z in sc.obstacles], sector=frame(sc.sector),
                      aircraft=to_own_frame(bs.traf.lat[others], bs.traf.lon[others], lat0, lon0, hdg).reshape(-1, 2),
-                     goal=frame([goal])[0], goal_radius=float(inner.distance_margin),
+                     aircraft_vel=vel, goal=frame([goal])[0], goal_radius=float(inner.distance_margin),
                      own_lat=lat0, own_lon=lon0, own_hdg=hdg)
             self._geom[a] = o[GEOM_KEY] = g
 
@@ -234,12 +237,12 @@ class ObsBuilder:
         self.frames.append((own_state(obs, action, self.lidar.zone_flag), self.lidar.scan(obs)))
 
     def get(self):
-        """state [K * 7] (K * 8 with the inside-zone flag), lidar [K * 3, n_rays]."""
+        """state [K * 7] (K * 8 with the inside-zone flag), lidar [K * 3, n_rays] (K * 4 with the speed channel)."""
         return (np.concatenate([f[0] for f in self.frames]), np.concatenate([f[1] for f in self.frames], axis=0))
 
 
 def obs_dims(lidar_cfg, history):
-    return dict(state_dim=state_dim(lidar_cfg.get("zone_flag", True)) * history, lidar_ch=N_CHANNELS * history, n_rays=lidar_cfg["n_rays"])
+    return dict(state_dim=state_dim(lidar_cfg.get("zone_flag", True)) * history, lidar_ch=(N_CHANNELS + int(bool(lidar_cfg.get("speed", False)))) * history, n_rays=lidar_cfg["n_rays"])
 
 
 def potential(obs, time_penalty, speed):
