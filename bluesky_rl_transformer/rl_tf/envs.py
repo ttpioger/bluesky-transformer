@@ -267,9 +267,10 @@ def controller(obs, gain=1.0):
     return np.array([np.clip(-gain * float(obs["sin_drift"][0]), -1.0, 1.0), 0.0], dtype=np.float32)
 
 
-def rollout_episode(env, policy_fn, seed, lidar, history, render=False, max_steps=400, rays=True):
+def rollout_episode(env, policy_fn, seed, lidar, history, render=False, max_steps=400, rays=True, on_step=None):
     """One episode. policy_fn(raw obs by id, (state, lidar) by id) -> action by id.
     rays: draw the lidar rays on the frames (render only).
+    on_step: called with no argument after the reset and after every step (for example to record tracks).
     Returns (metric rows by id, frames, turn actions by id)."""
     obs = env.reset(seed=seed)
     builders = {a: ObsBuilder(lidar, history) for a in obs}
@@ -277,6 +278,8 @@ def rollout_episode(env, policy_fn, seed, lidar, history, render=False, max_step
         builders[a].reset(obs[a])
     grab = (lambda o: env.render_rays(o, lidar)) if rays else (lambda o: env.render())
     frames = [grab(obs)] if render else []
+    if on_step is not None:
+        on_step()
     ret, turns, rows, steps = {a: 0.0 for a in obs}, {a: [] for a in obs}, {}, 0
     while env.agents and steps < max_steps:
         live = list(env.agents)
@@ -285,6 +288,8 @@ def rollout_episode(env, policy_fn, seed, lidar, history, render=False, max_step
         steps += 1
         if render:
             frames.append(grab(obs))
+        if on_step is not None:
+            on_step()
         for a in live:
             ret[a] += rew[a]
             turns[a].append(float(acts[a][0]))

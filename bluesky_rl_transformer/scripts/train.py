@@ -103,10 +103,15 @@ def main(argv=None):
     total, updates, n_cut_total, t_start = 0, 0, 0, time.time()
     n_nonfinite = 0
     tt = lambda x: torch.as_tensor(x, device=dev)
+    # wall-clock timers (seconds): environment (reset + step), inference (policy.act), update (GAE + PPO epochs)
+    timing = {"env": 0.0, "inference": 0.0, "update": 0.0}
+    sync = (lambda: torch.cuda.synchronize()) if str(dev).startswith("cuda") else (lambda: None)
 
     while total < args.steps:
         T = max(1, min(args.rollout_steps, int(np.ceil((args.steps - total) / E))))
+        t0 = time.perf_counter()
         (state, lidar, _), n_cut = vec.reset()          # reference: env.reset() at the start of every rollout
+        timing["env"] += time.perf_counter() - t0
         n_cut_total += n_cut
         B_state = np.zeros((T, E, N, dims["state_dim"]), dtype=np.float32)
         B_lidar = np.zeros((T, E, N, dims["lidar_ch"], dims["n_rays"]), dtype=np.float32)
@@ -117,8 +122,10 @@ def main(argv=None):
 
         torch.set_num_threads(1)
         for t in range(T):
+            t0 = time.perf_counter()
             raw, logp, val = policy.act(tt(state), tt(lidar))
-            raw = raw.cpu().numpy()
+            raw = raw.cpu().numpy()                          # .cpu() waits for the GPU, so the timer is exact
+            timing["inference"] += time.perf_counter() - t0
             bad = ~np.isfinite(raw).all(-1)                  # diagnostic: a NaN action gives a BlueSky HDG error
             if bad.any():
                 n_nonfinite += int(bad.sum())
@@ -128,15 +135,20 @@ def main(argv=None):
                           flush=True)
             B_state[t], B_lidar[t], B_raw[t] = state, lidar, raw
             B_logp[t], B_val[t] = logp.cpu().numpy(), val.cpu().numpy()
+            t0 = time.perf_counter()
             res = vec.step(np.clip(raw, -1.0, 1.0))
+            timing["env"] += time.perf_counter() - t0
             total += E
             B_rew[t] = (res["rew"] + args.gamma * res["phi_next"] - res["phi"]) * args.reward_scale
             B_done[t] = res["done"]
             for e in res["episodes"]:
                 episodes.append({"env_steps": total, **e})
             state, lidar, _ = res["cur"]
+        t0 = time.perf_counter()
         last_val = policy.act(tt(state), tt(lidar))[2].cpu().numpy()
+        timing["inference"] += time.perf_counter() - t0
 
+        t0 = time.perf_counter()
         M = E * N
         adv, ret = compute_gae(B_rew.reshape(T, M), B_val.reshape(T, M), B_done.reshape(T, M),
                                last_val.reshape(M), args.gamma, args.gae_lambda)   # no advantage normalization
@@ -164,6 +176,8 @@ def main(argv=None):
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(policy.parameters(), args.max_grad_norm)
                 opt.step()
+        sync()
+        timing["update"] += time.perf_counter() - t0
         updates += 1
 
         new_eps = episodes[n_before:]
@@ -189,6 +203,9 @@ def main(argv=None):
             wandb_upload(wb, model_path)
 
     wall = time.time() - t_start
+    timing["other"] = wall - sum(timing.values())
+    timing_share = {k: v / max(wall, 1e-9) for k, v in timing.items()}
+    print("timing (s, share of wall): " + ", ".join(f"{k} {v:.1f} ({timing_share[k]:.0%})" for k, v in timing.items()))
     vec.close()
     save_checkpoint(model_path, policy, vars(args), dims)
     print(f"Saved {model_path}")
@@ -219,6 +236,7 @@ def main(argv=None):
         "n_nonfinite_actions": n_nonfinite, **pass_criterion(episodes),
         "greedy_eval": {"seeds": seeds, "mean": window_stats(greedy_rows), "rows": greedy_rows},
         "wall_seconds": wall, "seconds_per_step": wall / max(total, 1),
+        "timing_seconds": timing, "timing_share": timing_share,
         "args": vars(args), "curve": curve, "episodes": episodes})
     if wb is not None:
         wandb_upload(wb, summary_path)
