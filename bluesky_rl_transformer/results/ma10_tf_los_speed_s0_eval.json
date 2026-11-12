@@ -1535,5 +1535,8 @@
    "turn_sign_flip_rate": 0.7951807228915663
   }
  ],
- "gif": "gifs/ma10_tf_los_speed_s0.gif"
+ "gifs": [
+  "gifs/ma10_tf_los_speed_s0_ep3.gif",
+  "gifs/ma10_tf_los_speed_s0_ep4.gif"
+ ]
 }
