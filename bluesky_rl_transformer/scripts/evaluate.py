@@ -110,11 +110,12 @@ def tracks_figure(episodes, path, label):
                Line2D([], [], color=cmap(0), marker="*", lw=0, ms=11, mec="black", label="Goal of the aircraft with the same colour"),
                Line2D([], [], color=RED, lw=3.0, label="Closer than 5 NM to another aircraft"),
                Line2D([], [], color="black", marker="x", lw=0, ms=8, mew=2, label="End of a flight that did not reach its goal"),
-               Line2D([], [], color=GREY, marker="o", ms=3, lw=0.6, label="Scripted aircraft: start and track"),
                Patch(color=FILL, label="Restricted area"), Line2D([], [], color=EDGE, lw=4, label="Sector boundary")]
+    if any(f["others"] for f in episodes):                 # the multi-agent setting has no scripted aircraft
+        handles.insert(4, Line2D([], [], color=GREY, marker="o", ms=3, lw=0.6, label="Scripted aircraft: start and track"))
     fig.legend(handles=handles, loc="lower center", ncol=3, frameon=False, fontsize=9)
     fig.suptitle(f"{label}: flown tracks, policy without action noise, one panel per scenario", fontsize=11)
-    fig.tight_layout(rect=(0, 0.9 / (4.6 * nrow + 1.2), 1, 0.97))
+    fig.tight_layout(rect=(0, 0.9 / (4.6 * nrow + 1.2), 1, 0.97), h_pad=4.0)   # room for the scale bar above each title
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(path, dpi=150)
     plt.close(fig)
@@ -143,7 +144,7 @@ def main(argv=None):
     p.add_argument("--gif", default=None, help="GIF path. One file per episode: PATH without .gif + _epI.gif.")
     p.add_argument("--gif-episodes", default=None,
                    help="Episode indexes with a GIF, for example 3,4. Default: all episodes.")
-    p.add_argument("--gif-ms", type=int, default=200, help="Display time of one frame (ms). Larger = slower.")
+    p.add_argument("--gif-ms", type=int, default=100, help="Display time of one frame (ms). Larger = slower.")
     p.add_argument("--gif-max-frames", type=int, default=400,
                    help="Frames per episode GIF. 400 keeps every decision step (an episode has 300 steps at most).")
     p.add_argument("--gif-size", type=int, default=512, help="GIF side length (pixels).")
