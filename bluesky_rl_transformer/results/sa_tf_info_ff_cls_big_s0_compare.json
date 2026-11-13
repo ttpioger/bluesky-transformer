@@ -1,0 +1,1851 @@
+{
+ "status": "EXPLORATORY",
+ "name": "sa_tf_info_ff_cls_big_s0",
+ "model": "models/sa_tf_info_ff_cls_big_s0.pt",
+ "setting": "single",
+ "deterministic": true,
+ "track_seeds": [
+  2,
+  3,
+  4,
+  5
+ ],
+ "eval_seeds": [
+  900000000,
+  900000001,
+  900000002,
+  900000003,
+  900000004,
+  900000005,
+  900000006,
+  900000007,
+  900000008,
+  900000009,
+  900000010,
+  900000011,
+  900000012,
+  900000013,
+  900000014,
+  900000015,
+  900000016,
+  900000017,
+  900000018,
+  900000019,
+  900000020,
+  900000021,
+  900000022,
+  900000023,
+  900000024,
+  900000025,
+  900000026,
+  900000027,
+  900000028,
+  900000029,
+  900000030,
+  900000031,
+  900000032,
+  900000033,
+  900000034,
+  900000035,
+  900000036,
+  900000037,
+  900000038,
+  900000039,
+  900000040,
+  900000041,
+  900000042,
+  900000043,
+  900000044,
+  900000045,
+  900000046,
+  900000047,
+  900000048,
+  900000049
+ ],
+ "std": "population std over the held-out scenarios (one model seed)",
+ "held_out": {
+  "straight": {
+   "waypoint_reached": {
+    "mean": 1.0,
+    "std": 0.0
+   },
+   "flight_time": {
+    "mean": 825.44,
+    "std": 132.8984815564121
+   },
+   "intrusion_events": {
+    "mean": 1.08,
+    "std": 1.0925200226998129
+   },
+   "intrusion_time": {
+    "mean": 96.26,
+    "std": 134.8290487988401
+   },
+   "restricted_area_events": {
+    "mean": 0.54,
+    "std": 0.72691127381545
+   },
+   "time_in_restricted_area": {
+    "mean": 80.76,
+    "std": 141.2325118377493
+   },
+   "sector_exit_events": {
+    "mean": 0.0,
+    "std": 0.0
+   },
+   "time_outside_sector": {
+    "mean": 0.0,
+    "std": 0.0
+   },
+   "violation_time": {
+    "mean": 177.02,
+    "std": 165.79812906061395
+   },
+   "ep_return": {
+    "mean": -89.06625537738611,
+    "std": 70.77828017110838
+   },
+   "mean_abs_turn_deg": {
+    "mean": 0.0,
+    "std": 0.0
+   },
+   "turn_sign_flip_rate": {
+    "mean": 0.0,
+    "std": 0.0
+   }
+  },
+  "policy": {
+   "waypoint_reached": {
+    "mean": 1.0,
+    "std": 0.0
+   },
+   "flight_time": {
+    "mean": 918.8,
+    "std": 229.35945587657818
+   },
+   "intrusion_events": {
+    "mean": 0.36,
+    "std": 0.5571355310873647
+   },
+   "intrusion_time": {
+    "mean": 14.78,
+    "std": 26.769602163648226
+   },
+   "restricted_area_events": {
+    "mean": 0.14,
+    "std": 0.3469870314579494
+   },
+   "time_in_restricted_area": {
+    "mean": 7.76,
+    "std": 27.720432897052675
+   },
+   "sector_exit_events": {
+    "mean": 0.02,
+    "std": 0.13999999999999999
+   },
+   "time_outside_sector": {
+    "mean": 3.08,
+    "std": 21.56
+   },
+   "violation_time": {
+    "mean": 25.62,
+    "std": 44.24427194564286
+   },
+   "ep_return": {
+    "mean": -33.624275405112165,
+    "std": 21.847780595453877
+   },
+   "mean_abs_turn_deg": {
+    "mean": 37.31000095758603,
+    "std": 2.1979504415374276
+   },
+   "turn_sign_flip_rate": {
+    "mean": 0.8711603234963288,
+    "std": 0.0494729836659406
+   }
+  },
+  "violation_time_policy_minus_straight": {
+   "mean": -151.4,
+   "std": 168.19143854548602,
+   "n_policy_better": 40,
+   "n_equal": 7,
+   "n_policy_worse": 3
+  }
+ },
+ "rows": [
+  {
+   "episode_seed": 2,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 831.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 426.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -142.26562479079507,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 426.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 930.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -22.5345871698548,
+    "mean_abs_turn_deg": 36.51768809244518,
+    "turn_sign_flip_rate": 0.8478260869565217,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 3,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 817.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 10.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -17.255148971714803,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 10.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 1476.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -58.14192021646659,
+    "mean_abs_turn_deg": 33.89767772883076,
+    "turn_sign_flip_rate": 0.8843537414965986,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 4,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 784.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 180.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -67.78482460683419,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 180.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 755.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -13.254869423353206,
+    "mean_abs_turn_deg": 41.4128933400896,
+    "turn_sign_flip_rate": 0.9066666666666666,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 5,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 690.0,
+    "intrusion_events": 3.0,
+    "intrusion_time": 145.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -91.8666330862033,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 145.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 875.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -25.085971753854608,
+    "mean_abs_turn_deg": 38.06339389271505,
+    "turn_sign_flip_rate": 0.8735632183908046,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000000,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 714.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -10.712395891591363,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 0.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 678.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -11.341680766915323,
+    "mean_abs_turn_deg": 36.195719536010394,
+    "turn_sign_flip_rate": 0.9552238805970149,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000001,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 1083.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 312.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 9.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -179.9458412455517,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 321.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 1250.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -31.393753665016327,
+    "mean_abs_turn_deg": 33.51453717486933,
+    "turn_sign_flip_rate": 0.8548387096774194,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000002,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 719.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -10.812156963396347,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 0.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 677.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -11.066188771317343,
+    "mean_abs_turn_deg": 38.030503810903824,
+    "turn_sign_flip_rate": 0.9701492537313433,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000003,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 1061.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 60.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -48.915105231542505,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 60.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 1018.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -17.576119907925495,
+    "mean_abs_turn_deg": 40.62043322469382,
+    "turn_sign_flip_rate": 0.8811881188118812,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000004,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 827.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -12.419404108034374,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 0.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 1347.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -49.74165875189034,
+    "mean_abs_turn_deg": 39.85732313990593,
+    "turn_sign_flip_rate": 0.8731343283582089,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000005,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 891.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 81.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -39.70911474989443,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 81.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 957.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -21.21745133580348,
+    "mean_abs_turn_deg": 33.46837980905548,
+    "turn_sign_flip_rate": 0.9157894736842105,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000006,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 632.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 62.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -43.48453203356879,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 62.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 650.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -13.318663189335401,
+    "mean_abs_turn_deg": 39.20270295240558,
+    "turn_sign_flip_rate": 0.84375,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000007,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 635.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -9.535238763524582,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 0.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 598.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -9.791077729782529,
+    "mean_abs_turn_deg": 39.70110555365682,
+    "turn_sign_flip_rate": 0.9322033898305084,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000008,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 946.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 3.0,
+    "time_in_restricted_area": 425.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -147.69676189541678,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 425.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 1423.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 3.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -52.488292280831864,
+    "mean_abs_turn_deg": 31.84034526673751,
+    "turn_sign_flip_rate": 0.8028169014084507,
+    "violation_time": 3.0
+   }
+  },
+  {
+   "episode_seed": 900000009,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 670.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 12.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -19.05080576707139,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 12.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 659.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 8.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -19.067985219954554,
+    "mean_abs_turn_deg": 40.699914436025374,
+    "turn_sign_flip_rate": 0.9076923076923077,
+    "violation_time": 8.0
+   }
+  },
+  {
+   "episode_seed": 900000010,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 869.0,
+    "intrusion_events": 3.0,
+    "intrusion_time": 118.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -81.06555202947261,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 118.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 867.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 24.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -31.577808452162092,
+    "mean_abs_turn_deg": 34.91861427540024,
+    "turn_sign_flip_rate": 0.9069767441860465,
+    "violation_time": 24.0
+   }
+  },
+  {
+   "episode_seed": 900000011,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 690.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -10.350004905245461,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 0.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 764.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 75.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -42.548527874840005,
+    "mean_abs_turn_deg": 35.892406579276376,
+    "turn_sign_flip_rate": 0.7894736842105263,
+    "violation_time": 75.0
+   }
+  },
+  {
+   "episode_seed": 900000012,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 807.0,
+    "intrusion_events": 2.0,
+    "intrusion_time": 488.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -262.1073556598317,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 488.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 908.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -22.236409809000634,
+    "mean_abs_turn_deg": 36.24664050762306,
+    "turn_sign_flip_rate": 0.8222222222222222,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000013,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 829.0,
+    "intrusion_events": 2.0,
+    "intrusion_time": 127.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -81.94299772753598,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 127.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 801.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 67.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -50.65131002619927,
+    "mean_abs_turn_deg": 38.77550696954131,
+    "turn_sign_flip_rate": 0.8625,
+    "violation_time": 67.0
+   }
+  },
+  {
+   "episode_seed": 900000014,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 693.0,
+    "intrusion_events": 4.0,
+    "intrusion_time": 250.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -147.40726527403183,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 250.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 713.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -14.585585322664942,
+    "mean_abs_turn_deg": 34.95496132411063,
+    "turn_sign_flip_rate": 0.8169014084507042,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000015,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 1056.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -15.84038947064319,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 0.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 994.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -16.274768437781486,
+    "mean_abs_turn_deg": 38.67154553337023,
+    "turn_sign_flip_rate": 0.9292929292929293,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000016,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 922.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 51.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 607.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -226.43043740933902,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 658.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 1057.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 10.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -31.732324973919617,
+    "mean_abs_turn_deg": 36.595789858124675,
+    "turn_sign_flip_rate": 0.8857142857142857,
+    "violation_time": 10.0
+   }
+  },
+  {
+   "episode_seed": 900000017,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 1069.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 3.0,
+    "time_in_restricted_area": 95.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -50.54168016917497,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 95.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 1384.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -40.927820491763306,
+    "mean_abs_turn_deg": 37.22742487066727,
+    "turn_sign_flip_rate": 0.8478260869565217,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000018,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 991.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -14.865275440736681,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 0.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 958.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -16.829544390164543,
+    "mean_abs_turn_deg": 35.387330779776676,
+    "turn_sign_flip_rate": 0.9157894736842105,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000019,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 834.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 66.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -34.31231385165583,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 66.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 1236.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 32.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -60.793763682494536,
+    "mean_abs_turn_deg": 35.988013359057085,
+    "turn_sign_flip_rate": 0.8292682926829268,
+    "violation_time": 32.0
+   }
+  },
+  {
+   "episode_seed": 900000020,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 681.0,
+    "intrusion_events": 3.0,
+    "intrusion_time": 400.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 16.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -226.01577045531482,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 416.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 815.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -21.743433333849932,
+    "mean_abs_turn_deg": 34.70423606973959,
+    "turn_sign_flip_rate": 0.8024691358024691,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000021,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 832.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 54.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -42.48021189325595,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 54.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 783.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 66.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -48.72951171163238,
+    "mean_abs_turn_deg": 39.94182091819335,
+    "turn_sign_flip_rate": 0.9487179487179487,
+    "violation_time": 66.0
+   }
+  },
+  {
+   "episode_seed": 900000022,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 753.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 113.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -47.20241666472131,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 113.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 739.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -13.406842127608503,
+    "mean_abs_turn_deg": 35.238538821172,
+    "turn_sign_flip_rate": 0.875,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000023,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 923.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 68.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -50.8450726067108,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 68.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 1139.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -31.981645322937467,
+    "mean_abs_turn_deg": 36.85057493024751,
+    "turn_sign_flip_rate": 0.8761061946902655,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000024,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 977.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 61.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 131.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -89.45536119912795,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 192.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 1057.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 173.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -77.79631045551159,
+    "mean_abs_turn_deg": 37.149270589480984,
+    "turn_sign_flip_rate": 0.8857142857142857,
+    "violation_time": 173.0
+   }
+  },
+  {
+   "episode_seed": 900000025,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 911.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 111.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 307.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -166.2726374950547,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 418.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 941.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -19.314885306785587,
+    "mean_abs_turn_deg": 37.15258598768789,
+    "turn_sign_flip_rate": 0.9042553191489362,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000026,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 722.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 57.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 74.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -66.53000426895731,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 131.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 681.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 63.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -45.69821560206203,
+    "mean_abs_turn_deg": 38.72248165633368,
+    "turn_sign_flip_rate": 0.8970588235294118,
+    "violation_time": 63.0
+   }
+  },
+  {
+   "episode_seed": 900000027,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 838.0,
+    "intrusion_events": 2.0,
+    "intrusion_time": 267.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -152.07006538894728,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 267.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 1510.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 20.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 1.0,
+    "time_outside_sector": 154.0,
+    "ep_return": -103.79717131296115,
+    "mean_abs_turn_deg": 40.56194331867016,
+    "turn_sign_flip_rate": 0.92,
+    "violation_time": 174.0
+   }
+  },
+  {
+   "episode_seed": 900000028,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 654.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 303.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -164.31000978572908,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 303.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 816.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 51.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -51.637790045708904,
+    "mean_abs_turn_deg": 37.90158561771599,
+    "turn_sign_flip_rate": 0.8271604938271605,
+    "violation_time": 51.0
+   }
+  },
+  {
+   "episode_seed": 900000029,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 733.0,
+    "intrusion_events": 3.0,
+    "intrusion_time": 141.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -90.49783841204079,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 141.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 745.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -14.73016769625374,
+    "mean_abs_turn_deg": 34.9774067223072,
+    "turn_sign_flip_rate": 0.8648648648648649,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000030,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 737.0,
+    "intrusion_events": 3.0,
+    "intrusion_time": 228.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -134.05968932193974,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 228.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 1153.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -41.485165489067825,
+    "mean_abs_turn_deg": 34.08166624565513,
+    "turn_sign_flip_rate": 0.7739130434782608,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000031,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 758.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 330.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -112.37003723878117,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 330.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 833.0,
+    "intrusion_events": 2.0,
+    "intrusion_time": 118.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 31.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -95.86242695113252,
+    "mean_abs_turn_deg": 39.263551708843025,
+    "turn_sign_flip_rate": 0.891566265060241,
+    "violation_time": 149.0
+   }
+  },
+  {
+   "episode_seed": 900000032,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 1018.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 2.0,
+    "time_in_restricted_area": 388.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -135.67032917375695,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 388.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 1089.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -24.444703154426215,
+    "mean_abs_turn_deg": 39.0170115729529,
+    "turn_sign_flip_rate": 0.8796296296296297,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000033,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 637.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -9.555032010496241,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 0.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 618.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -10.967266278716732,
+    "mean_abs_turn_deg": 38.79090129127425,
+    "turn_sign_flip_rate": 0.9016393442622951,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000034,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 679.0,
+    "intrusion_events": 3.0,
+    "intrusion_time": 194.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -116.18529980924481,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 194.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 729.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -16.36106330715533,
+    "mean_abs_turn_deg": 36.343715960695725,
+    "turn_sign_flip_rate": 0.7916666666666666,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000035,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 1074.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 297.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -107.2267579947199,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 297.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 1089.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -21.76952636954628,
+    "mean_abs_turn_deg": 39.854662126494105,
+    "turn_sign_flip_rate": 0.9259259259259259,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000036,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 872.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 40.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -36.084138980317555,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 40.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 865.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -16.250915823797943,
+    "mean_abs_turn_deg": 36.534388141128524,
+    "turn_sign_flip_rate": 0.8953488372093024,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000037,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 809.0,
+    "intrusion_events": 3.0,
+    "intrusion_time": 240.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -141.1657307499733,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 240.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 1218.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 34.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -61.96793467541973,
+    "mean_abs_turn_deg": 34.98439476371086,
+    "turn_sign_flip_rate": 0.743801652892562,
+    "violation_time": 34.0
+   }
+  },
+  {
+   "episode_seed": 900000038,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 897.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 133.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -55.355920622315686,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 133.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 854.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 58.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -33.85978550345756,
+    "mean_abs_turn_deg": 39.8113073889426,
+    "turn_sign_flip_rate": 0.8352941176470589,
+    "violation_time": 58.0
+   }
+  },
+  {
+   "episode_seed": 900000039,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 940.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 2.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 29.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -28.80214680127592,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 31.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 923.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 2.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -20.872212801919265,
+    "mean_abs_turn_deg": 38.22472936804256,
+    "turn_sign_flip_rate": 0.8586956521739131,
+    "violation_time": 2.0
+   }
+  },
+  {
+   "episode_seed": 900000040,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 686.0,
+    "intrusion_events": 3.0,
+    "intrusion_time": 144.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -91.29028749820618,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 144.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 870.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 29.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -42.64823141993356,
+    "mean_abs_turn_deg": 37.67137418019361,
+    "turn_sign_flip_rate": 0.7906976744186046,
+    "violation_time": 29.0
+   }
+  },
+  {
+   "episode_seed": 900000041,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 829.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 20.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -25.43837632360386,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 20.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 780.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -12.821502646317049,
+    "mean_abs_turn_deg": 39.81197880437741,
+    "turn_sign_flip_rate": 0.948051948051948,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000042,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 686.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 33.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 49.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -46.495260593861445,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 82.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 665.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 70.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 38.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -63.20757453436784,
+    "mean_abs_turn_deg": 40.28368124210123,
+    "turn_sign_flip_rate": 0.8787878787878788,
+    "violation_time": 108.0
+   }
+  },
+  {
+   "episode_seed": 900000043,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 641.0,
+    "intrusion_events": 2.0,
+    "intrusion_time": 152.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -91.63530944603357,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 152.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 658.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 39.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -35.909295184302536,
+    "mean_abs_turn_deg": 39.53968299298801,
+    "turn_sign_flip_rate": 0.8615384615384616,
+    "violation_time": 39.0
+   }
+  },
+  {
+   "episode_seed": 900000044,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 767.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 59.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 8.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -48.405814927065016,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 67.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 756.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -14.011143188681796,
+    "mean_abs_turn_deg": 38.589049273440125,
+    "turn_sign_flip_rate": 0.8933333333333333,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000045,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 745.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 60.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 330.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -145.17500170829612,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 390.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 798.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -17.67113136664137,
+    "mean_abs_turn_deg": 37.211311248131096,
+    "turn_sign_flip_rate": 0.8860759493670886,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000046,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 964.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 312.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -110.10224795996557,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 312.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 1258.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -37.79095804278747,
+    "mean_abs_turn_deg": 32.90972394203501,
+    "turn_sign_flip_rate": 0.832,
+    "violation_time": 0.0
+   }
+  },
+  {
+   "episode_seed": 900000047,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 938.0,
+    "intrusion_events": 2.0,
+    "intrusion_time": 598.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -319.0758622669538,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 598.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 1035.0,
+    "intrusion_events": 2.0,
+    "intrusion_time": 68.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -64.17759214848158,
+    "mean_abs_turn_deg": 36.751746190711856,
+    "turn_sign_flip_rate": 0.8640776699029126,
+    "violation_time": 68.0
+   }
+  },
+  {
+   "episode_seed": 900000048,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 903.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 39.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 16.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -42.845086452481695,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 55.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 865.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 48.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -41.83442779828169,
+    "mean_abs_turn_deg": 37.59801477948525,
+    "turn_sign_flip_rate": 0.8604651162790697,
+    "violation_time": 48.0
+   }
+  },
+  {
+   "episode_seed": 900000049,
+   "straight": {
+    "waypoint_reached": 1.0,
+    "flight_time": 730.0,
+    "intrusion_events": 1.0,
+    "intrusion_time": 62.0,
+    "restricted_area_events": 1.0,
+    "time_in_restricted_area": 222.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -113.55042223289826,
+    "mean_abs_turn_deg": 0.0,
+    "turn_sign_flip_rate": 0.0,
+    "violation_time": 284.0
+   },
+   "policy": {
+    "waypoint_reached": 1.0,
+    "flight_time": 719.0,
+    "intrusion_events": 0.0,
+    "intrusion_time": 0.0,
+    "restricted_area_events": 0.0,
+    "time_in_restricted_area": 0.0,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "ep_return": -13.304205576099385,
+    "mean_abs_turn_deg": 37.237513065338135,
+    "turn_sign_flip_rate": 0.9014084507042254,
+    "violation_time": 0.0
+   }
+  }
+ ]
+}

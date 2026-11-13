@@ -154,6 +154,16 @@ class FlightEnv:
             p.update(t=t, zone=zone, exit=ext, turn=turn, intr=intr)
         return obs, out_rew, {a: bool(term[a]) for a in obs}, {a: bool(trunc[a]) for a in obs}, infos
 
+    def set_density(self, n_intruders, n_obstacles):
+        """Curriculum (2026-11-13): the scenario generator makes n_intruders other aircraft and n_obstacles restricted
+        areas from the next reset on. The generator reads both counts at each reset (core/scenario.py). The size of
+        the observation of the environment does not change: absent objects are empty rows. The competition values
+        are 10 and 5 (the constructor defaults)."""
+        gen = getattr(self.env.unwrapped, "scenario_generator", None)
+        if gen is None:
+            raise ValueError("this environment has no scenario_generator; curriculum is not possible")
+        gen.n_intruders, gen.n_obstacles = int(n_intruders), int(n_obstacles)
+
     def _ac_id(self, a):
         return self.env.unwrapped.agent if self.setting == "single" else a
 
@@ -240,12 +250,14 @@ class ObsBuilder:
         h = self.lidar.act_tokens                      # last H actions, oldest first; an empty row has flag 0
         self.acts = deque([(0.0, 0.0, 0.0)] * h, maxlen=h) if h else None
         self.edge = self.lidar.edge_tokens_vec(obs) if self.lidar.edge_tokens else None
+        self.map = self.lidar.map_vec(obs) if self.lidar.map_px else None
 
     def push(self, obs, action):
         self.frames.append((own_state(obs, action, self.lidar.zone_flag), self.lidar.scan(obs)))
         self.ac = self.lidar.aircraft_tokens(obs) if self.lidar.ac_tokens else None
         self.zone = self.lidar.zone_tokens_vec(obs) if self.lidar.zone_tokens else None
         self.edge = self.lidar.edge_tokens_vec(obs) if self.lidar.edge_tokens else None
+        self.map = self.lidar.map_vec(obs) if self.lidar.map_px else None
         if self.acts is not None:
             self.acts.append((float(action[0]), float(action[1]), 1.0))
 
@@ -261,11 +273,22 @@ class ObsBuilder:
             state.append(np.concatenate([a[:, :ACT_FEATURES].reshape(-1), a[:, ACT_FEATURES]]))
         if self.edge is not None:                      # sector-edge tokens of the newest frame
             state.append(self.edge)
+        if self.map is not None:                       # map block of the newest frame: time left, then the image
+            state.append(self.map)
         return (np.concatenate(state), np.concatenate([f[1] for f in self.frames], axis=0))
 
 
+def lidar_cfg_from_args(args):
+    """Lidar and token settings from the flags of scripts.train (also used by the JEPA scripts)."""
+    return dict(n_rays=args.n_rays, fov_deg=args.fov_deg, max_range_km=args.max_range_km,
+                zone_flag=bool(args.zone_flag), speed=bool(args.lidar_speed), ac_tokens=args.ac_tokens,
+                zone_tokens=args.zone_tokens, act_tokens=args.act_tokens,
+                edge_tokens=args.edge_tokens, ac_cpa=args.ac_cpa, map_px=args.map_px, map_range_km=args.map_range_km)
+
+
 def obs_dims(lidar_cfg, history):
-    tok = {k: int(lidar_cfg.get(k, 0)) for k in ["ac_tokens", "zone_tokens", "act_tokens", "edge_tokens", "ac_cpa"]}   # values at the end of the state
+    tok = {k: int(lidar_cfg.get(k, 0)) for k in ["ac_tokens", "zone_tokens", "act_tokens", "edge_tokens", "ac_cpa",
+                                                 "map_px"]}   # values at the end of the state
     return dict(state_dim=state_dim(lidar_cfg.get("zone_flag", True)) * history + extra_dim(**tok), **tok,
                 lidar_ch=(N_CHANNELS + int(bool(lidar_cfg.get("speed", False)))) * history, n_rays=lidar_cfg["n_rays"])
 
@@ -400,6 +423,9 @@ def _worker(conn, cfg, worker):
                 else:
                     cur = pack(live)          # terminal observation of an aircraft that finished at this step
                 conn.send(dict(cur=cur, rew=r, phi=p, phi_next=pn, done=np.full(N, done), episodes=episodes))
+            elif cmd == "density":                # curriculum: effective from the next reset
+                env.set_density(*data)
+                conn.send(True)
             elif cmd == "close":
                 env.close()
                 conn.close()
@@ -445,6 +471,13 @@ class VecEnv:
         out["cur"] = self._stack([r["cur"] for r in res])
         out["episodes"] = [e for r in res for e in r["episodes"]]
         return out
+
+    def set_density(self, n_intruders, n_obstacles):
+        """Curriculum: all workers use the new counts from their next reset on."""
+        for c in self.conns:
+            c.send(("density", (n_intruders, n_obstacles)))
+        for c in self.conns:
+            c.recv()
 
     def close(self):
         for c in self.conns:

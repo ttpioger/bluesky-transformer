@@ -292,6 +292,157 @@ def test_ppo_step_learns_a_target_action():
     assert loss.item() < 0.1 * first
 
 
+def test_jepa_loss_start_and_target_update():
+    from rl_tf.jepa import TemporalJepa
+    pol = _policy()
+    jepa = TemporalJepa(pol.encoder, hidden=32)
+    state, lidar, act = torch.randn(8, 3, 28), torch.rand(8, 3, 12, 120), torch.rand(8, 2, 2) * 2 - 1
+    z = pol.encoder(state[:, 0], lidar[:, 0])
+    assert torch.allclose(jepa.step(z, act[:, 0]), z)               # start: the predictor gives "no change"
+    loss, info = jepa.loss(state, lidar, act)
+    assert torch.isfinite(loss) and len(info["pred_per_k"]) == 2
+    loss.backward()
+    assert all(p.grad is None for p in jepa.target.parameters())    # no gradient into the slow copy
+    with torch.no_grad():
+        pol.encoder.dense[0].weight.add_(1.0)
+    jepa.update_target(0.0)                                         # tau 0: the slow copy becomes the encoder
+    assert all(torch.equal(a, b) for a, b in zip(jepa.online.parameters(), jepa.target.parameters()))
+
+
+def test_jepa_windows_labels_probes_schedule():
+    from rl_tf.jepa import window_starts, future_labels, auc, ridge_fit, ridge_predict, ema_tau
+    has_next = np.array([1, 1, 0, 1, 1, 1, 0], np.uint8)            # flight A: rows 0-2, flight B: rows 3-6
+    assert window_starts(has_next, 2).tolist() == [0, 3, 4]
+    flag = np.array([0, 0, 0, 0, 0, 1, 0], np.uint8)
+    label, ok = future_labels(flag, has_next, 3)
+    assert label.tolist() == [False, False, False, True, True, True, False]
+    assert ok.tolist() == [True, True, True, True, True, True, False]
+    assert auc(np.array([0.1, 0.2, 0.8, 0.9]), np.array([0, 0, 1, 1])) == 1.0
+    assert auc(np.array([0.9, 0.8, 0.2, 0.1]), np.array([0, 0, 1, 1])) == 0.0
+    assert auc(np.zeros(4), np.array([0, 1, 0, 1])) == 0.5
+    x = np.random.default_rng(0).normal(size=(200, 3))
+    w = ridge_fit(x, x @ np.array([1.0, -2.0, 0.5]) + 3.0, lam=1e-8)
+    assert np.allclose(ridge_predict(w, x[:5]), x[:5] @ np.array([1.0, -2.0, 0.5]) + 3.0, atol=1e-4)
+    assert abs(ema_tau(0, 100) - 0.996) < 1e-12 and ema_tau(100, 100) == 1.0
+
+
+def test_curriculum_stages():
+    from rl_tf.common import parse_curriculum, curriculum_stage
+    st = parse_curriculum("5:3@300000, 2:1@0,10:5@800000")
+    assert st == [(0, 2, 1), (300000, 5, 3), (800000, 10, 5)] and parse_curriculum("") == []
+    assert curriculum_stage(st, 0) == (2, 1) and curriculum_stage(st, 299999) == (2, 1)
+    assert curriculum_stage(st, 300000) == (5, 3) and curriculum_stage(st, 5_000_000) == (10, 5)
+    try:
+        parse_curriculum("2:1@100")
+    except ValueError:
+        return
+    raise AssertionError("a curriculum without a stage at step 0 was accepted")
+
+
+def test_encoder_save_and_load():
+    import tempfile
+    from pathlib import Path
+    from rl_tf.networks import save_encoder, load_encoder
+    args = dict(patch=4, d_model=64, n_heads=4, n_layers=2, features_dim=256, fourier=0, cls_token=0)
+    dims = dict(state_dim=28, lidar_ch=12, n_rays=120)
+    a = _policy()
+    torch.manual_seed(1)
+    b = Policy(state_dim=28, lidar_ch=12, n_rays=120)
+    state, lidar = torch.randn(4, 28), torch.rand(4, 12, 120)
+    assert not torch.allclose(a.encoder(state, lidar), b.encoder(state, lidar))
+    with tempfile.TemporaryDirectory() as d:
+        path = Path(d) / "enc.pt"
+        save_encoder(path, a.encoder, args, dims)
+        load_encoder(b, path, dims, args)
+        assert torch.equal(a.encoder(state, lidar), b.encoder(state, lidar))
+        try:
+            load_encoder(b, path, dims, {**args, "d_model": 128})
+        except ValueError:
+            return
+    raise AssertionError("an encoder with other settings was accepted")
+
+
+def _map_setup():
+    """Own aircraft in a square sector (half side 100 km), zone x 40..80 km, y -20..20 km, goal 75 km to starboard.
+    Map: 8 x 8 px over +-100 km (25 km per pixel); 2 aircraft tokens (both empty)."""
+    lid = Lidar(max_range_km=50.0, speed=True, ac_tokens=2, map_px=8, map_range_km=100.0)
+    o = fake_obs(zone=(60.0, 0.0, 20.0), goal=(0.0, 75.0), half=100.0)
+    b = ObsBuilder(lid, 4)
+    b.reset(o)
+    s, l = b.get()
+    return lid, o, torch.as_tensor(s)[None], torch.as_tensor(l)[None]
+
+
+def test_map_image_and_tokens():
+    from rl_tf.lidar import extra_dim, MAP_CHANNELS
+    lid, o, s, l = _map_setup()
+    m = lid.map_vec(o)
+    img = m[1:].reshape(MAP_CHANNELS, 8, 8)
+    assert m[0] == 1.0                                                  # no "time_left" key: 1
+    assert img[0, 1, 3] == 1.0 and img[0, 1, 4] == 1.0 and img[0, 2, 3] == 0.5 and img[0, 0, 3] == 0.0
+    assert abs(img[0].sum() - 3.0) < 1e-6                               # row 1 full, row 2 half (2 x 2 samples)
+    assert img[1].sum() == 0.0                                          # the sector fills the image
+    assert all(abs(img[2, i, j] - 0.25) < 1e-6 for i in (3, 4) for j in (6, 7)) and abs(img[2].sum() - 1.0) < 1e-6
+    o2 = fake_obs(goal=(500.0, 500.0), half=50.0)
+    img2 = lid.map_vec(o2)[1:].reshape(MAP_CHANNELS, 8, 8)
+    assert img2[2].sum() == 0.0                                         # goal far outside the image: nothing
+    assert img2[1, 0, 0] == 1.0 and img2[1, 3, 3] == 0.0 and img2[1].sum() == 64 - 16    # +-50 km sector: 4 x 4 inside
+    d = obs_dims(dict(n_rays=120, speed=True, ac_tokens=2, map_px=8, map_range_km=100.0), 4)
+    assert d["state_dim"] == 32 + extra_dim(2) + 1 + 3 * 64 == s.shape[1] and d["map_px"] == 8
+    assert torch.equal(s[0, -192:], torch.as_tensor(img.reshape(-1))) and s[0, -193] == 1.0
+    torch.manual_seed(0)
+    pol = Policy(state_dim=d["state_dim"], lidar_ch=16, n_rays=120, ac_tokens=2, map_px=8, map_patch=4)
+    enc = pol.encoder
+    assert enc.n_tokens == 1 + 30 + 2 + 4 and enc.map_start == 33 and enc.lidar_start == 1
+    m0 = pol(s[None], l[None])[0].mean
+    assert torch.isfinite(m0).all()
+    for i in [-192 + 2 * 8 + 6, -193]:                                  # one pixel of channel 0; the time left
+        s3 = s.clone(); s3[0, i] += 0.5
+        assert not torch.allclose(m0, pol(s3[None], l[None])[0].mean, atol=1e-6)
+    out, pad = enc.token_outputs(s, l)
+    assert out.shape == (1, enc.n_tokens, 64) and pad[0, 31:33].all() and not pad[0, 33:].any()
+    torch.manual_seed(0); a = Policy(state_dim=28, lidar_ch=12, n_rays=120)
+    torch.manual_seed(0); b = Policy(state_dim=28, lidar_ch=12, n_rays=120, map_px=0, map_patch=8)
+    sa, sb = a.state_dict(), b.state_dict()
+    assert sa.keys() == sb.keys() and all(torch.equal(sa[k], sb[k]) for k in sa)     # map off: the same model
+
+
+def test_masked_jepa():
+    from rl_tf.jepa import TemporalJepa
+    lid, o, s, l = _map_setup()
+    torch.manual_seed(0)
+    pol = Policy(state_dim=s.shape[1], lidar_ch=16, n_rays=120, ac_tokens=2, map_px=8, map_patch=4)
+    enc = pol.encoder
+    plain = TemporalJepa(enc, hidden=32)
+    assert not hasattr(plain, "mpred") and plain.predictor_params() == sum(
+        q.numel() for q in list(plain.predictor.parameters()) + list(plain.act_embed.parameters()))
+    jepa = TemporalJepa(enc, hidden=32, masked_coef=1.0, map_block=1, lidar_arc=3, mpred_dim=32, mpred_layers=1)
+    idx = jepa.sample_targets(64, "cpu")
+    assert idx.shape == (64, 4)
+    assert ((idx[:, 0] >= enc.map_start) & (idx[:, 0] < enc.n_tokens)).all()
+    lid_idx = idx[:, 1:] - enc.lidar_start
+    assert ((lid_idx >= 0) & (lid_idx < 30)).all() and (((lid_idx[:, 1:] - lid_idx[:, :-1]) % 30) == 1).all()
+    hide = torch.zeros(1, enc.n_tokens, dtype=torch.bool); hide[0, enc.lidar_start] = True     # rays 0-3
+    l2 = l.clone(); l2[..., 0:4] = 0.9
+    a, _ = enc.token_outputs(s, l, hide)
+    b, _ = enc.token_outputs(s, l2, hide)
+    vis = ~hide[0]
+    assert torch.allclose(a[0, vis], b[0, vis], atol=1e-6)              # a hidden token gives no information
+    assert not torch.allclose(enc.token_outputs(s, l)[0], enc.token_outputs(s, l2)[0], atol=1e-6)
+    st = (s[:, None] + 0.01 * torch.randn(8, 3, s.shape[1])).clone()
+    li = (l[:, None] + 0.01 * torch.rand(8, 3, *l.shape[1:])).clone()
+    act = torch.rand(8, 2, 2) * 2 - 1
+    loss, info = jepa.loss(st, li, act)
+    assert torch.isfinite(loss) and info["masked"] > 0 and len(info["pred_per_k"]) == 2
+    loss.backward()
+    assert all(q.grad is None for q in jepa.target.parameters())
+    assert jepa.mpred_in.weight.grad is not None and enc.map_embed.weight.grad is not None
+    only = TemporalJepa(enc, hidden=32, temporal_coef=0.0, masked_coef=1.0, map_block=2, lidar_arc=0,
+                        mpred_dim=32, mpred_layers=1)
+    loss2, info2 = only.loss(st, li, act)
+    assert info2["pred"] == 0.0 and info2["pred_per_k"] == [] and only.sample_targets(3, "cpu").shape == (3, 4)
+
+
 def main():
     t0, failed = time.time(), 0
     tests = sorted(k for k in globals() if k.startswith("test_"))

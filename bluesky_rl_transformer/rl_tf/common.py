@@ -110,6 +110,34 @@ def add_wandb_args(p):
     p.add_argument("--wandb-project", default="bluesky-rl-transformer")
 
 
+def parse_curriculum(text):
+    """Curriculum stages from "I:O@S,I:O@S,...": from environment step S on, scenarios have I other aircraft and
+    O restricted areas. The first stage must start at step 0. Empty text = no curriculum. Returns a list of
+    (S, I, O), sorted by S."""
+    if not text:
+        return []
+    stages = []
+    for part in text.split(","):
+        counts, start = part.strip().split("@")
+        i, o = counts.split(":")
+        stages.append((int(start), int(i), int(o)))
+    stages.sort()
+    if stages[0][0] != 0:
+        raise ValueError("the first curriculum stage must start at step 0")
+    if any(i < 0 or o < 0 for _, i, o in stages):
+        raise ValueError("curriculum counts must be >= 0")
+    return stages
+
+
+def curriculum_stage(stages, steps):
+    """(I, O) of the stage that holds at `steps` environment steps."""
+    cur = stages[0]
+    for s in stages:
+        if steps >= s[0]:
+            cur = s
+    return cur[1], cur[2]
+
+
 def policy_fn_from(policy, device="cpu", deterministic=True):
     """policy_fn for rollout_episode: joint forward pass over the live aircraft."""
     def fn(raw_obs, built):

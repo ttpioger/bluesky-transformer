@@ -33,20 +33,28 @@ class LidarTransformerEncoder(nn.Module):
     fourier = F > 0: the input of the aircraft, area, goal and edge MLPs is the row plus sin and cos of each value
     at the frequencies pi * 2^j, j = 0..F-1 (the rows are small numbers; this separates near values).
     cls_token = 1: one learned read-out token at place 0; its output replaces the output of the own-state token.
+    map_px = P > 0 (2026-11-13): the state ends with the map block (Lidar.map_vec): the time-left share, then a
+    MAP_CHANNELS x P x P image. The image is cut into (P / map_patch)^2 square patches; each patch is one token
+    (one linear layer, as the patch embedding of ViT, plus one learned vector per patch place). The time-left
+    share goes into the own-state network (one more input).
     All options at 0 give the encoder of before, with the same start weights.
+
+    Token order: [read-out], own state, lidar patches, aircraft, areas, goal, actions, edges, map patches.
+    token_outputs() gives the output of each token (masked JEPA, rl_tf/jepa.py).
     """
 
     def __init__(self, state_dim, lidar_ch, n_rays, patch=4, d_model=64, n_heads=4, n_layers=2,
                  state_hidden=128, features_dim=256, ac_tokens=0, zone_tokens=0, act_tokens=0,
-                 edge_tokens=0, ac_cpa=0, fourier=0, cls_token=0):
+                 edge_tokens=0, ac_cpa=0, fourier=0, cls_token=0, map_px=0, map_patch=8):
         super().__init__()
         from .lidar import (AC_FEATURES, ZONE_FEATURES, GOAL_FEATURES, ACT_FEATURES, EDGE_FEATURES, CPA_FEATURES,
-                            extra_dim)
+                            MAP_CHANNELS, extra_dim, map_len)
         self.k, self.ac_f = int(ac_tokens), AC_FEATURES + CPA_FEATURES * int(bool(ac_cpa))
         self.e, self.edge_f, self.four, self.cls = int(edge_tokens), EDGE_FEATURES, int(fourier), int(bool(cls_token))
         self.z, self.zone_f, self.goal_f = int(zone_tokens), ZONE_FEATURES, GOAL_FEATURES
         self.h, self.act_f = int(act_tokens), ACT_FEATURES
-        self.extra = extra_dim(self.k, self.z, self.h, self.e, ac_cpa)
+        self.mp, self.map_len = int(map_px), map_len(map_px)
+        self.extra = extra_dim(self.k, self.z, self.h, self.e, ac_cpa, self.mp)
         w = 1 + 2 * self.four                                           # input values per row value
         state_dim = state_dim - self.extra                              # size of the own state alone
         if n_rays % patch:
@@ -55,7 +63,7 @@ class LidarTransformerEncoder(nn.Module):
         self.patch_embed = nn.Linear(lidar_ch * patch, d_model)
         self.pos = nn.Parameter(torch.zeros(1, self.n_tok, d_model))       # ray direction of each token
         nn.init.trunc_normal_(self.pos, std=0.02)
-        self.state_net = nn.Sequential(nn.Linear(state_dim, state_hidden), nn.ReLU(),
+        self.state_net = nn.Sequential(nn.Linear(state_dim + int(self.mp > 0), state_hidden), nn.ReLU(),
                                        nn.Linear(state_hidden, state_hidden), nn.ReLU())
         self.state_token = nn.Linear(state_hidden, d_model)
         layer = nn.TransformerEncoderLayer(d_model, n_heads, 2 * d_model, dropout=0.0, activation="gelu",
@@ -87,6 +95,18 @@ class LidarTransformerEncoder(nn.Module):
             nn.init.trunc_normal_(self.cls_tok, std=0.02)
         if self.four:
             self.register_buffer("freqs", torch.pi * 2.0 ** torch.arange(self.four, dtype=torch.float32))
+        self.n_map = 0
+        if self.mp:                                    # made last: the weights of the other layers start as before
+            if self.mp % map_patch:
+                raise ValueError("map_px must be a multiple of map_patch")
+            self.map_c, self.map_patch, self.map_g = MAP_CHANNELS, int(map_patch), self.mp // int(map_patch)
+            self.n_map = self.map_g ** 2
+            self.map_embed = nn.Linear(MAP_CHANNELS * self.map_patch ** 2, d_model)
+            self.map_pos = nn.Parameter(torch.zeros(1, self.n_map, d_model))    # place of each patch in the image
+            nn.init.trunc_normal_(self.map_pos, std=0.02)
+        self.n_tokens = (self.cls + 1 + self.n_tok + self.k + (self.z + 1 if self.z else 0) + self.h + self.e
+                         + self.n_map)
+        self.lidar_start, self.map_start = self.cls + 1, self.n_tokens - self.n_map     # place of the first token
 
     def ff(self, x):
         """Row values [..., f] -> [..., f * (1 + 2F)]: the values, then sin and cos at each frequency."""
@@ -100,14 +120,37 @@ class LidarTransformerEncoder(nn.Module):
         x = lidar.reshape(b, c, self.n_tok, self.patch).permute(0, 2, 1, 3).reshape(b, self.n_tok, c * self.patch)
         return self.patch_embed(x) + self.pos
 
+    def map_tokens(self, img):
+        """Image values [B, C * P * P] (channel first) -> patch tokens [B, G * G, d], row-major (row 0 = ahead)."""
+        b, c, g, p = img.shape[0], self.map_c, self.map_g, self.map_patch
+        x = img.reshape(b, c, g, p, g, p).permute(0, 2, 4, 1, 3, 5).reshape(b, g * g, c * p * p)
+        return self.map_embed(x) + self.map_pos
+
     def forward(self, state, lidar):
         if not (self.extra or self.cls):
             s = self.state_net(state)
             x = torch.cat([self.state_token(s).unsqueeze(1), self.tokens(lidar)], dim=1)
             x = self.blocks(x)
             return self.dense(torch.cat([self.norm(x[:, 0]), s], dim=1))
+        x, pad, s = self.embed(state, lidar)
+        x = self.blocks(x, src_key_padding_mask=pad)
+        return self.dense(torch.cat([self.norm(x[:, 0]), s], dim=1))
+
+    def token_outputs(self, state, lidar, hide=None):
+        """Output of each token after the blocks and the last norm [B, T, d], and the empty-row mask [B, T].
+        hide [B, T] bool: no token attends to these tokens (they are out of the context; masked JEPA)."""
+        x, pad, _ = self.embed(state, lidar)
+        x = self.blocks(x, src_key_padding_mask=pad if hide is None else pad | hide)
+        return self.norm(x), pad
+
+    def embed(self, state, lidar):
+        """Input tokens [B, T, d], empty-row mask [B, T] (True = no token there), own-state encoding [B, hidden]."""
         b, o = state.shape[0], state.shape[1] - self.extra
-        s = self.state_net(state[:, :o])
+        own = state[:, :o]
+        if self.mp:                                    # time-left share: first value of the map block
+            m0 = state.shape[1] - self.map_len
+            own = torch.cat([own, state[:, m0:m0 + 1]], dim=1)
+        s = self.state_net(own)
         toks = [self.state_token(s).unsqueeze(1), self.tokens(lidar)]
         pads = [torch.zeros(b, 1 + self.n_tok + self.cls, dtype=torch.bool, device=state.device)]
         if self.cls:
@@ -134,8 +177,10 @@ class LidarTransformerEncoder(nn.Module):
             edge, empty, o = rows(o, self.e, self.edge_f)
             toks.append(self.edge_embed(self.ff(edge)) + self.edge_pos)
             pads.append(empty)
-        x = self.blocks(torch.cat(toks, dim=1), src_key_padding_mask=torch.cat(pads, dim=1))
-        return self.dense(torch.cat([self.norm(x[:, 0]), s], dim=1))
+        if self.mp:
+            toks.append(self.map_tokens(state[:, o + 1:o + self.map_len]))
+            pads.append(torch.zeros(b, self.n_map, dtype=torch.bool, device=state.device))
+        return torch.cat(toks, dim=1), torch.cat(pads, dim=1), s
 
 
 class AttentionCritic(nn.Module):
@@ -158,13 +203,13 @@ class AttentionCritic(nn.Module):
 class Policy(nn.Module):
     def __init__(self, state_dim, lidar_ch, n_rays, action_dim=2, patch=4, d_model=64, n_heads=4, n_layers=2,
                  features_dim=256, hidden=64, log_std_init=0.0, ac_tokens=0, zone_tokens=0, act_tokens=0,
-                 edge_tokens=0, ac_cpa=0, fourier=0, cls_token=0):
+                 edge_tokens=0, ac_cpa=0, fourier=0, cls_token=0, map_px=0, map_patch=8):
         super().__init__()
         self.encoder = LidarTransformerEncoder(state_dim, lidar_ch, n_rays, patch, d_model, n_heads, n_layers,
                                                features_dim=features_dim, ac_tokens=ac_tokens,
                                                zone_tokens=zone_tokens, act_tokens=act_tokens,
                                                edge_tokens=edge_tokens, ac_cpa=ac_cpa, fourier=fourier,
-                                               cls_token=cls_token)
+                                               cls_token=cls_token, map_px=map_px, map_patch=map_patch)
         self.actor = nn.Sequential(nn.Linear(features_dim, hidden), nn.Tanh(), nn.Linear(hidden, hidden), nn.Tanh(),
                                    nn.Linear(hidden, action_dim), nn.Tanh())
         self.log_std = nn.Parameter(torch.full((action_dim,), float(log_std_init)))
@@ -198,12 +243,48 @@ def build_policy(dims, args):
                   zone_tokens=dims.get("zone_tokens", 0), act_tokens=dims.get("act_tokens", 0),
                   edge_tokens=dims.get("edge_tokens", 0), ac_cpa=dims.get("ac_cpa", 0),
                   fourier=args.get("fourier", 0), cls_token=args.get("cls_token", 0),
+                  map_px=dims.get("map_px", 0), map_patch=args.get("map_patch", 8),
                   **{k: args[k] for k in NET_KEYS})
 
 
 def save_checkpoint(path, policy, args, dims, extra=None):
     torch.save({"policy": policy.state_dict(), "args": dict(args), "dims": dict(dims),
                 "n_params": n_params(policy), **(extra or {})}, path)
+
+
+ENC_KEYS = ["patch", "d_model", "n_heads", "n_layers", "features_dim", "fourier", "cls_token"]
+
+
+def save_encoder(path, encoder, args, dims, extra=None):
+    """Encoder alone (JEPA pretraining, 2026-11-13). args and dims must be those of scripts.train."""
+    torch.save({"encoder": encoder.state_dict(), "args": dict(args), "dims": dict(dims),
+                "n_params_encoder": n_params(encoder), **(extra or {})}, path)
+
+
+def encoder_mismatch(ck_args, ck_dims, args, dims):
+    """Names of the encoder settings that differ between a checkpoint and a run ([] = the same encoder).
+    A key that a checkpoint does not have is 0 (checkpoint from before the flag). The map settings
+    (map_patch, map_range_km) count only when the map image is on."""
+    bad = [k for k in ENC_KEYS if ck_args.get(k, 0) != args.get(k, 0)]
+    bad += [k for k in dims if ck_dims.get(k, 0) != dims[k]]
+    if dims.get("map_px", 0):
+        bad += [k for k, d in [("map_patch", 8), ("map_range_km", 150.0)] if ck_args.get(k, d) != args.get(k, d)]
+    return bad
+
+
+def load_encoder(policy, path, dims, args):
+    """Copy a saved encoder into policy.encoder. The token and network settings must be equal; else ValueError.
+    `path` can also be a full policy checkpoint (key "policy"): then its encoder part is used."""
+    ck = torch.load(path, map_location="cpu", weights_only=False)
+    bad = encoder_mismatch(ck["args"], ck["dims"], args, dims)
+    if bad:
+        raise ValueError(f"{path}: encoder settings differ from this run: {bad}")
+    if "encoder" in ck:
+        state = ck["encoder"]
+    else:
+        state = {k[len("encoder."):]: v for k, v in ck["policy"].items() if k.startswith("encoder.")}
+    policy.encoder.load_state_dict(state)
+    return ck
 
 
 def load_policy(path, device="cpu"):

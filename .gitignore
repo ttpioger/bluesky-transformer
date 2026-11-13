@@ -6,5 +6,6 @@ images/
 logs/
 models/
 dist/
+bluesky_rl_transformer/data/
 
 wandb/

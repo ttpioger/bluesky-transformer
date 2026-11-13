@@ -32,6 +32,8 @@ CPA_FEATURES = 2                                       # more aircraft-token val
 CPA_NORM_S = 300.0                                     # time unit of the closest-point value (30 decision steps)
 EDGE_FEATURES = 6                                      # sector-edge token, see Lidar.edge_tokens_vec
 SPEED_NORM_MS = 350.0                                  # closing-speed unit: largest value measured was 314 m/s (2026-11-12)
+MAP_CHANNELS = 3                                       # map image: restricted area, outside the sector, goal
+MAP_SUPERSAMPLE = 2                                    # map image: S x S sample points per pixel (area share per pixel)
 N_TYPES = 4                                            # the 3 channels + the own goal (no channel)
 TYPE_NAMES = ["zone", "boundary", "aircraft", "goal"]
 OWN_KEYS = ["airspeed", "inside_sector", "cos_drift", "sin_drift", "waypoint_distance"]
@@ -43,20 +45,27 @@ def state_dim(zone_flag=True):
     return STATE_DIM + int(bool(zone_flag))
 
 
-def extra_dim(ac_tokens=0, zone_tokens=0, act_tokens=0, edge_tokens=0, ac_cpa=0):
+def map_len(map_px=0):
+    """Size of the map block at the end of the state: the time-left share, then MAP_CHANNELS x P x P pixels. 0 if off."""
+    p = int(map_px)
+    return 1 + MAP_CHANNELS * p * p if p else 0
+
+
+def extra_dim(ac_tokens=0, zone_tokens=0, act_tokens=0, edge_tokens=0, ac_cpa=0, map_px=0):
     """Size of the token values at the end of the state array. Order: K aircraft rows and K flags; Z restricted-area
-    rows, Z flags and one goal row; H action rows and H flags; E sector-edge rows and E flags.
+    rows, Z flags and one goal row; H action rows and H flags; E sector-edge rows and E flags; the map block.
     ac_cpa = 1: each aircraft row has CPA_FEATURES more values."""
     k, z, h, e = int(ac_tokens), int(zone_tokens), int(act_tokens), int(edge_tokens)
     return (k * (AC_FEATURES + CPA_FEATURES * int(bool(ac_cpa)) + 1) + (z * (ZONE_FEATURES + 1) + GOAL_FEATURES if z else 0)
-            + h * (ACT_FEATURES + 1) + e * (EDGE_FEATURES + 1))
+            + h * (ACT_FEATURES + 1) + e * (EDGE_FEATURES + 1) + map_len(map_px))
 
 
 def token_cfg(a):
     """Token options from the arguments of a checkpoint. A key that is not there is 0 (checkpoint from before the flag)."""
     return dict(ac_tokens=int(a.get("ac_tokens", 0)), zone_tokens=int(a.get("zone_tokens", 0)),
                 act_tokens=int(a.get("act_tokens", 0)), edge_tokens=int(a.get("edge_tokens", 0)),
-                ac_cpa=int(a.get("ac_cpa", 0)))
+                ac_cpa=int(a.get("ac_cpa", 0)), map_px=int(a.get("map_px", 0)),
+                map_range_km=float(a.get("map_range_km", 150.0)))
 
 
 def ray_circles(u, c, r):
@@ -98,6 +107,19 @@ def polygon_edges(polys):
     return p, q
 
 
+def points_in_polygon(pts, v):
+    """Even-odd rule for many points at once. pts [P, 2], v [V, 2] closed polygon. Returns [P] bool."""
+    v = np.asarray(v, dtype=np.float64).reshape(-1, 2)
+    if len(v) < 3:
+        return np.zeros(len(pts), dtype=bool)
+    p, q = v, np.roll(v, -1, axis=0)
+    py = pts[:, 1:2]
+    span = (p[None, :, 1] > py) != (q[None, :, 1] > py)                  # [P, V] the edge crosses the line y = py
+    with np.errstate(divide="ignore", invalid="ignore"):
+        xc = p[None, :, 0] + (py - p[None, :, 1]) * (q[None, :, 0] - p[None, :, 0]) / (q[None, :, 1] - p[None, :, 1])
+    return ((span & (pts[:, 0:1] < xc)).sum(axis=1) % 2) == 1
+
+
 def to_own_frame(lat, lon, lat0, lon0, hdg_deg):
     """Flat-earth lat/lon (degrees) -> own frame km (x = nose, y = starboard). Heading: 0 = north, clockwise."""
     east = (np.asarray(lon, dtype=np.float64) - lon0) * np.cos(np.deg2rad(lat0)) * DEG2KM
@@ -108,7 +130,8 @@ def to_own_frame(lat, lon, lat0, lon0, hdg_deg):
 
 class Lidar:
     def __init__(self, n_rays=120, fov_deg=360.0, max_range_km=100.0, ac_radius_km=5.0 * NM2KM, zone_flag=True,
-                 speed=False, ac_tokens=0, zone_tokens=0, act_tokens=0, edge_tokens=0, ac_cpa=0):
+                 speed=False, ac_tokens=0, zone_tokens=0, act_tokens=0, edge_tokens=0, ac_cpa=0, map_px=0,
+                 map_range_km=150.0):
         self.n_rays, self.fov_deg, self.max_range, self.ac_radius = n_rays, fov_deg, max_range_km, ac_radius_km
         self.zone_flag = bool(zone_flag)               # the own state has the inside-zone flag
         self.speed = bool(speed)                       # 4th channel: closing speed of the aircraft that the ray hits
@@ -119,6 +142,12 @@ class Lidar:
         self.edge_tokens = int(edge_tokens)            # sector-edge tokens: E direction bins around the aircraft
         self.ac_cpa = int(bool(ac_cpa))                # aircraft tokens also give the closest point of approach
         self.ac_f = AC_FEATURES + CPA_FEATURES * self.ac_cpa
+        self.map_px, self.map_range = int(map_px), float(map_range_km)   # map image (2026-11-13), see map_vec
+        if self.map_px:
+            n, s = self.map_px * MAP_SUPERSAMPLE, self.map_range * 2.0 / (self.map_px * MAP_SUPERSAMPLE)
+            c = (np.arange(n) + 0.5) * s
+            x, y = np.meshgrid(self.map_range - c, c - self.map_range, indexing="ij")   # row 0 = ahead, col 0 = port
+            self.map_pts = np.stack([x.ravel(), y.ravel()], axis=1)                     # sample points, own frame km
         if fov_deg >= 360.0:
             ang = -180.0 + 360.0 * np.arange(n_rays) / n_rays          # ring, no doubled ray
         else:
@@ -197,6 +226,35 @@ class Lidar:
                     feat[:n, AC_FEATURES:] = np.stack([t / CPA_NORM_S, d_cpa / reach], axis=1)
                 flag[:n] = 1.0
         return np.concatenate([feat.reshape(-1), flag])
+
+    def map_vec(self, obs):
+        """Map image (2026-11-13): the fixed map around the own aircraft, own frame, square of side 2 * map_range km.
+        Row 0 is the side ahead of the nose, column 0 the port side; the own aircraft is at the centre.
+        Channels: 0 = share of the pixel inside a restricted area; 1 = share of the pixel outside the sector;
+        2 = goal: the goal point is split over the 4 nearest pixel centres (bilinear weights, sum 1; a weight
+        outside the image is dropped, so a goal far outside the image gives 0). Shares come from
+        MAP_SUPERSAMPLE x MAP_SUPERSAMPLE sample points per pixel. Other aircraft are not in the image (they move:
+        the aircraft tokens and the lidar have them).
+        Returns [1 + MAP_CHANNELS * P * P] float32: the share of the episode time that is left (it was in the goal
+        row of the zone tokens), then the image, channel first."""
+        P, S = self.map_px, MAP_SUPERSAMPLE
+        g = obs[GEOM_KEY]
+        img = np.zeros((MAP_CHANNELS, P, P), dtype=np.float32)
+        pool = lambda m: m.reshape(P, S, P, S).mean(axis=(1, 3))
+        zone = np.zeros(len(self.map_pts), dtype=bool)
+        for poly in g["zones"]:
+            zone |= points_in_polygon(self.map_pts, poly)
+        img[0] = pool(zone.astype(np.float32))
+        img[1] = pool((~points_in_polygon(self.map_pts, g["sector"])).astype(np.float32))
+        h = 2.0 * self.map_range / P
+        gx, gy = np.asarray(g["goal"], dtype=np.float64).reshape(2)
+        u, v = (self.map_range - gx) / h - 0.5, (gy + self.map_range) / h - 0.5         # pixel coordinates of the goal
+        i0, j0 = int(np.floor(u)), int(np.floor(v))
+        for i, wi in ((i0, 1.0 - (u - i0)), (i0 + 1, u - i0)):
+            for j, wj in ((j0, 1.0 - (v - j0)), (j0 + 1, v - j0)):
+                if 0 <= i < P and 0 <= j < P:
+                    img[2, i, j] += wi * wj
+        return np.concatenate([np.array([g.get("time_left", 1.0)], dtype=np.float32), img.reshape(-1)])
 
     def zone_tokens_vec(self, obs):
         """The Z = zone_tokens nearest restricted areas (all areas of the scenario, no range limit), nearest first,

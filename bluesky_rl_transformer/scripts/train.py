@@ -12,11 +12,12 @@ import time
 from pathlib import Path
 import numpy as np
 import torch
-from rl_tf.envs import (VecEnv, FlightEnv, add_reward_args, reward_kwargs, obs_dims, rollout_episode, turn_stats)
+from rl_tf.envs import (VecEnv, FlightEnv, add_reward_args, reward_kwargs, obs_dims, rollout_episode, turn_stats,
+                        lidar_cfg_from_args)
 from rl_tf.lidar import Lidar
-from rl_tf.networks import build_policy, save_checkpoint, n_params
+from rl_tf.networks import build_policy, save_checkpoint, n_params, load_encoder
 from rl_tf.common import (setup_torch, compute_gae, pass_criterion, window_stats, write_json, policy_fn_from, wandb_upload,
-                          wandb_init, add_wandb_args)
+                          wandb_init, add_wandb_args, parse_curriculum, curriculum_stage)
 
 EVAL_SEED0 = 900_000_000   # held-out scenario seeds for the final flights without noise
 
@@ -57,6 +58,12 @@ def build_parser():
                    help="1: each aircraft token also has the time to the closest point of approach and the distance there.")
     p.add_argument("--lidar-speed", type=int, choices=[0, 1], default=1,
                    help="1: 4th lidar channel with the closing speed of the aircraft that the ray hits.")
+    p.add_argument("--map-px", type=int, default=0,
+                   help="P > 0: map image of P x P pixels around the aircraft (restricted areas, outside the sector, "
+                        "goal; newest frame only), one token per patch. 0 = off (baseline).")
+    p.add_argument("--map-range-km", type=float, default=150.0,
+                   help="Map image: half side of the square, km (the image covers 2 x this value).")
+    p.add_argument("--map-patch", type=int, default=8, help="Map image: pixels per patch side (one token per patch).")
     p.add_argument("--history", type=int, default=4, help="Stacked frames (reference: 4).")
     p.add_argument("--zone-flag", type=int, choices=[0, 1], default=1,
                    help="1: the own state has a flag 'inside a no-fly zone'. 0: as before 2026-11-11.")
@@ -72,6 +79,16 @@ def build_parser():
     p.add_argument("--cls-token", type=int, choices=[0, 1], default=0,
                    help="1: a learned read-out token collects the result; the own-state token then only carries the state.")
     p.add_argument("--log-std-init", type=float, default=0.0, help="Start exploration noise (reference: 0.0).")
+    # JEPA pretraining and curriculum (2026-11-13); the defaults give the training of before
+    p.add_argument("--init-encoder", default="",
+                   help="File of a pretrained encoder (scripts.pretrain_jepa) or of a policy; its encoder weights are the "
+                        "start weights. The token and network flags must be the same. Empty = random start weights.")
+    p.add_argument("--freeze-encoder-steps", type=int, default=0,
+                   help="No encoder update before this many environment steps (the heads adapt first). 0 = off.")
+    p.add_argument("--curriculum", default="",
+                   help="Stages 'I:O@S,...': from environment step S on, training scenarios have I other aircraft and O "
+                        "restricted areas (competition: 10:5). Example: '2:1@0,5:3@300000,10:5@800000'. The final "
+                        "flights without noise always use 10:5. Empty = no curriculum.")
     # reward
     p.add_argument("--reward-scale", type=float, default=0.0002, help="Scale of the reward used for learning only.")
     p.add_argument("--shaping", choices=["potential", "off"], default="off",
@@ -98,15 +115,19 @@ def main(argv=None):
     reset_seed = None if args.reset_seed < 0 else args.reset_seed
     out = Path(args.out_dir)
     (out / "models").mkdir(parents=True, exist_ok=True)
-    lidar_cfg = dict(n_rays=args.n_rays, fov_deg=args.fov_deg, max_range_km=args.max_range_km,
-                     zone_flag=bool(args.zone_flag), speed=bool(args.lidar_speed), ac_tokens=args.ac_tokens,
-                     zone_tokens=args.zone_tokens, act_tokens=args.act_tokens,
-                     edge_tokens=args.edge_tokens, ac_cpa=args.ac_cpa)
+    lidar_cfg = lidar_cfg_from_args(args)
+    stages = parse_curriculum(args.curriculum)
     cfg = dict(setting=args.setting, n_agents=args.n_agents, reward=reward_kwargs(args), lidar=lidar_cfg,
                history=args.history, shaping=args.shaping == "potential", shaping_speed=args.shaping_speed,
                seed=args.seed, reset_seed=reset_seed)
     dims = obs_dims(lidar_cfg, args.history)
     policy = build_policy(dims, vars(args)).to(dev)
+    if args.init_encoder:
+        load_encoder(policy, args.init_encoder, dims, vars(args))
+        print(f"Encoder start weights from {args.init_encoder}", flush=True)
+    frozen = args.freeze_encoder_steps > 0
+    if frozen:                                         # Adam skips a weight without gradient
+        policy.encoder.requires_grad_(False)
     opt = torch.optim.Adam(policy.parameters(), lr=args.lr)
     n_par = {"policy": n_params(policy), "encoder": n_params(policy.encoder),
              "actor_head": n_params(policy.actor) + policy.log_std.numel(), "critic_head": n_params(policy.critic)}
@@ -124,8 +145,17 @@ def main(argv=None):
     timing = {"env": 0.0, "inference": 0.0, "update": 0.0}
     sync = (lambda: torch.cuda.synchronize()) if str(dev).startswith("cuda") else (lambda: None)
 
+    density = None
     while total < args.steps:
         T = max(1, min(args.rollout_steps, int(np.ceil((args.steps - total) / E))))
+        if stages and curriculum_stage(stages, total) != density:
+            density = curriculum_stage(stages, total)
+            vec.set_density(*density)                  # effective from the reset below
+            print(f"curriculum at env_steps={total}: {density[0]} other aircraft, {density[1]} restricted areas", flush=True)
+        if frozen and total >= args.freeze_encoder_steps:
+            frozen = False
+            policy.encoder.requires_grad_(True)
+            print(f"encoder updates start at env_steps={total}", flush=True)
         t0 = time.perf_counter()
         (state, lidar, _), n_cut = vec.reset()          # reference: env.reset() at the start of every rollout
         timing["env"] += time.perf_counter() - t0
@@ -200,6 +230,8 @@ def main(argv=None):
         new_eps = episodes[n_before:]
         row = {"env_steps": total, "policy_loss": policy_loss.item(), "value_loss": value_loss.item(),
                "log_std": policy.log_std.mean().item(), "n_episodes": len(new_eps), "n_cut_episodes": n_cut}
+        if stages:
+            row["n_intruders"], row["n_obstacles"] = density
         txt = ""
         if new_eps:
             for k in ["ep_return", "waypoint_reached", "intrusion_events", "restricted_area_events",

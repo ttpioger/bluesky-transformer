@@ -104,6 +104,26 @@ Comparison with the fly-straight baseline (single agent, no training). It writes
 
 Outputs: `results/NAME_summary.json` (pass flags, first and last window, final flights without noise with `mean_abs_turn_deg` and `turn_sign_flip_rate`, curve, all episodes), `models/NAME.pt` (saved every 20 updates and at the end), `logs/NAME.log`.
 
+## JEPA pretraining and curriculum (2026-11-13)
+
+Temporal, action-conditioned JEPA (`rl_tf/jepa.py`). The encoder f gives z_t = f(o_t). A predictor rolls z forward with the actions, and the target of step k is f_ema(o_{t+k}), a slow copy of f with no gradient. Loss: MSE over k = 1..H plus VICReg variance and covariance terms. Only the encoder goes into PPO.
+
+1. `scripts.collect_jepa`: scripted flights only (fly straight, goal controller, goal controller with noise, random turns), scenario seeds 3 000 000 + i, densities 10:5, 10:5, 5:3, 2:1 (other aircraft : restricted areas). Shards `data/jepa_NAME_wK.npz` (not in git).
+2. `scripts.pretrain_jepa`: JEPA on the shards, then linear probes on validation flights (intrusion within 60 s, area entry within 60 s: AUC; goal distance: R²) for the raw input, the start weights, the JEPA encoder and each `--probe-model`. Writes `models/jepa_NAME.pt` and `results/jepa_NAME_summary.json`. Stop rule: spread < 0.05 = collapse, exit code 2.
+3. `scripts.train --init-encoder models/jepa_NAME.pt` (same token and network flags), optional `--freeze-encoder-steps N`.
+
+### Map image and masked-token JEPA (2026-11-13, default off)
+
+Each input kind gets one role. The map image shows the fixed map; the lidar gives exact distances near the aircraft; the aircraft tokens give the moving objects with velocity and CPA.
+
+- `--map-px P` (0 = off): an image of P x P pixels, own frame (row 0 = ahead, column 0 = port), square of side 2 x `--map-range-km` (default 150). Channels: share of the pixel inside a restricted area, share outside the sector (2 x 2 samples per pixel), goal (point split over the 4 nearest pixel centres; 0 if far outside). Newest frame only. The image goes at the end of the state, after the time-left share. The time-left share goes into the own-state network (it was in the goal token before).
+- `--map-patch p` (default 8): one token per p x p patch, (P / p)^2 tokens, one linear layer plus one learned vector per patch place (as ViT).
+- Option 1 token set: `--map-px 32 --map-patch 8 --ac-tokens 10 --ac-cpa 1 --zone-tokens 0 --edge-tokens 0 --act-tokens 0 --cls-token 1`: read-out 1 + own state 1 + lidar 30 + aircraft 10 + map 16 = 58 tokens. The past actions stay in the own state of each of the 4 frames.
+- Masked-token JEPA (`scripts.pretrain_jepa --masked-coef 1`): per sample, one block of `--map-block` x `--map-block` map patches and one arc of `--lidar-arc` lidar patches are hidden from the online encoder. A predictor Transformer (`--mpred-dim`, `--mpred-layers`) predicts the outputs of the slow copy at those tokens. `--temporal-coef` (default 1) keeps the temporal target; `--temporal-coef 0` gives the masked target alone.
+- Status: 2 new unit tests (`test_map_image_and_tokens`, `test_masked_jepa`). NOT run yet. Bit-identical check with the map off NOT done yet. Pixel-drawing time per step NOT measured.
+
+`scripts.train --curriculum '2:1@0,5:3@300000,10:5@800000'`: from step S on, training scenarios have I other aircraft and O areas. The final flights without noise and all evaluation scripts use 10:5. All new flags at their defaults give the training of before.
+
 ## Checks done (2026-11-10)
 
 - Unit tests: 9 passed (lidar geometry, frame stack, masks, GAE, one learning step), before the polygon lidar.
