@@ -124,6 +124,40 @@ Each input kind gets one role. The map image shows the fixed map; the lidar give
 
 `scripts.train --curriculum '2:1@0,5:3@300000,10:5@800000'`: from step S on, training scenarios have I other aircraft and O areas. The final flights without noise and all evaluation scripts use 10:5. All new flags at their defaults give the training of before.
 
+No lidar (2026-11-13): `--n-rays 0` removes the lidar tokens and their weights. With the map image and the aircraft tokens, the policy reads own state 1 + aircraft 10 + map 16 (+ read-out 1) = 28 tokens. The aircraft tokens still use `--max-range-km` as their radius. The masked JEPA then hides map blocks only. Limit: near a restricted area or the sector edge, the policy sees distances only at the map resolution (9.4 km per pixel at 32 px over +-150 km). Unit test: `test_no_lidar_map_jepa`. NOT run yet.
+
+### Latent world model and CEM planner (2026-11-13 evening, after V-JEPA 2-AC)
+
+Design page: "JEPA World-Model Planner". Code: `rl_tf/world_model.py`, `scripts/train_world_model.py`, planner flags of `scripts.competition_eval`.
+
+- World model on a **frozen** encoder (the encoder of the policy that the planner flies with). State: token outputs h [T, d], own-state encoding s, empty-row mask. Predictor: Transformer over the T tokens + one own-state token + one action token, residual, last layer at zero (start = "no change"), Markov (sees step t only). Cost heads: cross-attention from the own-state token to all tokens, then an MLP: intrusion / restricted area / outside sector (logits), goal-distance decrease, reward of the step. Loss: rollout of H = 6 steps against the encoder outputs at t+k, one-step loss from the true state, head losses on predicted and true states.
+- `scripts.collect_jepa` now records the reward of each step (with the reward flags of the command) and can fly a trained policy: `--controllers policy,... --policy-model FILE` (sampled actions). Without these flags the flights are the same as before; the data has one more column.
+- `scripts.train_world_model --encoder-from models/POLICY.pt --data A B`: checks that the data reward equals the reward of the policy run. Validation: per step k the rollout error against "no change", AUC of the predicted intrusion and area probability, R^2 of reward and goal step. Writes `models/wm_NAME.pt`, `results/wm_NAME_summary.json`.
+- `scripts.competition_eval --model models/POLICY.pt --world-model models/wm_NAME.pt --plan-level 1|2`: level 1 = safety filter (search only when the predicted risk of the policy rollout over 60 s is >= `--plan-threshold`, default 0.5), level 2 = search at every step. Search: CEM, 64 sequences x 3 rounds x 6 steps around the policy rollout; score = predicted reward (PPO units: reward scale, gamma) + gamma^6 x policy critic at the end; first command flown, plan again each step. Check: `--plan-level 1 --plan-threshold 2` never searches and must give the metrics of no planner. Output `results/POLICY_planL_competition_sa.json` with `plan_stats` (share of decisions with a search, ms per decision).
+- Known limits: tokens are matched over time by place (aircraft rows are sorted by distance; no aircraft id in the data). Multi-agent: each aircraft plans alone, the critic sees one aircraft.
+- Status: 4 new unit tests (`test_world_model_start_z_and_loss`, `test_world_model_step_labels`, `test_planner_filter_keeps_policy_and_search_beats_prior`, `test_world_model_save_and_load`). NOT run yet (no runs on the laptop). Only a syntax check ran.
+
+#### Multi agent (2026-11-13 late)
+
+- Recording: `scripts.collect_jepa --setting multi --n-agents N` records all N aircraft (aircraft j of flight i: controller (i * N + j) % len). Rows of one aircraft are contiguous. New columns in both settings: `agent`, `nb_ids [K]` (aircraft index in each aircraft-token row, -1 = empty or scripted). The geometry of each observation now has `aircraft_ids` (callsigns, same order as `aircraft`). `--densities` in multi agent: first number 0 (default 0:5,0:5,0:3,0:1).
+- World model: each aircraft-token row can get the command (turn, speed, known) of its aircraft (MLP, last layer at 0). `--nb-drop 0.3` hides them in 30 % of the training windows (the model also learns "unknown"). New head 5: value = discounted return to go of the recorded flights in PPO units (gamma and reward scale of the policy file).
+- Planner: all aircraft roll out together; each row follows the plan of its aircraft (start: policy rollout). `--plan-order independent` (default: all search at once) or `sequential` (callsign order; a later aircraft sees the chosen plans of the earlier ones). `--plan-value auto|critic|head` (auto: critic for a single-agent policy, value head for a multi-agent policy, whose central critic needs all aircraft).
+- Training chain: `scripts.train --init-policy FILE` loads encoder, actor and log_std (critic new; a single-agent policy can start a multi-agent run). `--curriculum` with `--setting multi` now stops with an error unless I = 0 (that environment has no scripted aircraft); change the number of learning aircraft with a chain of runs (`--n-agents 2 -> 4 -> 10`, each with `--init-policy` of the run before).
+- Limits: the value head learns the return of the recorded controllers, not of the planner. Neighbour commands follow the aircraft that held row j at t (rows are re-sorted by distance at each step).
+- Status: 4 more unit tests (`test_returns_and_neighbour_commands`, `test_aircraft_row_ids_follow_token_order`, `test_planner_multi_agent_neighbours`, `test_load_actor_keeps_new_critic`). NOT run yet. Only a syntax check ran.
+
+## PPO-Lagrangian (2026-11-13 late, default off)
+
+`scripts.train --lagrangian 'intrusion_events_no_start:0.3,time_in_restricted_area:5,time_outside_sector:6'`: each flight metric gets a limit (per flight, competition units), a multiplier lam >= 0 and a cost critic (one attention critic per constraint on the encoder features, no gradient into the encoder, own Adam). The cost of a step is the increase of the metric (computed in the environment workers) times `--reward-scale`, so lam has the units of a reward weight. Advantage: (A_r - sum lam A_c) / (1 + sum lam); lam = 0 gives the advantage of before. Dual step after each update on the flights that ended in the rollout: lam <- clip(lam + `--lambda-lr` x clip(cost / limit - 1, -1, 1), 0, `--lambda-max`). The fixed reward weights stay (the Lagrangian adds to them). lam and the mean costs go into the curve, the log line and W&B; the checkpoint holds lam and the cost critics (`lagrangian` key; `load_policy` ignores it). Single agent can use the `*_no_start` metrics (start intrusions cannot be avoided). Unit tests: `test_lagrangian_parse_step_and_advantage`, `test_policy_act_features_do_not_change_actions`. NOT run yet; bit-identical check with the flag off NOT done yet.
+
+## Start intrusions (single agent, 2026-11-13; not official metrics)
+
+The official metrics count an intrusion at reset when another aircraft is already within 5 NM. No policy can avoid it. `FlightEnv` (single agent) adds three keys to `info` and to the flight rows; the official metrics do not change:
+- `start_intrusions`: aircraft within 5 NM at the reset sample;
+- `intrusion_events_no_start`, `intrusion_time_no_start`: the intrusion metrics without these start intrusions. A start intrusion stays left out until that aircraft goes out of 5 NM; a later new intrusion with it counts. So `intrusion_events_no_start = intrusion_events - start_intrusions`.
+
+`scripts.competition_eval` shows the three rows in its table, writes `start_intrusion` (flights that start in intrusion, and the means over the other flights) to `results/NAME_competition_sa.json`, and computes the fly-straight cache again if it has no such keys. Unit test: `test_start_intrusions_left_out` (fake environment). NOT run yet.
+
 ## Checks done (2026-11-10)
 
 - Unit tests: 9 passed (lidar geometry, frame stack, masks, GAE, one learning step), before the polygon lidar.

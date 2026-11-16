@@ -149,7 +149,7 @@ class Lidar:
             x, y = np.meshgrid(self.map_range - c, c - self.map_range, indexing="ij")   # row 0 = ahead, col 0 = port
             self.map_pts = np.stack([x.ravel(), y.ravel()], axis=1)                     # sample points, own frame km
         if fov_deg >= 360.0:
-            ang = -180.0 + 360.0 * np.arange(n_rays) / n_rays          # ring, no doubled ray
+            ang = -180.0 + 360.0 * np.arange(n_rays) / max(n_rays, 1)  # ring, no doubled ray; n_rays 0 = no lidar
         else:
             ang = np.linspace(-fov_deg / 2.0, fov_deg / 2.0, n_rays)
         self.angles_deg = ang                                           # 0 = nose, positive = starboard

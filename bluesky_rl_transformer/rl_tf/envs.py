@@ -17,6 +17,40 @@ os.environ.setdefault("SDL_VIDEODRIVER", "dummy")   # no window for rgb_array re
 METRIC_KEYS = ["waypoint_reached", "flight_time", "intrusion_events", "intrusion_time",
                "restricted_area_events", "time_in_restricted_area",
                "sector_exit_events", "time_outside_sector"]
+# Single agent only (2026-11-13), NOT official metrics: the official metrics count an intrusion at reset when another
+# aircraft is already within 5 NM. These keys leave such start intrusions out (see track_start_intrusions).
+START_KEYS = ["start_intrusions", "intrusion_events_no_start", "intrusion_time_no_start"]
+
+
+def track_start_intrusions(inner):
+    """Wrap the metric methods of the single-agent competition environment `inner` (no change to its metrics).
+    A start intrusion: another aircraft within the intrusion distance at the reset sample (t = 0). It stays left out
+    until that aircraft leaves the intrusion distance; a later new intrusion with the same aircraft counts.
+    Returns the live dict {start_intrusions, intrusion_events_no_start, intrusion_time_no_start} of the flight."""
+    init0, upd0 = inner._init_metrics, inner._update_metrics
+    out = {k: 0 for k in START_KEYS}
+    st = {"first": True, "start": set(), "counted": set()}
+
+    def init(ac_id):
+        init0(ac_id)
+        out.update(start_intrusions=0, intrusion_events_no_start=0, intrusion_time_no_start=0.0)
+        st.update(first=True, start=set(), counted=set())
+
+    def update(ac_id, dt=None):
+        upd0(ac_id, dt)
+        now = set(inner._intruders_in_intrusion)
+        if st["first"]:                                # the reset sample
+            st["first"], st["start"] = False, now
+            out["start_intrusions"] = len(now)
+            return
+        st["start"] &= now                             # a start intrusion ends when that aircraft goes out
+        counted = now - st["start"]
+        out["intrusion_events_no_start"] += len(counted - st["counted"])
+        out["intrusion_time_no_start"] += len(counted) * (inner.sim_dt if dt is None else dt)
+        st["counted"] = counted
+
+    inner._init_metrics, inner._update_metrics = init, update
+    return out
 
 # Reward. Unit of the time terms: per simulated second. Event terms: once per entry or exit.
 # Hard constraint (user, 2026-11-11): the reward has only negative terms. No waypoint reward. check_reward
@@ -106,6 +140,7 @@ class FlightEnv:
             bluesky_gym.register_envs()
             self.env = gym.make("CompetitionEnv-v0", render_mode=render_mode, **kw)
             self.ids = ["own"]
+            self._start_metrics = track_start_intrusions(self.env.unwrapped)
         elif setting == "multi":
             from bluesky_zoo.competition_v0 import CompetitionZooEnv
             self.env = CompetitionZooEnv(n_agents=n_agents, render_mode=render_mode, **kw)
@@ -130,6 +165,7 @@ class FlightEnv:
     def step(self, actions):
         if self.setting == "single":
             o, r, te, tr, info = self.env.step(np.asarray(actions["own"], dtype=np.float64))
+            info = {**info, **self._start_metrics}     # official metrics unchanged; START_KEYS added
             obs, rew, term, trunc, infos = {"own": o}, {"own": r}, {"own": te}, {"own": tr}, {"own": info}
             self.agents = [] if (te or tr) else ["own"]
         else:
@@ -190,7 +226,8 @@ class FlightEnv:
                      aircraft=to_own_frame(bs.traf.lat[others], bs.traf.lon[others], lat0, lon0, hdg).reshape(-1, 2),
                      aircraft_vel=vel, goal=frame([goal])[0], goal_radius=float(inner.distance_margin),
                      own_lat=lat0, own_lon=lon0, own_hdg=hdg,
-                     time_left=float(np.clip(1.0 - t_now / float(inner.episode_time_limit), 0.0, 1.0)))
+                     time_left=float(np.clip(1.0 - t_now / float(inner.episode_time_limit), 0.0, 1.0)),
+                     aircraft_ids=[str(c) for c in np.asarray(bs.traf.id)[others]])   # callsigns, same order as aircraft
             self._geom[a] = o[GEOM_KEY] = g
 
     def render(self):
@@ -300,6 +337,7 @@ def potential(obs, time_penalty, speed):
 
 def metrics_row(info, ep_return):
     row = {k: float(info.get(k, 0.0)) for k in METRIC_KEYS}
+    row.update({k: float(info[k]) for k in START_KEYS if k in info})     # single agent only
     row["ep_return"] = float(ep_return)
     return row
 
@@ -359,12 +397,15 @@ def _episode_seed(cfg, worker, episode):
 def _worker(conn, cfg, worker):
     import contextlib
     import io
+    from .common import step_costs
     with contextlib.redirect_stdout(io.StringIO()):          # BlueSky start-up text
         env = FlightEnv(cfg["setting"], cfg["n_agents"], **cfg["reward"])
     lidar, K = Lidar(**cfg["lidar"]), cfg["history"]
     ids = env.ids
     N, dims = len(ids), obs_dims(cfg["lidar"], cfg["history"])
     st = {"obs": None, "builders": None, "ret": None, "episode": 0, "started": False}
+    cost_keys = list(cfg.get("cost_keys", []))     # Lagrangian constraints (2026-11-13); empty = off
+    C = len(cost_keys)
 
     def phi(o):
         return potential(o, cfg["reward"]["time_penalty"], cfg["shaping_speed"]) if cfg["shaping"] else 0.0
@@ -376,6 +417,7 @@ def _worker(conn, cfg, worker):
         for a in st["obs"]:
             st["builders"][a].reset(st["obs"][a])
         st["ret"] = {a: 0.0 for a in ids}
+        st["cprev"] = {a: np.zeros(C) for a in ids}   # cumulative constraint metrics of the flight so far
 
     def pack(agents):
         state = np.zeros((N, dims["state_dim"]), dtype=np.float32)
@@ -407,8 +449,11 @@ def _worker(conn, cfg, worker):
                 nobs, rew, te, tr, infos = env.step(acts)
                 r, p, pn = np.zeros(N, np.float32), np.zeros(N, np.float32), np.zeros(N, np.float32)
                 episodes = []
+                cost = np.zeros((N, C), np.float32)
                 for a in live:
                     i = ids.index(a)
+                    if C:
+                        cost[i], st["cprev"][a] = step_costs(infos[a], st["cprev"][a], cost_keys)
                     r[i], p[i] = rew[a], phi(st["obs"][a])
                     pn[i] = 0.0 if te[a] else phi(nobs[a])
                     st["ret"][a] += rew[a]
@@ -422,7 +467,10 @@ def _worker(conn, cfg, worker):
                     cur = pack(env.agents)
                 else:
                     cur = pack(live)          # terminal observation of an aircraft that finished at this step
-                conn.send(dict(cur=cur, rew=r, phi=p, phi_next=pn, done=np.full(N, done), episodes=episodes))
+                msg = dict(cur=cur, rew=r, phi=p, phi_next=pn, done=np.full(N, done), episodes=episodes)
+                if C:
+                    msg["cost"] = cost
+                conn.send(msg)
             elif cmd == "density":                # curriculum: effective from the next reset
                 env.set_density(*data)
                 conn.send(True)
@@ -470,6 +518,8 @@ class VecEnv:
         out = {k: np.stack([r[k] for r in res]) for k in ["rew", "phi", "phi_next", "done"]}
         out["cur"] = self._stack([r["cur"] for r in res])
         out["episodes"] = [e for r in res for e in r["episodes"]]
+        if "cost" in res[0]:                           # Lagrangian: [E, N, C] cost of this step
+            out["cost"] = np.stack([r["cost"] for r in res])
         return out
 
     def set_density(self, n_intruders, n_obstacles):

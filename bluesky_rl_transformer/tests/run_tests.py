@@ -443,6 +443,233 @@ def test_masked_jepa():
     assert info2["pred"] == 0.0 and info2["pred_per_k"] == [] and only.sample_targets(3, "cpu").shape == (3, 4)
 
 
+def test_no_lidar_map_jepa():
+    """n_rays = 0: own state, aircraft tokens and map image only; masked JEPA on map blocks only."""
+    from rl_tf.jepa import TemporalJepa
+    lid = Lidar(n_rays=0, max_range_km=50.0, speed=True, ac_tokens=2, map_px=8, map_range_km=100.0)
+    o = fake_obs(zone=(60.0, 0.0, 20.0), goal=(0.0, 75.0), half=100.0)
+    b = ObsBuilder(lid, 4); b.reset(o); b.push(o, (0.1, 0.0))
+    s, l = b.get()
+    d = obs_dims(dict(n_rays=0, speed=True, ac_tokens=2, map_px=8, map_range_km=100.0), 4)
+    assert l.shape == (d["lidar_ch"], 0) and s.shape == (d["state_dim"],)
+    s, l = torch.as_tensor(s)[None], torch.as_tensor(l)[None]
+    torch.manual_seed(0)
+    pol = Policy(state_dim=d["state_dim"], lidar_ch=16, n_rays=0, ac_tokens=2, map_px=8, map_patch=4)
+    enc = pol.encoder
+    assert enc.n_tokens == 1 + 2 + 4 and enc.map_start == 3 and not hasattr(enc, "patch_embed")
+    dist, v = pol(s[None], l[None])
+    assert dist.mean.shape == (1, 1, 2) and torch.isfinite(dist.mean).all() and torch.isfinite(v).all()
+    jepa = TemporalJepa(enc, hidden=32, masked_coef=1.0, map_block=1, lidar_arc=6, mpred_dim=32, mpred_layers=1)
+    assert jepa.lidar_arc == 0 and jepa.sample_targets(5, "cpu").shape == (5, 1)
+    st, li = s[:, None].expand(4, 3, -1).clone(), l[:, None].expand(4, 3, -1, -1).clone()
+    loss, info = jepa.loss(st + 0.01 * torch.randn_like(st), li, torch.zeros(4, 2, 2))
+    assert torch.isfinite(loss) and info["masked"] > 0
+
+
+def test_start_intrusions_left_out():
+    """Fake competition environment: the official metric code (events at the rising edge, time per sample)."""
+    from rl_tf.envs import track_start_intrusions
+
+    class Fake:
+        sim_dt = 1.0
+
+        def __init__(self):
+            self.seq, self.i = [], 0
+
+        def _init_metrics(self, ac):
+            self.m, self._intruders_in_intrusion, self.i = {"intrusion_events": 0, "intrusion_time": 0.0}, set(), 0
+
+        def _update_metrics(self, ac, dt=None):
+            dt = self.sim_dt if dt is None else dt
+            now = set(self.seq[self.i]); self.i += 1
+            self.m["intrusion_events"] += len(now - self._intruders_in_intrusion)
+            self.m["intrusion_time"] += len(now) * dt
+            self._intruders_in_intrusion = now
+
+    env = Fake()
+    out = track_start_intrusions(env)
+    # A is in intrusion at reset, stays 2 s, goes out, comes back 1 s; B starts an intrusion at t = 3 for 2 s
+    env.seq = [{"A"}, {"A"}, {"A"}, {"B"}, {"A", "B"}, set()]
+    env._init_metrics("own"); env._update_metrics("own", dt=0.0)                # reset sample
+    for _ in range(5):
+        env._update_metrics("own")
+    assert env.m == {"intrusion_events": 3, "intrusion_time": 5.0}             # official metrics unchanged
+    assert out == {"start_intrusions": 1, "intrusion_events_no_start": 2, "intrusion_time_no_start": 3.0}
+    env.seq = [set(), {"A"}]                                                    # next flight: no start intrusion
+    env._init_metrics("own"); env._update_metrics("own", dt=0.0); env._update_metrics("own")
+    assert out == {"start_intrusions": 0, "intrusion_events_no_start": 1, "intrusion_time_no_start": 1.0}
+
+
+def _wm_batch(b=4, h=3):
+    torch.manual_seed(2)
+    st, li = torch.randn(b, h + 1, 28), torch.rand(b, h + 1, 12, 120)
+    act = torch.rand(b, h, 2) * 2 - 1
+    lab = torch.cat([torch.randint(0, 2, (b, h, 3)).float(), torch.randn(b, h, 3)], dim=-1)
+    return st, li, act, lab
+
+
+def test_world_model_start_z_and_loss():
+    from rl_tf.world_model import WorldModel
+    pol = _policy()
+    wm = WorldModel(pol.encoder, n_layers=1, n_heads=4)
+    st, li, act, lab = _wm_batch()
+    h, s, pad = wm.encode(st[:, 0], li[:, 0])
+    assert h.shape == (4, pol.encoder.n_tokens, 64) and s.shape == (4, 128) and not pad.any()
+    assert torch.allclose(wm.z(h, s), pol.encoder(st[:, 0], li[:, 0]), atol=1e-5)   # z = the policy features
+    h2, s2 = wm.step(h, s, pad, act[:, 0])
+    assert torch.equal(h2, h) and torch.equal(s2, s)               # start: the predictor gives "no change"
+    assert wm.heads(h, s, pad).shape == (4, 6)
+    loss, info = wm.loss(st, li, act, lab, torch.ones(3))
+    assert torch.isfinite(loss) and len(info["roll_per_k"]) == 3
+    loss.backward()
+    assert all(p.grad is None for p in wm.encoder.parameters())    # the encoder stays frozen
+    assert wm.dh.weight.grad is not None and wm.head_mlp[-1].weight.grad is not None
+
+
+def test_world_model_step_labels():
+    from rl_tf.world_model import step_labels
+    d = {"f_intr": np.array([0, 1, 0, 0], np.uint8), "f_area": np.array([1, 0, 0, 0], np.uint8),
+         "f_out": np.zeros(4, np.uint8), "goal_km": np.array([10.0, 8.5, 7.0, 6.0], np.float32),
+         "reward": np.array([-1.0, -2.0, -3.0, 0.0], np.float32), "ret": np.array([-6.0, -5.0, -3.0, 0.0], np.float32)}
+    y = step_labels(d, np.array([0, 1]), 2)
+    assert y.shape == (2, 2, 6)
+    assert np.allclose(y[0], [[0, 1, 0, 1.5, -1.0, -5.0], [1, 0, 0, 1.5, -2.0, -3.0]])   # step k: row t+k-1 -> row t+k
+    assert np.allclose(y[1, 1], [0, 0, 0, 1.0, -3.0, 0.0])
+
+
+def test_planner_filter_keeps_policy_and_search_beats_prior():
+    from rl_tf.world_model import WorldModel, Planner
+    pol = _policy()
+    wm = WorldModel(pol.encoder, n_layers=1, n_heads=4)
+    st, li, _, _ = _wm_batch(b=3)
+    st, li, prev = st[:, 0], li[:, 0], torch.zeros(3)
+    off = Planner(wm, pol, level=1, threshold=2.0, horizon=3)      # risk <= 1 < 2: never searches
+    a, info = off.act(st, li, prev)
+    ref = pol.act(st[:, None], li[:, None], deterministic=True)[0][:, 0].clamp(-1, 1)
+    assert not info["active"].any() and torch.allclose(a, ref, atol=1e-5)
+    on = Planner(wm, pol, level=2, samples=8, rounds=2, horizon=3, elites=2, seed=1)
+    a2, info2 = on.act(st, li, prev)
+    assert a2.shape == (3, 2) and (a2.abs() <= 1).all() and info2["active"].all()
+    assert (info2["best_J"] >= info2["prior_J"] - 1e-6).all()      # the policy rollout is a candidate
+
+
+def test_world_model_save_and_load():
+    import tempfile
+    from pathlib import Path
+    from rl_tf.world_model import WorldModel, save_world_model, load_world_model, same_weights
+    args = dict(patch=4, d_model=64, n_heads=4, n_layers=2, features_dim=256, log_std_init=0.0, fourier=0, cls_token=0)
+    dims = dict(state_dim=28, lidar_ch=12, n_rays=120)
+    wm = WorldModel(_policy().encoder, n_layers=1, n_heads=4)
+    with torch.no_grad():
+        wm.dh.weight.add_(0.1)
+        wm.norms.copy_(torch.tensor([-1.0, 2.0, 3.0, -4.0, 5.0]))
+    with tempfile.TemporaryDirectory() as d:
+        path = Path(d) / "wm.pt"
+        save_world_model(path, wm, args, dims)
+        wm2, _ = load_world_model(path)
+    assert same_weights(wm, wm2) and same_weights(wm.encoder, wm2.encoder)
+    assert not same_weights(wm.encoder, Policy(state_dim=28, lidar_ch=12, n_rays=120).encoder)
+
+
+def test_returns_and_neighbour_commands():
+    from rl_tf.world_model import returns_to_go, action_lookup, neighbour_commands
+    g = returns_to_go(np.array([-1.0, -2.0, 0.0, -4.0, 0.0], np.float32), np.array([1, 1, 0, 1, 0], np.uint8), 0.5, 2.0)
+    assert np.allclose(g, [-4.0, -4.0, 0.0, -8.0, 0.0])            # two flights; 0 at the last row of each
+    d = {"episode": np.zeros(6, np.int32), "agent": np.array([0, 0, 0, 1, 1, 1], np.int8),
+         "step": np.array([0, 1, 2, 0, 1, 2], np.int16), "has_next": np.array([1, 1, 0, 1, 1, 0], np.uint8),
+         "action": np.array([[.1, 0], [.2, 0], [0, 0], [.5, .1], [.6, .2], [0, 0]], np.float32),
+         "nb_ids": np.array([[1, -1]] * 3 + [[0, -1]] * 3, np.int8)}     # one flight, aircraft 0 and 1
+    nb = neighbour_commands(d, np.array([0]), 3, action_lookup(d))
+    assert nb.shape == (1, 3, 2, 3)
+    assert np.allclose(nb[0, :, 0], [[.5, .1, 1], [.6, .2, 1], [0, 0, 0]])   # step 2: aircraft 1 has no action left
+    assert (nb[0, :, 1] == 0).all()                                 # row 1 holds no learning aircraft
+
+
+def test_aircraft_row_ids_follow_token_order():
+    from rl_tf.world_model import aircraft_row_ids
+    o = fake_obs(half=500.0)
+    o[GEOM_KEY]["aircraft"] = np.array([[30.0, 0.0], [0.0, -10.0], [200.0, 0.0], [5.0, 5.0]])
+    o[GEOM_KEY]["aircraft_ids"] = ["A", "B", "C", "D"]
+    assert aircraft_row_ids(Lidar(max_range_km=50.0, ac_tokens=3), o) == ["D", "B", "A"]   # nearest first; C too far
+
+
+def test_planner_multi_agent_neighbours():
+    from rl_tf.world_model import WorldModel, Planner
+    torch.manual_seed(0)
+    pol = Policy(state_dim=42, lidar_ch=12, n_rays=120, ac_tokens=2)       # 28 own + 2 rows x 6 + 2 flags
+    wm = WorldModel(pol.encoder, n_layers=1, n_heads=4)
+    with torch.no_grad():                                           # trained-like weights: neighbour input matters
+        for p in list(wm.nb_in[-1].parameters()) + [wm.dh.weight, wm.ds.weight]:
+            p.normal_(0.0, 0.3)
+    st, li = torch.randn(3, 42), torch.rand(3, 12, 120)
+    st[:, 40:] = 1.0                                                # both aircraft rows are real
+    h, s, pad = wm.encode(st, li)
+    a = torch.zeros(3, 2)
+    h0, _ = wm.step(h, s, pad, a)
+    h1, _ = wm.step(h, s, pad, a, torch.tensor([0.9, -0.3, 1.0]).expand(3, 2, 3))
+    assert not torch.allclose(h0, h1)
+    row_ids = torch.tensor([[1, 2], [0, 2], [0, 1]])
+    for order in ("independent", "sequential"):
+        pl = Planner(wm, pol, level=2, samples=8, rounds=2, horizon=3, elites=2, value="head", order=order, seed=1)
+        out, info = pl.act(st, li, torch.zeros(3), row_ids, [2, 0, 1])
+        assert out.shape == (3, 2) and torch.isfinite(out).all()
+        assert (info["best_J"] >= info["prior_J"] - 1e-6).all()
+
+
+def test_load_actor_keeps_new_critic():
+    import tempfile
+    from pathlib import Path
+    from rl_tf.networks import save_checkpoint, load_actor
+    from rl_tf.world_model import same_weights
+    args = dict(patch=4, d_model=64, n_heads=4, n_layers=2, features_dim=256, log_std_init=0.0, fourier=0, cls_token=0)
+    dims = dict(state_dim=28, lidar_ch=12, n_rays=120)
+    a = _policy()
+    with torch.no_grad():
+        a.log_std.fill_(-1.0)
+    torch.manual_seed(1)
+    b = Policy(state_dim=28, lidar_ch=12, n_rays=120)
+    crit = {k: v.clone() for k, v in b.critic.state_dict().items()}
+    with tempfile.TemporaryDirectory() as d:
+        path = Path(d) / "p.pt"
+        save_checkpoint(path, a, args, dims)
+        load_actor(b, path, dims, args)
+    assert same_weights(a.encoder, b.encoder) and same_weights(a.actor, b.actor) and torch.equal(a.log_std, b.log_std)
+    assert all(torch.equal(v, b.critic.state_dict()[k]) for k, v in crit.items())   # the critic starts new
+
+
+def test_lagrangian_parse_step_and_advantage():
+    from rl_tf.common import parse_lagrangian, lagrange_step, lagrangian_advantage, step_costs
+    cons = parse_lagrangian("intrusion_events_no_start:0.3, time_in_restricted_area:5")
+    assert cons == [("intrusion_events_no_start", 0.3), ("time_in_restricted_area", 5.0)] and parse_lagrangian("") == []
+    for bad in ["a:0", "a:1,a:2"]:
+        try:
+            parse_lagrangian(bad)
+        except ValueError:
+            continue
+        raise AssertionError(f"accepted {bad}")
+    lam = lagrange_step([0.0, 1.0], [0.6, 2.5], [0.3, 5.0], 0.1, 100.0)
+    assert np.allclose(lam, [0.1, 0.95])                             # violation 1.0 (clipped); inside: -0.5 * 0.1
+    assert np.allclose(lagrange_step([0.02, 5.0], [0.0, 1000.0], [0.3, 5.0], 0.1, 5.05), [0.0, 5.05])   # 0 and max
+    adv_r = np.random.default_rng(0).normal(size=(4, 3)).astype(np.float32)
+    adv_c = np.random.default_rng(1).normal(size=(2, 4, 3)).astype(np.float32)
+    assert lagrangian_advantage(adv_r, adv_c, [0.0, 0.0]) is adv_r   # lam = 0: the advantage of before, unchanged
+    a = lagrangian_advantage(adv_r, adv_c, [1.0, 3.0])
+    assert a.dtype == np.float32 and np.allclose(a, (adv_r - adv_c[0] - 3.0 * adv_c[1]) / 5.0, atol=1e-6)
+    c, prev = step_costs({"x": 2.0, "y": 10.0}, np.array([1.0, 4.0]), ["x", "y"])
+    assert np.allclose(c, [1.0, 6.0]) and np.allclose(prev, [2.0, 10.0])
+
+
+def test_policy_act_features_do_not_change_actions():
+    pol = _policy()
+    state, lidar = torch.randn(2, 3, 28), torch.rand(2, 3, 12, 120)
+    torch.manual_seed(5)
+    a = pol.act(state, lidar)
+    torch.manual_seed(5)
+    b = pol.act(state, lidar, return_feats=True)
+    assert len(a) == 3 and len(b) == 4 and all(torch.equal(x, y) for x, y in zip(a, b[:3]))
+    assert torch.equal(b[3], pol.encoder(state.reshape(6, 28), lidar.reshape(6, 12, 120)).reshape(2, 3, -1))
+
+
 def main():
     t0, failed = time.time(), 0
     tests = sorted(k for k in globals() if k.startswith("test_"))

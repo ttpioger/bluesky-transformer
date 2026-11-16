@@ -86,7 +86,10 @@ def wandb_upload(wb, path):
 SUMMARY_ROWS = [("waypoint_reached", "goal completed (share of flights)"), ("flight_time", "flight time (s)"),
                 ("intrusion_events", "intrusion events"), ("intrusion_time", "intrusion time (s)"),
                 ("restricted_area_events", "restricted area events"), ("time_in_restricted_area", "restricted area time (s)"),
-                ("sector_exit_events", "sector exit events"), ("time_outside_sector", "time outside sector (s)")]
+                ("sector_exit_events", "sector exit events"), ("time_outside_sector", "time outside sector (s)"),
+                ("start_intrusions", "intrusions already at start"),                  # single agent only, not official
+                ("intrusion_events_no_start", "intrusion events, start left out"),
+                ("intrusion_time_no_start", "intrusion time (s), start left out")]
 
 
 def summary_table(straight, policy, seed, wb=None, key="held_out/summary"):
@@ -94,7 +97,8 @@ def summary_table(straight, policy, seed, wb=None, key="held_out/summary"):
     straight and policy: {metric key: mean}. Prints the table, sends it to W&B (under `key`) if wb is
     given, and returns (columns, rows)."""
     cols = ["metric", "fly straight", f"seed {seed} (our Transformer)"]
-    rows = [[label, round(float(straight[k]), 2), round(float(policy[k]), 2)] for k, label in SUMMARY_ROWS]
+    rows = [[label, round(float(straight[k]), 2), round(float(policy[k]), 2)] for k, label in SUMMARY_ROWS
+            if k in straight and k in policy]                                     # START_KEYS: single agent only
     print(f"\n{cols[0]:<36} {cols[1]:>14} {cols[2]:>28}")
     for r in rows:
         print(f"{r[0]:<36} {r[1]:>14.2f} {r[2]:>28.2f}")
@@ -136,6 +140,45 @@ def curriculum_stage(stages, steps):
         if steps >= s[0]:
             cur = s
     return cur[1], cur[2]
+
+
+def parse_lagrangian(text):
+    """Constraints 'metric:limit,...' (2026-11-13, PPO-Lagrangian): the mean of each flight metric must stay at or
+    below its limit (per flight, competition units). Empty text = off. Returns a list of (metric, limit)."""
+    if not text:
+        return []
+    out = []
+    for part in text.split(","):
+        k, v = part.strip().split(":")
+        if float(v) <= 0:
+            raise ValueError(f"constraint {k}: the limit must be > 0")
+        out.append((k.strip(), float(v)))
+    if len({k for k, _ in out}) != len(out):
+        raise ValueError("a constraint metric appears twice")
+    return out
+
+
+def lagrange_step(lam, mean_cost, limits, lr, lam_max):
+    """Dual ascent on the multipliers: lam_i <- clip(lam_i + lr * clip(cost_i / limit_i - 1, -1, 1), 0, lam_max). The
+    violation is relative to the limit, so one rate fits events and seconds; its clip keeps the early, very unsafe
+    flights of training from driving lam up in a few updates (at most lr per update)."""
+    lam, c, d = (np.asarray(x, dtype=np.float64) for x in (lam, mean_cost, limits))
+    return np.clip(lam + lr * np.clip(c / d - 1.0, -1.0, 1.0), 0.0, lam_max)
+
+
+def lagrangian_advantage(adv_r, adv_c, lam):
+    """(A_r - sum_i lam_i A_c_i) / (1 + sum_i lam_i). adv_r [...], adv_c [C, ...], lam [C]. lam = 0 gives adv_r."""
+    lam = np.asarray(lam, dtype=np.float64)
+    if not lam.any():
+        return adv_r
+    comb = adv_r - np.tensordot(lam, adv_c, axes=1)
+    return (comb / (1.0 + lam.sum())).astype(adv_r.dtype)
+
+
+def step_costs(info, prev, keys):
+    """Cost of one step per constraint metric: the increase of each cumulative flight metric. Returns (cost, new prev)."""
+    now = np.array([float(info.get(k, 0.0)) for k in keys], dtype=np.float64)
+    return (now - prev).astype(np.float32), now
 
 
 def policy_fn_from(policy, device="cpu", deterministic=True):

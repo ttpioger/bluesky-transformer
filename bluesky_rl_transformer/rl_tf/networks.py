@@ -40,6 +40,7 @@ class LidarTransformerEncoder(nn.Module):
     All options at 0 give the encoder of before, with the same start weights.
 
     Token order: [read-out], own state, lidar patches, aircraft, areas, goal, actions, edges, map patches.
+    n_rays = 0: no lidar tokens and no lidar weights (the lidar input is [B, C, 0]).
     token_outputs() gives the output of each token (masked JEPA, rl_tf/jepa.py).
     """
 
@@ -59,10 +60,11 @@ class LidarTransformerEncoder(nn.Module):
         state_dim = state_dim - self.extra                              # size of the own state alone
         if n_rays % patch:
             raise ValueError("n_rays must be a multiple of patch")
-        self.patch, self.n_tok, self.out_dim = patch, n_rays // patch, features_dim
-        self.patch_embed = nn.Linear(lidar_ch * patch, d_model)
-        self.pos = nn.Parameter(torch.zeros(1, self.n_tok, d_model))       # ray direction of each token
-        nn.init.trunc_normal_(self.pos, std=0.02)
+        self.patch, self.n_tok, self.out_dim, self.d_model = patch, n_rays // patch, features_dim, d_model
+        if self.n_tok:                                 # n_rays = 0 (2026-11-13): no lidar, no lidar tokens
+            self.patch_embed = nn.Linear(lidar_ch * patch, d_model)
+            self.pos = nn.Parameter(torch.zeros(1, self.n_tok, d_model))   # ray direction of each token
+            nn.init.trunc_normal_(self.pos, std=0.02)
         self.state_net = nn.Sequential(nn.Linear(state_dim + int(self.mp > 0), state_hidden), nn.ReLU(),
                                        nn.Linear(state_hidden, state_hidden), nn.ReLU())
         self.state_token = nn.Linear(state_hidden, d_model)
@@ -117,6 +119,8 @@ class LidarTransformerEncoder(nn.Module):
 
     def tokens(self, lidar):
         b, c, r = lidar.shape
+        if not self.n_tok:                             # no lidar: an empty token list
+            return lidar.new_zeros(b, 0, self.d_model)
         x = lidar.reshape(b, c, self.n_tok, self.patch).permute(0, 2, 1, 3).reshape(b, self.n_tok, c * self.patch)
         return self.patch_embed(x) + self.pos
 
@@ -217,18 +221,25 @@ class Policy(nn.Module):
 
     def forward(self, state, lidar):
         """state [B, N, S], lidar [B, N, C, R] -> Normal over actions [B, N, A], value [B] (one per environment)."""
+        d, v, _ = self.forward_feats(state, lidar)
+        return d, v
+
+    def forward_feats(self, state, lidar):
+        """forward plus the encoder features [B, N, F] (the cost critics of the Lagrangian read them)."""
         b, n = state.shape[:2]
         f = self.encoder(state.reshape(b * n, -1), lidar.reshape(b * n, *lidar.shape[2:])).reshape(b, n, -1)
         mean = self.actor(f)
         std = self.log_std.clamp(-20.0, 2.0).exp().expand_as(mean)     # clamp of the reference
-        return Normal(mean, std), self.critic(f)
+        return Normal(mean, std), self.critic(f), f
 
     @torch.no_grad()
-    def act(self, state, lidar, deterministic=False):
-        """Returns raw action [B, N, A], log-prob [B, N], value [B, N] (the environment value, repeated per aircraft)."""
-        d, v = self(state, lidar)
+    def act(self, state, lidar, deterministic=False, return_feats=False):
+        """Returns raw action [B, N, A], log-prob [B, N], value [B, N] (the environment value, repeated per aircraft);
+        with return_feats also the encoder features [B, N, F]."""
+        d, v, f = self.forward_feats(state, lidar)
         raw = d.mean if deterministic else d.sample()
-        return raw, d.log_prob(raw).sum(-1), v[:, None].expand(-1, state.shape[1])
+        out = (raw, d.log_prob(raw).sum(-1), v[:, None].expand(-1, state.shape[1]))
+        return out + (f,) if return_feats else out
 
 
 def n_params(module):
@@ -284,6 +295,23 @@ def load_encoder(policy, path, dims, args):
     else:
         state = {k[len("encoder."):]: v for k, v in ck["policy"].items() if k.startswith("encoder.")}
     policy.encoder.load_state_dict(state)
+    return ck
+
+
+def load_actor(policy, path, dims, args):
+    """Copy encoder, actor and log_std of a saved policy (scripts.train) into `policy`; the critic keeps its start
+    weights (2026-11-13: chain of multi-agent runs, single agent -> multi agent). Settings must be equal; else
+    ValueError. The observation does not depend on the number of aircraft, so the setting may differ."""
+    ck = torch.load(path, map_location="cpu", weights_only=False)
+    if "policy" not in ck:
+        raise ValueError(f"{path}: not a policy checkpoint (an encoder file needs --init-encoder)")
+    bad = encoder_mismatch(ck["args"], ck["dims"], args, dims)
+    if bad:
+        raise ValueError(f"{path}: encoder settings differ from this run: {bad}")
+    state = {k: v for k, v in ck["policy"].items() if k.startswith(("encoder.", "actor.")) or k == "log_std"}
+    missing, unexpected = policy.load_state_dict(state, strict=False)
+    if unexpected or any(not k.startswith("critic.") for k in missing):
+        raise ValueError(f"{path}: weights do not fit: missing {missing}, unexpected {unexpected}")
     return ck
 
 

@@ -197,7 +197,7 @@ def main(argv=None):
                "goal_distance_r2": (data["goal_km"], np.ones(len(li), bool), "r2")}
     probes = {}
     raw = lambda r: np.concatenate([data["state"][r].astype(np.float32),
-                                    data["lidar"][r].astype(np.float32).reshape(len(r), -1)], axis=1)
+                                    data["lidar"][r].astype(np.float32).reshape(len(r), int(np.prod(data["lidar"].shape[1:])))], axis=1)
     probes["raw input"] = probe_table(raw, data, tr_rows, va_rows, targets)
     fresh = build_policy(dims, vars(args)).to(dev)
     fresh.encoder.load_state_dict(start_state)

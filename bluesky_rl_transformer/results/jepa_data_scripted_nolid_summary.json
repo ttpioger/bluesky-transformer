@@ -1,0 +1,169 @@
+{
+ "status": "EXPLORATORY",
+ "name": "scripted_nolid",
+ "flights": 1200,
+ "rows": 168446,
+ "rows_per_second": 163.00948958385015,
+ "wall_seconds": 1033.3508830070496,
+ "seed0": 3000000,
+ "policies": [
+  "straight",
+  "goal",
+  "goal_noise",
+  "random"
+ ],
+ "policy_kinds": [
+  "straight",
+  "goal",
+  "goal_noise",
+  "random",
+  "policy"
+ ],
+ "policy_model": "",
+ "reward": {
+  "drift_penalty": 0.0,
+  "time_penalty": -0.015,
+  "intrusion_penalty": -0.5,
+  "restricted_penalty": -0.3,
+  "sector_exit_penalty": -0.2,
+  "zone_entry_penalty": -2.0,
+  "sector_exit_event_penalty": 0.0,
+  "turn_change_penalty": 0.0,
+  "goal_distance_penalty": 0.0,
+  "heading_penalty": -0.05,
+  "intrusion_event_penalty": -3.0
+ },
+ "setting": "single",
+ "n_agents": 1,
+ "densities": [
+  [
+   10,
+   5
+  ],
+  [
+   10,
+   5
+  ],
+  [
+   5,
+   3
+  ],
+  [
+   2,
+   1
+  ]
+ ],
+ "dims": {
+  "state_dim": 3195,
+  "ac_tokens": 10,
+  "zone_tokens": 0,
+  "act_tokens": 0,
+  "edge_tokens": 0,
+  "ac_cpa": 1,
+  "map_px": 32,
+  "lidar_ch": 16,
+  "n_rays": 0
+ },
+ "lidar": {
+  "n_rays": 0,
+  "fov_deg": 360.0,
+  "max_range_km": 50.0,
+  "zone_flag": true,
+  "speed": true,
+  "ac_tokens": 10,
+  "zone_tokens": 0,
+  "act_tokens": 0,
+  "edge_tokens": 0,
+  "ac_cpa": 1,
+  "map_px": 32,
+  "map_range_km": 150.0
+ },
+ "history": 4,
+ "share_intrusion_steps": 0.04982012039466654,
+ "share_area_steps": 0.10056635360887169,
+ "share_outside_steps": 0.07754413877444404,
+ "shards": [
+  "data/jepa_scripted_nolid_w0.npz",
+  "data/jepa_scripted_nolid_w1.npz",
+  "data/jepa_scripted_nolid_w2.npz",
+  "data/jepa_scripted_nolid_w3.npz",
+  "data/jepa_scripted_nolid_w4.npz",
+  "data/jepa_scripted_nolid_w5.npz",
+  "data/jepa_scripted_nolid_w6.npz",
+  "data/jepa_scripted_nolid_w7.npz"
+ ],
+ "workers": [
+  {
+   "worker": 0,
+   "rows": 12907,
+   "flights": 150,
+   "seconds": 507.61881852149963,
+   "intrusion_steps": 1210,
+   "area_steps": 1481,
+   "outside_steps": 0
+  },
+  {
+   "worker": 1,
+   "rows": 12985,
+   "flights": 150,
+   "seconds": 499.3977777957916,
+   "intrusion_steps": 1157,
+   "area_steps": 1441,
+   "outside_steps": 0
+  },
+  {
+   "worker": 2,
+   "rows": 13212,
+   "flights": 150,
+   "seconds": 516.587521314621,
+   "intrusion_steps": 1015,
+   "area_steps": 1581,
+   "outside_steps": 0
+  },
+  {
+   "worker": 3,
+   "rows": 45150,
+   "flights": 150,
+   "seconds": 1019.2270653247833,
+   "intrusion_steps": 1465,
+   "area_steps": 5385,
+   "outside_steps": 6976
+  },
+  {
+   "worker": 4,
+   "rows": 12741,
+   "flights": 150,
+   "seconds": 473.3324558734894,
+   "intrusion_steps": 709,
+   "area_steps": 1335,
+   "outside_steps": 0
+  },
+  {
+   "worker": 5,
+   "rows": 12963,
+   "flights": 150,
+   "seconds": 482.05540585517883,
+   "intrusion_steps": 956,
+   "area_steps": 1196,
+   "outside_steps": 0
+  },
+  {
+   "worker": 6,
+   "rows": 13548,
+   "flights": 150,
+   "seconds": 496.42134284973145,
+   "intrusion_steps": 1065,
+   "area_steps": 1451,
+   "outside_steps": 0
+  },
+  {
+   "worker": 7,
+   "rows": 44940,
+   "flights": 150,
+   "seconds": 984.3678543567657,
+   "intrusion_steps": 815,
+   "area_steps": 3070,
+   "outside_steps": 6086
+  }
+ ]
+}

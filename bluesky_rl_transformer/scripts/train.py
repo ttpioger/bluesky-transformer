@@ -13,11 +13,12 @@ from pathlib import Path
 import numpy as np
 import torch
 from rl_tf.envs import (VecEnv, FlightEnv, add_reward_args, reward_kwargs, obs_dims, rollout_episode, turn_stats,
-                        lidar_cfg_from_args)
+                        lidar_cfg_from_args, METRIC_KEYS, START_KEYS)
 from rl_tf.lidar import Lidar
-from rl_tf.networks import build_policy, save_checkpoint, n_params, load_encoder
+from rl_tf.networks import build_policy, save_checkpoint, n_params, load_encoder, AttentionCritic
 from rl_tf.common import (setup_torch, compute_gae, pass_criterion, window_stats, write_json, policy_fn_from, wandb_upload,
-                          wandb_init, add_wandb_args, parse_curriculum, curriculum_stage)
+                          wandb_init, add_wandb_args, parse_curriculum, curriculum_stage, parse_lagrangian,
+                          lagrange_step, lagrangian_advantage)
 
 EVAL_SEED0 = 900_000_000   # held-out scenario seeds for the final flights without noise
 
@@ -40,7 +41,8 @@ def build_parser():
     p.add_argument("--entropy-coef", type=float, default=0.0)
     p.add_argument("--max-grad-norm", type=float, default=0.5, help="One clip over all weights (as in the reference).")
     # lidar and frame stack
-    p.add_argument("--n-rays", type=int, default=120)
+    p.add_argument("--n-rays", type=int, default=120,
+                   help="Lidar rays. 0 = no lidar (no lidar tokens; the aircraft tokens still use --max-range-km).")
     p.add_argument("--fov-deg", type=float, default=360.0)
     p.add_argument("--max-range-km", type=float, default=50.0,
                    help="Lidar radius around the aircraft, km. A ray sees nothing beyond it (100 before 2026-11-12).")
@@ -88,7 +90,13 @@ def build_parser():
     p.add_argument("--curriculum", default="",
                    help="Stages 'I:O@S,...': from environment step S on, training scenarios have I other aircraft and O "
                         "restricted areas (competition: 10:5). Example: '2:1@0,5:3@300000,10:5@800000'. The final "
-                        "flights without noise always use 10:5. Empty = no curriculum.")
+                        "flights without noise always use 10:5. Empty = no curriculum. Multi agent: I must be 0 (the "
+                        "environment has no scripted aircraft; change the number of learning aircraft with a chain of "
+                        "runs, --n-agents and --init-policy).")
+    p.add_argument("--init-policy", default="",
+                   help="Policy file (scripts.train) whose encoder, actor and log_std are the start weights; the critic "
+                        "starts new. The token and network flags must be the same. A single-agent policy can start a "
+                        "multi-agent run. Empty = off.")
     # reward
     p.add_argument("--reward-scale", type=float, default=0.0002, help="Scale of the reward used for learning only.")
     p.add_argument("--shaping", choices=["potential", "off"], default="off",
@@ -96,6 +104,19 @@ def build_parser():
                         "phi = time_penalty * estimated seconds to the waypoint; this term is positive during progress "
                         "to the waypoint, so it breaks the only-negative constraint.")
     p.add_argument("--shaping-speed", type=float, default=150.0, help="Nominal speed (m/s) in the potential.")
+    # Lagrangian (PPO-Lagrangian, 2026-11-13); empty = off, then the training is that of before
+    p.add_argument("--lagrangian", default="",
+                   help="Constraints 'metric:limit,...' on the mean flight metrics (competition units per flight), e.g. "
+                        "'intrusion_events_no_start:0.3,time_in_restricted_area:5,time_outside_sector:6'. Each gets a "
+                        "multiplier lam >= 0 and a cost critic; the advantage is (A_r - sum lam A_c) / (1 + sum lam). "
+                        "The cost of a step is the increase of the metric times --reward-scale, so lam is in the units "
+                        "of a reward weight (lam 3 on intrusion events = a penalty of -3 per event). The fixed reward "
+                        "weights stay. Single agent can use the *_no_start metrics.")
+    p.add_argument("--lambda-lr", type=float, default=0.05,
+                   help="Step of the multiplier per update, times the relative violation (cost / limit - 1, clipped "
+                        "to [-1, 1]).")
+    p.add_argument("--lambda-init", type=float, default=0.0)
+    p.add_argument("--lambda-max", type=float, default=100.0)
     add_reward_args(p)
     add_wandb_args(p)
     p.add_argument("--seed", type=int, default=0)
@@ -117,6 +138,17 @@ def main(argv=None):
     (out / "models").mkdir(parents=True, exist_ok=True)
     lidar_cfg = lidar_cfg_from_args(args)
     stages = parse_curriculum(args.curriculum)
+    if args.setting == "multi" and any(i != 0 for _, i, _ in stages):
+        raise ValueError("--curriculum with --setting multi: the environment has no scripted aircraft, so I must be 0 "
+                         "(only the restricted areas change). Change the number of learning aircraft with a chain of "
+                         "runs: --n-agents and --init-policy.")
+    if args.init_policy and args.init_encoder:
+        raise ValueError("give --init-policy or --init-encoder, not both")
+    cons = parse_lagrangian(args.lagrangian)
+    cost_keys, limits = [k for k, _ in cons], np.array([v for _, v in cons], dtype=np.float64)
+    allowed = METRIC_KEYS + (START_KEYS if args.setting == "single" else [])
+    if any(k not in allowed for k in cost_keys):
+        raise ValueError(f"--lagrangian: metrics must be from {allowed}")
     cfg = dict(setting=args.setting, n_agents=args.n_agents, reward=reward_kwargs(args), lidar=lidar_cfg,
                history=args.history, shaping=args.shaping == "potential", shaping_speed=args.shaping_speed,
                seed=args.seed, reset_seed=reset_seed)
@@ -125,12 +157,27 @@ def main(argv=None):
     if args.init_encoder:
         load_encoder(policy, args.init_encoder, dims, vars(args))
         print(f"Encoder start weights from {args.init_encoder}", flush=True)
+    if args.init_policy:
+        from rl_tf.networks import load_actor
+        load_actor(policy, args.init_policy, dims, vars(args))
+        print(f"Encoder, actor and log_std start weights from {args.init_policy} (critic new)", flush=True)
     frozen = args.freeze_encoder_steps > 0
     if frozen:                                         # Adam skips a weight without gradient
         policy.encoder.requires_grad_(False)
     opt = torch.optim.Adam(policy.parameters(), lr=args.lr)
     n_par = {"policy": n_params(policy), "encoder": n_params(policy.encoder),
              "actor_head": n_params(policy.actor) + policy.log_std.numel(), "critic_head": n_params(policy.critic)}
+    C = len(cons)
+    if C:                                              # made after the policy: its start weights stay as before
+        ccrit = torch.nn.ModuleList([AttentionCritic(args.features_dim, 64) for _ in range(C)]).to(dev)
+        copt = torch.optim.Adam(ccrit.parameters(), lr=args.lr)
+        lam = np.full(C, float(args.lambda_init))
+        cfg["cost_keys"] = cost_keys
+        n_par["cost_critics"] = n_params(ccrit)
+        print(f"Lagrangian: limits {dict(cons)}, lambda_lr {args.lambda_lr}, lambda_init {args.lambda_init}", flush=True)
+
+    def lag_extra():
+        return {"lagrangian": {"constraints": cons, "lambda": lam.tolist(), "cost_critics": ccrit.state_dict()}} if C else None
     model_path = out / "models" / f"{args.name}.pt"
     wb = wandb_init(args.wandb, args.wandb_project, args.name, {**vars(args), "n_params": n_par})
 
@@ -165,12 +212,19 @@ def main(argv=None):
         B_raw = np.zeros((T, E, N, 2), dtype=np.float32)
         B_logp, B_val, B_rew = (np.zeros((T, E, N), dtype=np.float32) for _ in range(3))
         B_done = np.zeros((T, E, N), dtype=bool)
+        if C:
+            B_cost, B_cval = np.zeros((T, E, N, C), np.float32), np.zeros((T, E, N, C), np.float32)
         n_before = len(episodes)
 
         torch.set_num_threads(1)
         for t in range(T):
             t0 = time.perf_counter()
-            raw, logp, val = policy.act(tt(state), tt(lidar))
+            if C:
+                raw, logp, val, feats = policy.act(tt(state), tt(lidar), return_feats=True)
+                with torch.no_grad():
+                    B_cval[t] = torch.stack([c(feats) for c in ccrit], -1)[:, None].expand(-1, N, -1).cpu().numpy()
+            else:
+                raw, logp, val = policy.act(tt(state), tt(lidar))
             raw = raw.cpu().numpy()                          # .cpu() waits for the GPU, so the timer is exact
             timing["inference"] += time.perf_counter() - t0
             bad = ~np.isfinite(raw).all(-1)                  # diagnostic: a NaN action gives a BlueSky HDG error
@@ -188,17 +242,30 @@ def main(argv=None):
             total += E
             B_rew[t] = (res["rew"] + args.gamma * res["phi_next"] - res["phi"]) * args.reward_scale
             B_done[t] = res["done"]
+            if C:
+                B_cost[t] = res["cost"] * args.reward_scale
             for e in res["episodes"]:
                 episodes.append({"env_steps": total, **e})
             state, lidar, _ = res["cur"]
         t0 = time.perf_counter()
-        last_val = policy.act(tt(state), tt(lidar))[2].cpu().numpy()
+        if C:
+            _, _, last_val, feats = policy.act(tt(state), tt(lidar), return_feats=True)
+            with torch.no_grad():
+                last_cval = torch.stack([c(feats) for c in ccrit], -1)[:, None].expand(-1, N, -1).cpu().numpy()
+            last_val = last_val.cpu().numpy()
+        else:
+            last_val = policy.act(tt(state), tt(lidar))[2].cpu().numpy()
         timing["inference"] += time.perf_counter() - t0
 
         t0 = time.perf_counter()
         M = E * N
         adv, ret = compute_gae(B_rew.reshape(T, M), B_val.reshape(T, M), B_done.reshape(T, M),
                                last_val.reshape(M), args.gamma, args.gae_lambda)   # no advantage normalization
+        if C:                                          # one GAE per constraint, then the Lagrangian advantage
+            gc = [compute_gae(B_cost[..., i].reshape(T, M), B_cval[..., i].reshape(T, M), B_done.reshape(T, M),
+                              last_cval[..., i].reshape(M), args.gamma, args.gae_lambda) for i in range(C)]
+            adv = lagrangian_advantage(adv, np.stack([g[0] for g in gc]), lam)
+            f_cret = tt(np.stack([g[1].reshape(-1) for g in gc], axis=-1))
 
         # one sample = one aircraft row (as the reference); the critic sees all aircraft of its environment
         flat = lambda x: tt(x.reshape(T * E, *x.shape[2:]))
@@ -211,7 +278,10 @@ def main(argv=None):
             for s in range(0, T * E * N, args.batch_size):
                 b = perm[s:s + args.batch_size]
                 te, ag = b // N, b % N
-                d_all, v = policy(f_state[te], f_lidar[te])
+                if C:
+                    d_all, v, feats = policy.forward_feats(f_state[te], f_lidar[te])
+                else:
+                    d_all, v = policy(f_state[te], f_lidar[te])
                 d = torch.distributions.Normal(d_all.mean[torch.arange(len(b)), ag], d_all.stddev[torch.arange(len(b)), ag])
                 ratio = torch.exp(d.log_prob(f_raw[b]).sum(-1) - f_logp[b])
                 a = f_adv[b]
@@ -223,6 +293,13 @@ def main(argv=None):
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(policy.parameters(), args.max_grad_norm)
                 opt.step()
+                if C:                                  # cost critics read the features, no gradient into the encoder
+                    vc = torch.stack([c(feats.detach()) for c in ccrit], -1)
+                    cost_value_loss = (vc - f_cret[b]).pow(2).mean()
+                    copt.zero_grad(set_to_none=True)
+                    (args.vf_coef * cost_value_loss).backward()
+                    torch.nn.utils.clip_grad_norm_(ccrit.parameters(), args.max_grad_norm)
+                    copt.step()
         sync()
         timing["update"] += time.perf_counter() - t0
         updates += 1
@@ -232,6 +309,13 @@ def main(argv=None):
                "log_std": policy.log_std.mean().item(), "n_episodes": len(new_eps), "n_cut_episodes": n_cut}
         if stages:
             row["n_intruders"], row["n_obstacles"] = density
+        if C:                                          # dual step on the flights that ended in this rollout
+            if new_eps:
+                mean_c = np.array([np.mean([e[k] for e in new_eps]) for k in cost_keys])
+                row.update({f"cost_{k}": float(v) for k, v in zip(cost_keys, mean_c)})
+                lam = lagrange_step(lam, mean_c, limits, args.lambda_lr, args.lambda_max)
+            row.update({f"lambda_{k}": float(v) for k, v in zip(cost_keys, lam)})
+            row["cost_value_loss"] = cost_value_loss.item()
         txt = ""
         if new_eps:
             for k in ["ep_return", "waypoint_reached", "intrusion_events", "restricted_area_events",
@@ -245,10 +329,12 @@ def main(argv=None):
             extra = {k: float(np.mean([e[k] for e in new_eps])) for k in
                      ["intrusion_time", "time_in_restricted_area", "time_outside_sector"]} if new_eps else {}
             wb.log({f"train/{k}": v for k, v in {**row, **extra}.items() if k != "env_steps"}, step=total)
+        if C:
+            txt += " | lambda " + " ".join(f"{k}={v:.3f}" for k, v in zip(cost_keys, lam))
         print(f"env_steps={total} policy_loss={row['policy_loss']:.4f} value_loss={row['value_loss']:.4f} "
               f"log_std={row['log_std']:.2f}{txt}", flush=True)
         if updates % args.save_every == 0:
-            save_checkpoint(model_path, policy, vars(args), dims)
+            save_checkpoint(model_path, policy, vars(args), dims, lag_extra())
             wandb_upload(wb, model_path)
 
     wall = time.time() - t_start
@@ -256,7 +342,7 @@ def main(argv=None):
     timing_share = {k: v / max(wall, 1e-9) for k, v in timing.items()}
     print("timing (s, share of wall): " + ", ".join(f"{k} {v:.1f} ({timing_share[k]:.0%})" for k, v in timing.items()))
     vec.close()
-    save_checkpoint(model_path, policy, vars(args), dims)
+    save_checkpoint(model_path, policy, vars(args), dims, lag_extra())
     print(f"Saved {model_path}")
     wandb_upload(wb, model_path)
 
@@ -286,6 +372,8 @@ def main(argv=None):
         "greedy_eval": {"seeds": seeds, "mean": window_stats(greedy_rows), "rows": greedy_rows},
         "wall_seconds": wall, "seconds_per_step": wall / max(total, 1),
         "timing_seconds": timing, "timing_share": timing_share,
+        "lagrangian": {"constraints": cons, "lambda_final": lam.tolist(), "lambda_lr": args.lambda_lr,
+                       "lambda_init": args.lambda_init, "lambda_max": args.lambda_max} if C else None,
         "args": vars(args), "curve": curve, "episodes": episodes})
     if wb is not None:
         wandb_upload(wb, summary_path)
