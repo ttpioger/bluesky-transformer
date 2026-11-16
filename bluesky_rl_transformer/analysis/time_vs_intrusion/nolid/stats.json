@@ -1,0 +1,1591 @@
+{
+ "created": "2026-11-16 19:59",
+ "run": "sa_tf_nolid_jepa_s0",
+ "status": "EXPLORATORY",
+ "weights": {
+  "time_penalty": -0.015,
+  "intrusion_penalty": -0.5,
+  "intrusion_event_penalty": -3.0,
+  "restricted_penalty": -0.3,
+  "zone_entry_penalty": -2.0,
+  "sector_exit_penalty": -0.2,
+  "sector_exit_event_penalty": 0.0,
+  "heading_penalty": -0.05,
+  "drift_penalty": 0.0,
+  "goal_distance_penalty": 0.0,
+  "turn_change_penalty": 0.0
+ },
+ "checks": {
+  "max_rest_term": -0.5427348720603185,
+  "n_rest_positive": 0,
+  "n_cut_training_flights": 3904,
+  "n_logged_training_flights": 15353
+ },
+ "audit": {
+  "terms": [
+   {
+    "term": "r_time",
+    "weight": -0.015,
+    "metric": "flight_time",
+    "applies": "per simulated second flown",
+    "kind": "per second"
+   },
+   {
+    "term": "r_intrusion_time",
+    "weight": -0.5,
+    "metric": "intrusion_time",
+    "applies": "per second and per other aircraft within 5 NM (metric sampled every 1 s)",
+    "kind": "per second"
+   },
+   {
+    "term": "r_intrusion_event",
+    "weight": -3.0,
+    "metric": "intrusion_events",
+    "applies": "once per start of an intrusion with one aircraft (also an intrusion already present at reset)",
+    "kind": "per event"
+   },
+   {
+    "term": "r_restricted_time",
+    "weight": -0.3,
+    "metric": "time_in_restricted_area",
+    "applies": "per second inside >= 1 restricted area (one count also inside 2 areas)",
+    "kind": "per second"
+   },
+   {
+    "term": "r_zone_entry",
+    "weight": -2.0,
+    "metric": "restricted_area_events",
+    "applies": "once per entry into a restricted area",
+    "kind": "per event"
+   },
+   {
+    "term": "r_outside_time",
+    "weight": -0.2,
+    "metric": "time_outside_sector",
+    "applies": "per second outside the sector",
+    "kind": "per second"
+   },
+   {
+    "term": "r_sector_exit_event",
+    "weight": 0.0,
+    "metric": "sector_exit_events",
+    "applies": "once per exit from the sector",
+    "kind": "per event"
+   },
+   {
+    "term": "heading_penalty",
+    "weight": -0.05,
+    "metric": "(not a flight metric)",
+    "applies": "per second flown x (1 - cos psi), psi = heading vs bearing to goal (after the step)",
+    "kind": "per step"
+   },
+   {
+    "term": "drift_penalty",
+    "weight": 0.0,
+    "metric": "(not a flight metric)",
+    "applies": "per radian of drift, per 10 s step (env term)",
+    "kind": "per step"
+   },
+   {
+    "term": "goal_distance_penalty",
+    "weight": 0.0,
+    "metric": "(not a flight metric)",
+    "applies": "per second flown x km to the goal",
+    "kind": "per step"
+   },
+   {
+    "term": "turn_change_penalty",
+    "weight": 0.0,
+    "metric": "(not a flight metric)",
+    "applies": "per unit of change of the turn action between two steps",
+    "kind": "per step"
+   }
+  ],
+  "exchange_rate": {
+   "flight_s_per_intrusion_s": 33.333333333333336,
+   "flight_s_per_intrusion_event": 200.0,
+   "note": "flight seconds that cost the same reward as one intrusion second / one intrusion event",
+   "mean_intrusion_s_per_event_competition": 65.01804757998359,
+   "flight_s_per_mean_intrusion": 2367.2682526661197,
+   "detour_cost_per_s_at_psi": {
+    "0": -0.015,
+    "30": -0.021698729810778063,
+    "60": -0.039999999999999994,
+    "90": -0.065
+   },
+   "discounted_flight_s_per_intrusion_s": {
+    "0": 33.333333333333336,
+    "25": 42.85474155541672,
+    "50": 55.09586621344683,
+    "100": 91.06663421430095
+   }
+  },
+  "effective": {
+   "reward_scale": 0.05,
+   "gamma": 0.99,
+   "step_seconds": 10,
+   "reward_clipping": "none (train.py: B_rew = (rew + gamma*phi' - phi) * reward_scale)",
+   "reward_normalisation": "none",
+   "advantage_normalisation": "none (train.py: 'no advantage normalization')",
+   "shaping": "off",
+   "value_clipping": "none",
+   "ppo_ratio_clip": 0.2,
+   "max_grad_norm": 0.5,
+   "note": "reward_scale multiplies every term, so it does not change the exchange rate. The PPO ratio clip and the gradient-norm clip limit the size of one update; they do not change the rate at the optimum, but they slow the learning from rare, large penalties."
+  }
+ },
+ "paired": {
+  "sa_tf_nolid_s0": {
+   "n_pairs": 1000,
+   "spearman_dtime_dintrusion": {
+    "rho": 0.26840333508959413,
+    "lo": 0.2110694263585397,
+    "hi": 0.32322029806950936
+   },
+   "share_alt_safer_and_slower": 0.368,
+   "share_alt_less_intrusion": 0.507,
+   "share_alt_more_intrusion": 0.1,
+   "delta_mean": {
+    "flight_time": {
+     "n": 1000,
+     "mean": 424.181,
+     "lo": 389.09497500000003,
+     "hi": 460.788125
+    },
+    "intrusion_time": {
+     "n": 1000,
+     "mean": -61.269,
+     "lo": -68.372125,
+     "hi": -54.354150000000004
+    },
+    "intrusion_events": {
+     "n": 1000,
+     "mean": -0.886,
+     "lo": -0.974,
+     "hi": -0.797
+    },
+    "ep_return_original": {
+     "n": 1000,
+     "mean": 47.68785711549333,
+     "lo": 42.08558316698801,
+     "hi": 53.630277398596185
+    },
+    "r_time": {
+     "n": 1000,
+     "mean": -6.362715000000001,
+     "lo": -6.919218,
+     "hi": -5.846003250000001
+    },
+    "r_intrusion_time": {
+     "n": 1000,
+     "mean": 30.6345,
+     "lo": 27.346137499999998,
+     "hi": 34.23556249999999
+    },
+    "r_intrusion_event": {
+     "n": 1000,
+     "mean": 2.658,
+     "lo": 2.382,
+     "hi": 2.9340749999999995
+    },
+    "r_restricted_time": {
+     "n": 1000,
+     "mean": -5.289599999999999,
+     "lo": -7.7810999999999995,
+     "hi": -2.577315000000001
+    },
+    "r_zone_entry": {
+     "n": 1000,
+     "mean": -0.016,
+     "lo": -0.186,
+     "hi": 0.164
+    },
+    "r_outside_time": {
+     "n": 1000,
+     "mean": -0.25360000000000005,
+     "lo": -1.7917450000000001,
+     "hi": 1.1448349999999998
+    },
+    "r_sector_exit_event": {
+     "n": 1000,
+     "mean": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "r_other": {
+     "n": 1000,
+     "mean": 26.317272115493328,
+     "lo": 23.888550572367745,
+     "hi": 28.76585086772408
+    }
+   },
+   "note": "Delta = ALT - RUN on the same scenario. Score: reward of RUN (ep_return_original). A trade-off (1) predicts: where ALT has less intrusion it flies longer (negative rho), and its score loss comes from r_time / r_other."
+  },
+  "sa_tf_tok3_s0": {
+   "n_pairs": 1000,
+   "spearman_dtime_dintrusion": {
+    "rho": 0.3315282984385204,
+    "lo": 0.27563017982965965,
+    "hi": 0.3871290010111481
+   },
+   "share_alt_safer_and_slower": 0.023,
+   "share_alt_less_intrusion": 0.517,
+   "share_alt_more_intrusion": 0.127,
+   "delta_mean": {
+    "flight_time": {
+     "n": 1000,
+     "mean": -727.027,
+     "lo": -764.471675,
+     "hi": -687.89485
+    },
+    "intrusion_time": {
+     "n": 1000,
+     "mean": -63.268,
+     "lo": -70.47879999999999,
+     "hi": -56.160500000000006
+    },
+    "intrusion_events": {
+     "n": 1000,
+     "mean": -0.778,
+     "lo": -0.873,
+     "hi": -0.685
+    },
+    "ep_return_original": {
+     "n": 1000,
+     "mean": 90.49964655185913,
+     "lo": 84.20768915256318,
+     "hi": 96.80228089101469
+    },
+    "r_time": {
+     "n": 1000,
+     "mean": 10.905404999999998,
+     "lo": 10.33930575,
+     "hi": 11.478094875
+    },
+    "r_intrusion_time": {
+     "n": 1000,
+     "mean": 31.634,
+     "lo": 28.10645,
+     "hi": 35.1336625
+    },
+    "r_intrusion_event": {
+     "n": 1000,
+     "mean": 2.334,
+     "lo": 2.048925,
+     "hi": 2.616
+    },
+    "r_restricted_time": {
+     "n": 1000,
+     "mean": 4.4415,
+     "lo": 2.4972000000000003,
+     "hi": 6.889492499999999
+    },
+    "r_zone_entry": {
+     "n": 1000,
+     "mean": 0.672,
+     "lo": 0.52,
+     "hi": 0.848
+    },
+    "r_outside_time": {
+     "n": 1000,
+     "mean": -0.4110000000000001,
+     "lo": -2.0799000000000007,
+     "hi": 0.9800749999999996
+    },
+    "r_sector_exit_event": {
+     "n": 1000,
+     "mean": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "r_other": {
+     "n": 1000,
+     "mean": 40.92374155185912,
+     "lo": 38.56996761301325,
+     "hi": 43.507936702964
+    }
+   },
+   "note": "Delta = ALT - RUN on the same scenario. Score: reward of RUN (ep_return_original). A trade-off (1) predicts: where ALT has less intrusion it flies longer (negative rho), and its score loss comes from r_time / r_other."
+  }
+ },
+ "alt": {
+  "sa_tf_nolid_s0": {
+   "weights_note": "weights from its summary",
+   "weights_same_as_run": true
+  },
+  "sa_tf_tok3_s0": {
+   "weights_note": "weights from its summary",
+   "weights_same_as_run": true
+  }
+ },
+ "fly_straight": {
+  "means": {
+   "waypoint_reached": 1.0,
+   "flight_time": 852.011,
+   "intrusion_time": 96.319,
+   "intrusion_events": 1.127,
+   "time_in_restricted_area": 129.934,
+   "restricted_area_events": 0.813,
+   "time_outside_sector": 0.0,
+   "sector_exit_events": 0.0
+  },
+  "score_known_terms_upper_bound": -104.92686499999999,
+  "note": "heading term unknown (no rows); every term is <= 0, so the full score is <= this value"
+ },
+ "locate": {
+  "train_bins": [
+   {
+    "env_steps_lo": 0.0,
+    "env_steps_hi": 99999.2,
+    "n": 461,
+    "flight_time": {
+     "n": 461,
+     "mean": 1646.4620390455532,
+     "lo": 1579.8732646420824,
+     "hi": 1716.94625813449
+    },
+    "intrusion_time": {
+     "n": 461,
+     "mean": 72.94793926247289,
+     "lo": 64.76480477223427,
+     "hi": 81.38758134490237
+    },
+    "intrusion_events": {
+     "n": 461,
+     "mean": 1.1713665943600868,
+     "lo": 1.0628524945770066,
+     "hi": 1.2798264642082429
+    },
+    "waypoint_reached": {
+     "n": 461,
+     "mean": 0.8373101952277657,
+     "lo": 0.8026030368763557,
+     "hi": 0.8698481561822126
+    },
+    "ep_return": {
+     "n": 461,
+     "mean": -163.8346203502988,
+     "lo": -177.41467814072234,
+     "hi": -150.47387985433676
+    },
+    "corr": {
+     "n": 461,
+     "spearman": 0.1647294217228213,
+     "ci_lo": 0.0723322475558253,
+     "ci_hi": 0.25425081483028,
+     "status": "REPORTABLE-size"
+    }
+   },
+   {
+    "env_steps_lo": 99999.2,
+    "env_steps_hi": 199998.4,
+    "n": 802,
+    "flight_time": {
+     "n": 802,
+     "mean": 1090.9526184538654,
+     "lo": 1063.6562344139652,
+     "hi": 1117.6691708229425
+    },
+    "intrusion_time": {
+     "n": 802,
+     "mean": 42.1857855361596,
+     "lo": 37.84242518703242,
+     "hi": 47.125716957605974
+    },
+    "intrusion_events": {
+     "n": 802,
+     "mean": 0.8117206982543641,
+     "lo": 0.7418640897755612,
+     "hi": 0.8840710723192018
+    },
+    "waypoint_reached": {
+     "n": 802,
+     "mean": 0.9912718204488778,
+     "lo": 0.9850374064837906,
+     "hi": 0.9975062344139651
+    },
+    "ep_return": {
+     "n": 802,
+     "mean": -71.65184546383554,
+     "lo": -75.72619193240885,
+     "hi": -67.78963777571488
+    },
+    "corr": {
+     "n": 802,
+     "spearman": -0.022411927727403448,
+     "ci_lo": -0.09596884691237728,
+     "ci_hi": 0.04467040715086559,
+     "status": "REPORTABLE-size"
+    }
+   },
+   {
+    "env_steps_lo": 199998.4,
+    "env_steps_hi": 299997.6,
+    "n": 720,
+    "flight_time": {
+     "n": 720,
+     "mean": 1184.026388888889,
+     "lo": 1151.3075694444444,
+     "hi": 1218.2311805555555
+    },
+    "intrusion_time": {
+     "n": 720,
+     "mean": 33.125,
+     "lo": 28.673472222222223,
+     "hi": 37.72222222222222
+    },
+    "intrusion_events": {
+     "n": 720,
+     "mean": 0.6402777777777777,
+     "lo": 0.5708333333333333,
+     "hi": 0.7125
+    },
+    "waypoint_reached": {
+     "n": 720,
+     "mean": 0.9763888888888889,
+     "lo": 0.9652777777777778,
+     "hi": 0.9861111111111112
+    },
+    "ep_return": {
+     "n": 720,
+     "mean": -73.6007067181066,
+     "lo": -78.80830805442578,
+     "hi": -68.87189035425686
+    },
+    "corr": {
+     "n": 720,
+     "spearman": 0.22856958521869244,
+     "ci_lo": 0.16161366644826014,
+     "ci_hi": 0.29838093423313383,
+     "status": "REPORTABLE-size"
+    }
+   },
+   {
+    "env_steps_lo": 299997.6,
+    "env_steps_hi": 399996.8,
+    "n": 748,
+    "flight_time": {
+     "n": 748,
+     "mean": 1166.5307486631016,
+     "lo": 1139.1078877005348,
+     "hi": 1195.3544117647057
+    },
+    "intrusion_time": {
+     "n": 748,
+     "mean": 30.066844919786096,
+     "lo": 26.205548128342247,
+     "hi": 34.080447860962565
+    },
+    "intrusion_events": {
+     "n": 748,
+     "mean": 0.6270053475935828,
+     "lo": 0.5668449197860963,
+     "hi": 0.6898395721925134
+    },
+    "waypoint_reached": {
+     "n": 748,
+     "mean": 0.9946524064171123,
+     "lo": 0.9893048128342246,
+     "hi": 0.9986631016042781
+    },
+    "ep_return": {
+     "n": 748,
+     "mean": -70.51825232686379,
+     "lo": -75.13281891545563,
+     "hi": -66.35588980522972
+    },
+    "corr": {
+     "n": 748,
+     "spearman": 0.23228793265355596,
+     "ci_lo": 0.16281908557117672,
+     "ci_hi": 0.29632259044192555,
+     "status": "REPORTABLE-size"
+    }
+   },
+   {
+    "env_steps_lo": 399996.8,
+    "env_steps_hi": 499996.0,
+    "n": 828,
+    "flight_time": {
+     "n": 828,
+     "mean": 1055.1557971014493,
+     "lo": 1032.505948067633,
+     "hi": 1080.4580012077295
+    },
+    "intrusion_time": {
+     "n": 828,
+     "mean": 23.17270531400966,
+     "lo": 20.31868961352657,
+     "hi": 26.3794384057971
+    },
+    "intrusion_events": {
+     "n": 828,
+     "mean": 0.5193236714975845,
+     "lo": 0.46494565217391304,
+     "hi": 0.5748792270531401
+    },
+    "waypoint_reached": {
+     "n": 828,
+     "mean": 0.9891304347826086,
+     "lo": 0.9818840579710145,
+     "hi": 0.9951690821256038
+    },
+    "ep_return": {
+     "n": 828,
+     "mean": -56.666578921265796,
+     "lo": -60.40781453541553,
+     "hi": -53.12183474820651
+    },
+    "corr": {
+     "n": 828,
+     "spearman": 0.04742378105503955,
+     "ci_lo": -0.021290697802604876,
+     "ci_hi": 0.11166913112999088,
+     "status": "REPORTABLE-size"
+    }
+   },
+   {
+    "env_steps_lo": 499996.0,
+    "env_steps_hi": 599995.2,
+    "n": 860,
+    "flight_time": {
+     "n": 860,
+     "mean": 1022.1767441860466,
+     "lo": 999.8509302325582,
+     "hi": 1047.3249709302324
+    },
+    "intrusion_time": {
+     "n": 860,
+     "mean": 23.040697674418606,
+     "lo": 20.077587209302326,
+     "hi": 26.05485465116279
+    },
+    "intrusion_events": {
+     "n": 860,
+     "mean": 0.5151162790697674,
+     "lo": 0.4604651162790698,
+     "hi": 0.57328488372093
+    },
+    "waypoint_reached": {
+     "n": 860,
+     "mean": 0.9883720930232558,
+     "lo": 0.9802325581395349,
+     "hi": 0.9953488372093023
+    },
+    "ep_return": {
+     "n": 860,
+     "mean": -53.35815044297908,
+     "lo": -57.07238789602917,
+     "hi": -50.11906643331377
+    },
+    "corr": {
+     "n": 860,
+     "spearman": 0.12905770091127797,
+     "ci_lo": 0.05925770381251892,
+     "ci_hi": 0.19526102440698348,
+     "status": "REPORTABLE-size"
+    }
+   },
+   {
+    "env_steps_lo": 599995.2,
+    "env_steps_hi": 699994.4,
+    "n": 865,
+    "flight_time": {
+     "n": 865,
+     "mean": 1031.9976878612717,
+     "lo": 1008.5964739884394,
+     "hi": 1056.7506936416185
+    },
+    "intrusion_time": {
+     "n": 865,
+     "mean": 17.654335260115605,
+     "lo": 15.143265895953757,
+     "hi": 20.118092485549134
+    },
+    "intrusion_events": {
+     "n": 865,
+     "mean": 0.4184971098265896,
+     "lo": 0.3699421965317919,
+     "hi": 0.4670809248554912
+    },
+    "waypoint_reached": {
+     "n": 865,
+     "mean": 0.9849710982658959,
+     "lo": 0.9757225433526011,
+     "hi": 0.9930635838150289
+    },
+    "ep_return": {
+     "n": 865,
+     "mean": -49.907730456679694,
+     "lo": -53.0939508107812,
+     "hi": -46.84350659261131
+    },
+    "corr": {
+     "n": 865,
+     "spearman": 0.1545207173546066,
+     "ci_lo": 0.0903606111569636,
+     "ci_hi": 0.21665942840785893,
+     "status": "REPORTABLE-size"
+    }
+   },
+   {
+    "env_steps_lo": 699994.4,
+    "env_steps_hi": 799993.6,
+    "n": 888,
+    "flight_time": {
+     "n": 888,
+     "mean": 1002.0777027027027,
+     "lo": 981.2161036036036,
+     "hi": 1022.6508164414414
+    },
+    "intrusion_time": {
+     "n": 888,
+     "mean": 21.068693693693692,
+     "lo": 18.235332207207207,
+     "hi": 24.410050675675667
+    },
+    "intrusion_events": {
+     "n": 888,
+     "mean": 0.4831081081081081,
+     "lo": 0.43355855855855857,
+     "hi": 0.5315315315315315
+    },
+    "waypoint_reached": {
+     "n": 888,
+     "mean": 0.9954954954954955,
+     "lo": 0.9898648648648649,
+     "hi": 0.9988738738738738
+    },
+    "ep_return": {
+     "n": 888,
+     "mean": -48.10588800964309,
+     "lo": -51.40719513806311,
+     "hi": -44.95745433835611
+    },
+    "corr": {
+     "n": 888,
+     "spearman": 0.0959751023685478,
+     "ci_lo": 0.032416574474015414,
+     "ci_hi": 0.16020095068891588,
+     "status": "REPORTABLE-size"
+    }
+   },
+   {
+    "env_steps_lo": 799993.6,
+    "env_steps_hi": 899992.7999999999,
+    "n": 854,
+    "flight_time": {
+     "n": 854,
+     "mean": 1032.391100702576,
+     "lo": 1009.3596604215456,
+     "hi": 1055.9417154566745
+    },
+    "intrusion_time": {
+     "n": 854,
+     "mean": 17.584309133489462,
+     "lo": 15.306762295081967,
+     "hi": 20.21121194379391
+    },
+    "intrusion_events": {
+     "n": 854,
+     "mean": 0.4063231850117096,
+     "lo": 0.3583138173302108,
+     "hi": 0.45784543325526933
+    },
+    "waypoint_reached": {
+     "n": 854,
+     "mean": 0.9918032786885246,
+     "lo": 0.9847775175644028,
+     "hi": 0.9976580796252927
+    },
+    "ep_return": {
+     "n": 854,
+     "mean": -47.450867784964075,
+     "lo": -50.39660934429747,
+     "hi": -44.575829438037985
+    },
+    "corr": {
+     "n": 854,
+     "spearman": 0.19174630657639608,
+     "ci_lo": 0.1240034541387042,
+     "ci_hi": 0.25887990776032127,
+     "status": "REPORTABLE-size"
+    }
+   },
+   {
+    "env_steps_lo": 899992.7999999999,
+    "env_steps_hi": 999992.0,
+    "n": 823,
+    "flight_time": {
+     "n": 823,
+     "mean": 1071.2964763061968,
+     "lo": 1042.0247266099636,
+     "hi": 1100.1801944106926
+    },
+    "intrusion_time": {
+     "n": 823,
+     "mean": 21.45321992709599,
+     "lo": 18.409356014580805,
+     "hi": 24.681773997569866
+    },
+    "intrusion_events": {
+     "n": 823,
+     "mean": 0.4629404617253949,
+     "lo": 0.40704738760631837,
+     "hi": 0.5164034021871203
+    },
+    "waypoint_reached": {
+     "n": 823,
+     "mean": 0.9781287970838396,
+     "lo": 0.9671931956257594,
+     "hi": 0.9866342648845686
+    },
+    "ep_return": {
+     "n": 823,
+     "mean": -51.29732601121699,
+     "lo": -54.56210206007304,
+     "hi": -47.86801155311252
+    },
+    "corr": {
+     "n": 823,
+     "spearman": 0.20090938121735347,
+     "ci_lo": 0.1357906719979733,
+     "ci_hi": 0.2698349253900547,
+     "status": "REPORTABLE-size"
+    }
+   },
+   {
+    "env_steps_lo": 999992.0,
+    "env_steps_hi": 1099991.2,
+    "n": 863,
+    "flight_time": {
+     "n": 863,
+     "mean": 1025.595596755504,
+     "lo": 1002.7034472769409,
+     "hi": 1049.9283603707995
+    },
+    "intrusion_time": {
+     "n": 863,
+     "mean": 15.962920046349941,
+     "lo": 13.737862108922364,
+     "hi": 18.458140208574736
+    },
+    "intrusion_events": {
+     "n": 863,
+     "mean": 0.3870220162224797,
+     "lo": 0.34530706836616454,
+     "hi": 0.4322132097334878
+    },
+    "waypoint_reached": {
+     "n": 863,
+     "mean": 0.9953650057937428,
+     "lo": 0.9895712630359212,
+     "hi": 0.9988412514484357
+    },
+    "ep_return": {
+     "n": 863,
+     "mean": -46.40181334829715,
+     "lo": -49.17734004658758,
+     "hi": -43.8512576032958
+    },
+    "corr": {
+     "n": 863,
+     "spearman": 0.16378715654402778,
+     "ci_lo": 0.10106091777674488,
+     "ci_hi": 0.2258102642189346,
+     "status": "REPORTABLE-size"
+    }
+   },
+   {
+    "env_steps_lo": 1099991.2,
+    "env_steps_hi": 1199990.4,
+    "n": 804,
+    "flight_time": {
+     "n": 804,
+     "mean": 1079.068407960199,
+     "lo": 1051.126461442786,
+     "hi": 1111.1464552238806
+    },
+    "intrusion_time": {
+     "n": 804,
+     "mean": 22.246268656716417,
+     "lo": 19.22608830845771,
+     "hi": 25.524875621890548
+    },
+    "intrusion_events": {
+     "n": 804,
+     "mean": 0.4925373134328358,
+     "lo": 0.43656716417910446,
+     "hi": 0.5497512437810945
+    },
+    "waypoint_reached": {
+     "n": 804,
+     "mean": 0.9788557213930348,
+     "lo": 0.9689054726368159,
+     "hi": 0.9888059701492538
+    },
+    "ep_return": {
+     "n": 804,
+     "mean": -54.48239270431227,
+     "lo": -58.746808441938626,
+     "hi": -50.733504752481394
+    },
+    "corr": {
+     "n": 804,
+     "spearman": 0.26238058367351713,
+     "ci_lo": 0.19231780730031314,
+     "ci_hi": 0.33041976841915915,
+     "status": "REPORTABLE-size"
+    }
+   },
+   {
+    "env_steps_lo": 1199990.4,
+    "env_steps_hi": 1299989.5999999999,
+    "n": 814,
+    "flight_time": {
+     "n": 814,
+     "mean": 1066.7542997542998,
+     "lo": 1043.5308353808352,
+     "hi": 1091.4160933660933
+    },
+    "intrusion_time": {
+     "n": 814,
+     "mean": 19.314496314496314,
+     "lo": 16.035257985257985,
+     "hi": 22.700706388206385
+    },
+    "intrusion_events": {
+     "n": 814,
+     "mean": 0.4189189189189189,
+     "lo": 0.36486486486486486,
+     "hi": 0.4742014742014742
+    },
+    "waypoint_reached": {
+     "n": 814,
+     "mean": 0.9914004914004914,
+     "lo": 0.984029484029484,
+     "hi": 0.9975429975429976
+    },
+    "ep_return": {
+     "n": 814,
+     "mean": -50.73566726664793,
+     "lo": -54.195101505940734,
+     "hi": -47.418135283765615
+    },
+    "corr": {
+     "n": 814,
+     "spearman": 0.26016159672541195,
+     "ci_lo": 0.19253954405607426,
+     "ci_hi": 0.32626501597440694,
+     "status": "REPORTABLE-size"
+    }
+   },
+   {
+    "env_steps_lo": 1299989.5999999999,
+    "env_steps_hi": 1399988.8,
+    "n": 803,
+    "flight_time": {
+     "n": 803,
+     "mean": 1095.093399750934,
+     "lo": 1066.9238480697386,
+     "hi": 1123.8188356164383
+    },
+    "intrusion_time": {
+     "n": 803,
+     "mean": 23.26151930261519,
+     "lo": 19.561581569115813,
+     "hi": 27.083561643835615
+    },
+    "intrusion_events": {
+     "n": 803,
+     "mean": 0.48567870485678705,
+     "lo": 0.4333437110834371,
+     "hi": 0.5429638854296388
+    },
+    "waypoint_reached": {
+     "n": 803,
+     "mean": 0.9900373599003736,
+     "lo": 0.9825653798256538,
+     "hi": 0.9962640099626401
+    },
+    "ep_return": {
+     "n": 803,
+     "mean": -57.71183143519666,
+     "lo": -62.40602673319995,
+     "hi": -53.65624329390571
+    },
+    "corr": {
+     "n": 803,
+     "spearman": 0.1590154385563241,
+     "ci_lo": 0.08953878428998142,
+     "ci_hi": 0.22717996191782489,
+     "status": "REPORTABLE-size"
+    }
+   },
+   {
+    "env_steps_lo": 1399988.8,
+    "env_steps_hi": 1499988.0,
+    "n": 803,
+    "flight_time": {
+     "n": 803,
+     "mean": 1077.7509339975093,
+     "lo": 1052.723785803238,
+     "hi": 1104.0967932752178
+    },
+    "intrusion_time": {
+     "n": 803,
+     "mean": 17.779576587795766,
+     "lo": 15.16684308841843,
+     "hi": 20.468430884184308
+    },
+    "intrusion_events": {
+     "n": 803,
+     "mean": 0.43586550435865506,
+     "lo": 0.3835305105853051,
+     "hi": 0.48941469489414696
+    },
+    "waypoint_reached": {
+     "n": 803,
+     "mean": 0.9900373599003736,
+     "lo": 0.9825653798256538,
+     "hi": 0.9962640099626401
+    },
+    "ep_return": {
+     "n": 803,
+     "mean": -52.034898965225125,
+     "lo": -55.28340870499216,
+     "hi": -48.984587783293534
+    },
+    "corr": {
+     "n": 803,
+     "spearman": 0.20152853724858774,
+     "ci_lo": 0.1362124483895873,
+     "ci_hi": 0.26845032531917573,
+     "status": "REPORTABLE-size"
+    }
+   },
+   {
+    "env_steps_lo": 1499988.0,
+    "env_steps_hi": 1599987.2,
+    "n": 747,
+    "flight_time": {
+     "n": 747,
+     "mean": 1144.3855421686746,
+     "lo": 1113.1092704149933,
+     "hi": 1177.12781124498
+    },
+    "intrusion_time": {
+     "n": 747,
+     "mean": 12.96921017402945,
+     "lo": 10.951706827309236,
+     "hi": 15.195649263721553
+    },
+    "intrusion_events": {
+     "n": 747,
+     "mean": 0.35475234270414996,
+     "lo": 0.30518741633199464,
+     "hi": 0.4042838018741633
+    },
+    "waypoint_reached": {
+     "n": 747,
+     "mean": 0.9825970548862115,
+     "lo": 0.9732262382864793,
+     "hi": 0.9919678714859438
+    },
+    "ep_return": {
+     "n": 747,
+     "mean": -53.438928108797974,
+     "lo": -57.20927720567791,
+     "hi": -49.85089599286386
+    },
+    "corr": {
+     "n": 747,
+     "spearman": 0.04260312873846464,
+     "ci_lo": -0.02778720116322847,
+     "ci_hi": 0.11379330291293392,
+     "status": "REPORTABLE-size"
+    }
+   },
+   {
+    "env_steps_lo": 1599987.2,
+    "env_steps_hi": 1699986.4,
+    "n": 694,
+    "flight_time": {
+     "n": 694,
+     "mean": 1229.2953890489914,
+     "lo": 1186.4092219020172,
+     "hi": 1270.3950288184437
+    },
+    "intrusion_time": {
+     "n": 694,
+     "mean": 31.079250720461093,
+     "lo": 27.41437319884726,
+     "hi": 35.32723342939481
+    },
+    "intrusion_events": {
+     "n": 694,
+     "mean": 0.6585014409221902,
+     "lo": 0.5893371757925072,
+     "hi": 0.729106628242075
+    },
+    "waypoint_reached": {
+     "n": 694,
+     "mean": 0.9596541786743515,
+     "lo": 0.9438040345821326,
+     "hi": 0.9740634005763689
+    },
+    "ep_return": {
+     "n": 694,
+     "mean": -68.19100714300453,
+     "lo": -72.6920586488598,
+     "hi": -63.85458321520368
+    },
+    "corr": {
+     "n": 694,
+     "spearman": 0.08461998705856938,
+     "ci_lo": 0.015132846619247022,
+     "ci_hi": 0.15572949923546722,
+     "status": "REPORTABLE-size"
+    }
+   },
+   {
+    "env_steps_lo": 1699986.4,
+    "env_steps_hi": 1799985.5999999999,
+    "n": 769,
+    "flight_time": {
+     "n": 769,
+     "mean": 1103.513654096229,
+     "lo": 1071.5683355006502,
+     "hi": 1136.063198959688
+    },
+    "intrusion_time": {
+     "n": 769,
+     "mean": 24.568270481144342,
+     "lo": 21.26996098829649,
+     "hi": 28.01963589076723
+    },
+    "intrusion_events": {
+     "n": 769,
+     "mean": 0.5162548764629389,
+     "lo": 0.459037711313394,
+     "hi": 0.577373211963589
+    },
+    "waypoint_reached": {
+     "n": 769,
+     "mean": 0.9804941482444733,
+     "lo": 0.9700910273081924,
+     "hi": 0.9895968790637191
+    },
+    "ep_return": {
+     "n": 769,
+     "mean": -54.79283727257768,
+     "lo": -58.309542054351496,
+     "hi": -51.27007308986607
+    },
+    "corr": {
+     "n": 769,
+     "spearman": 0.14215630065344584,
+     "ci_lo": 0.07380058661441705,
+     "ci_hi": 0.20962683614523306,
+     "status": "REPORTABLE-size"
+    }
+   },
+   {
+    "env_steps_lo": 1799985.5999999999,
+    "env_steps_hi": 1899984.8,
+    "n": 687,
+    "flight_time": {
+     "n": 687,
+     "mean": 1223.63173216885,
+     "lo": 1185.669577874818,
+     "hi": 1262.982423580786
+    },
+    "intrusion_time": {
+     "n": 687,
+     "mean": 34.89519650655022,
+     "lo": 29.632059679767103,
+     "hi": 40.29628820960698
+    },
+    "intrusion_events": {
+     "n": 687,
+     "mean": 0.6404657933042213,
+     "lo": 0.5676855895196506,
+     "hi": 0.7176128093158661
+    },
+    "waypoint_reached": {
+     "n": 687,
+     "mean": 0.9636098981077147,
+     "lo": 0.9490538573508006,
+     "hi": 0.9767103347889374
+    },
+    "ep_return": {
+     "n": 687,
+     "mean": -73.37807220327689,
+     "lo": -79.53914781653658,
+     "hi": -67.60210784430014
+    },
+    "corr": {
+     "n": 687,
+     "spearman": 0.355878945389215,
+     "ci_lo": 0.2883929712502387,
+     "ci_hi": 0.4205900978794355,
+     "status": "REPORTABLE-size"
+    }
+   },
+   {
+    "env_steps_lo": 1899984.8,
+    "env_steps_hi": 1999984.0,
+    "n": 520,
+    "flight_time": {
+     "n": 520,
+     "mean": 1572.7769230769231,
+     "lo": 1519.4002884615386,
+     "hi": 1625.7930288461537
+    },
+    "intrusion_time": {
+     "n": 520,
+     "mean": 80.98076923076923,
+     "lo": 71.84173076923078,
+     "hi": 90.53764423076922
+    },
+    "intrusion_events": {
+     "n": 520,
+     "mean": 1.2807692307692307,
+     "lo": 1.1596153846153847,
+     "hi": 1.4076923076923078
+    },
+    "waypoint_reached": {
+     "n": 520,
+     "mean": 0.9096153846153846,
+     "lo": 0.8846153846153846,
+     "hi": 0.9326923076923077
+    },
+    "ep_return": {
+     "n": 520,
+     "mean": -121.20076409581374,
+     "lo": -129.41444151472533,
+     "hi": -113.04036089649321
+    },
+    "corr": {
+     "n": 520,
+     "spearman": 0.4090194937796023,
+     "ci_lo": 0.33039014425994134,
+     "ci_hi": 0.4830061107603322,
+     "status": "REPORTABLE-size"
+    }
+   }
+  ],
+  "pattern_between_bins": [
+   {
+    "from_hi": 699994.4,
+    "to_hi": 799993.6,
+    "d_flight_time": -29.919985158569034,
+    "d_intrusion_time": 3.414358433578087,
+    "cis_separate": false
+   }
+  ],
+  "windows": {
+   "first_window": {
+    "n_agent_episodes": 20,
+    "waypoint_reached": 0.2,
+    "flight_time": 2684.5,
+    "intrusion_events": 1.4,
+    "intrusion_time": 107.0,
+    "restricted_area_events": 1.8,
+    "time_in_restricted_area": 344.95,
+    "sector_exit_events": 0.8,
+    "time_outside_sector": 633.35,
+    "start_intrusions": 0.15,
+    "intrusion_events_no_start": 1.25,
+    "intrusion_time_no_start": 95.5,
+    "ep_return": -464.3288265072836,
+    "ep_return_std": 211.05016315640106
+   },
+   "last_window": {
+    "n_agent_episodes": 20,
+    "waypoint_reached": 0.95,
+    "flight_time": 1512.6,
+    "intrusion_events": 1.15,
+    "intrusion_time": 90.5,
+    "restricted_area_events": 0.55,
+    "time_in_restricted_area": 27.95,
+    "sector_exit_events": 0.0,
+    "time_outside_sector": 0.0,
+    "start_intrusions": 0.15,
+    "intrusion_events_no_start": 1.0,
+    "intrusion_time_no_start": 74.2,
+    "ep_return": -118.27765752406665,
+    "ep_return_std": 80.76819200724285
+   }
+  },
+  "greedy_eval": {
+   "flight_time": 1472.1,
+   "intrusion_time": 79.9
+  },
+  "competition_means": {
+   "sa_tf_nolid_jepa_s0": {
+    "flight_time": 1736.566,
+    "intrusion_time": 79.257,
+    "intrusion_events": 1.219,
+    "waypoint_reached": 0.853,
+    "ep_return_original": -131.3335582047153
+   },
+   "sa_tf_nolid_s0": {
+    "flight_time": 2160.747,
+    "intrusion_time": 17.988,
+    "intrusion_events": 0.333,
+    "waypoint_reached": 0.869,
+    "ep_return_original": -83.645701089222
+   },
+   "sa_tf_tok3_s0": {
+    "flight_time": 1009.539,
+    "intrusion_time": 15.989,
+    "intrusion_events": 0.441,
+    "waypoint_reached": 0.994,
+    "ep_return_original": -40.8339116528562
+   }
+  }
+ },
+ "correlations": {
+  "competition": {
+   "n": 1000,
+   "spearman": 0.34568111056129475,
+   "ci_lo": 0.2910001277278429,
+   "ci_hi": 0.4007281206987942,
+   "status": "REPORTABLE-size"
+  },
+  "competition_goal_reached": {
+   "n": 853,
+   "spearman": 0.4100485185021113,
+   "ci_lo": 0.3544165838226515,
+   "ci_hi": 0.46430153465921953,
+   "status": "REPORTABLE-size"
+  },
+  "competition_with_intrusion": {
+   "n": 564,
+   "spearman": 0.2908357686836357,
+   "ci_lo": 0.2110994443517406,
+   "ci_hi": 0.36772230846828385,
+   "status": "REPORTABLE-size"
+  },
+  "train_early": {
+   "n": 2731,
+   "spearman": 0.17846591239206275,
+   "ci_lo": 0.14178139956198346,
+   "ci_hi": 0.215354360997576,
+   "status": "REPORTABLE-size"
+  },
+  "train_middle": {
+   "n": 5118,
+   "spearman": 0.13541263346036433,
+   "ci_lo": 0.10942516128190545,
+   "ci_hi": 0.16149645144313704,
+   "status": "REPORTABLE-size"
+  },
+  "train_late": {
+   "n": 7504,
+   "spearman": 0.24253857190150888,
+   "ci_lo": 0.22113701839489686,
+   "ci_hi": 0.2651843390391319,
+   "status": "REPORTABLE-size"
+  },
+  "greedy_eval": {
+   "n": 10,
+   "spearman": 0.4331604831696081,
+   "ci_lo": -0.2652760240854567,
+   "ci_hi": 0.923906616637319,
+   "status": "EXPLORATORY (n < 200)"
+  },
+  "competition_sa_tf_nolid_s0": {
+   "n": 1000,
+   "spearman": 0.027680960245214437,
+   "ci_lo": -0.03751365036809855,
+   "ci_hi": 0.0915341682778942,
+   "status": "REPORTABLE-size"
+  },
+  "competition_sa_tf_tok3_s0": {
+   "n": 1000,
+   "spearman": 0.15090833463206096,
+   "ci_lo": 0.09185119113686523,
+   "ci_hi": 0.2113685268105242,
+   "status": "REPORTABLE-size"
+  }
+ },
+ "decomposition": {
+  "with_intrusion": {
+   "r_time": {
+    "n": 564,
+    "mean": -28.113936170212764,
+    "lo": -28.919569813829785,
+    "hi": -27.33158510638298
+   },
+   "r_intrusion_time": {
+    "n": 564,
+    "mean": -70.26329787234043,
+    "lo": -75.39550088652483,
+    "hi": -65.45820035460994
+   },
+   "r_intrusion_event": {
+    "n": 564,
+    "mean": -6.48404255319149,
+    "lo": -6.835239361702127,
+    "hi": -6.138297872340425
+   },
+   "r_restricted_time": {
+    "n": 564,
+    "mean": -6.75,
+    "lo": -11.049401595744682,
+    "hi": -3.88873670212766
+   },
+   "r_zone_entry": {
+    "n": 564,
+    "mean": -0.8156028368794326,
+    "lo": -1.0,
+    "hi": -0.6594858156028374
+   },
+   "r_outside_time": {
+    "n": 564,
+    "mean": -2.5574468085106385,
+    "lo": -3.9412943262411346,
+    "hi": -1.4217819148936182
+   },
+   "r_sector_exit_event": {
+    "n": 564,
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "r_other": {
+    "n": 564,
+    "mean": -59.53258219693853,
+    "lo": -62.844385998011276,
+    "hi": -56.20055553658334
+   },
+   "ep_return_original": {
+    "n": 564,
+    "mean": -174.51690843807327,
+    "lo": -183.78520864314197,
+    "hi": -166.78677247641772
+   },
+   "flight_time": {
+    "n": 564,
+    "mean": 1874.2624113475176,
+    "lo": 1820.2015514184397,
+    "hi": 1926.3619237588653
+   },
+   "intrusion_time": {
+    "n": 564,
+    "mean": 140.52659574468086,
+    "lo": 130.85292553191488,
+    "hi": 150.66719858156029
+   }
+  },
+  "without_intrusion": {
+   "r_time": {
+    "n": 436,
+    "mean": -23.376674311926603,
+    "lo": -24.400448394495413,
+    "hi": -22.420916284403667
+   },
+   "r_intrusion_time": {
+    "n": 436,
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "r_intrusion_event": {
+    "n": 436,
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "r_restricted_time": {
+    "n": 436,
+    "mean": -6.773394495412844,
+    "lo": -9.575263761467887,
+    "hi": -4.5811926605504585
+   },
+   "r_zone_entry": {
+    "n": 436,
+    "mean": -1.1009174311926606,
+    "lo": -1.417545871559633,
+    "hi": -0.8348623853211009
+   },
+   "r_outside_time": {
+    "n": 436,
+    "mean": -1.0610091743119268,
+    "lo": -1.8284862385321101,
+    "hi": -0.4866399082568811
+   },
+   "r_sector_exit_event": {
+    "n": 436,
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "r_other": {
+    "n": 436,
+    "mean": -43.1605317560596,
+    "lo": -47.232680991702544,
+    "hi": -39.149151792169036
+   },
+   "ep_return_original": {
+    "n": 436,
+    "mean": -75.47252716890365,
+    "lo": -82.16050803822247,
+    "hi": -69.20848761906409
+   },
+   "flight_time": {
+    "n": 436,
+    "mean": 1558.4449541284403,
+    "lo": 1494.2271788990827,
+    "hi": 1625.7635894495413
+   },
+   "intrusion_time": {
+    "n": 436,
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   }
+  }
+ },
+ "decomposition_train_late": {
+  "with_intrusion": {
+   "r_time": {
+    "n": 2624,
+    "mean": -18.713043064024387,
+    "lo": -19.015633050685977,
+    "hi": -18.43010570693598
+   },
+   "r_intrusion_time": {
+    "n": 2624,
+    "mean": -37.456745426829265,
+    "lo": -38.83040682164634,
+    "hi": -36.0409775152439
+   },
+   "r_intrusion_event": {
+    "n": 2624,
+    "mean": -4.614329268292683,
+    "lo": -4.716110899390244,
+    "hi": -4.5114329268292686
+   },
+   "r_restricted_time": {
+    "n": 2624,
+    "mean": -6.607545731707317,
+    "lo": -7.263647103658536,
+    "hi": -5.96962842987805
+   },
+   "r_zone_entry": {
+    "n": 2624,
+    "mean": -0.9039634146341463,
+    "lo": -0.9679878048780488,
+    "hi": -0.8414443597560977
+   },
+   "r_outside_time": {
+    "n": 2624,
+    "mean": -1.400685975609756,
+    "lo": -1.8931650152439026,
+    "hi": -0.9882164634146345
+   },
+   "r_sector_exit_event": {
+    "n": 2624,
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "r_other": {
+    "n": 2624,
+    "mean": -24.512933647141097,
+    "lo": -25.526772648578625,
+    "hi": -23.467827649029193
+   },
+   "ep_return_original": {
+    "n": 2624,
+    "mean": -94.20924652823867,
+    "lo": -96.77707239793367,
+    "hi": -91.50862091920878
+   },
+   "flight_time": {
+    "n": 2624,
+    "mean": 1247.5362042682927,
+    "lo": 1228.496150914634,
+    "hi": 1266.2761528201218
+   },
+   "intrusion_time": {
+    "n": 2624,
+    "mean": 74.91349085365853,
+    "lo": 72.24978086890243,
+    "hi": 77.86247141768293
+   }
+  },
+  "without_intrusion": {
+   "r_time": {
+    "n": 4880,
+    "mean": -16.313498975409836,
+    "lo": -16.488777356557378,
+    "hi": -16.119539293032787
+   },
+   "r_intrusion_time": {
+    "n": 4880,
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "r_intrusion_event": {
+    "n": 4880,
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "r_restricted_time": {
+    "n": 4880,
+    "mean": -8.408483606557377,
+    "lo": -9.158193135245902,
+    "hi": -7.744722848360656
+   },
+   "r_zone_entry": {
+    "n": 4880,
+    "mean": -1.1131147540983606,
+    "lo": -1.1676331967213114,
+    "hi": -1.0585963114754098
+   },
+   "r_outside_time": {
+    "n": 4880,
+    "mean": -1.2567622950819675,
+    "lo": -1.6895727459016394,
+    "hi": -0.8884938524590166
+   },
+   "r_sector_exit_event": {
+    "n": 4880,
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "r_other": {
+    "n": 4880,
+    "mean": -15.71208841822607,
+    "lo": -16.359621831529367,
+    "hi": -15.073430102932825
+   },
+   "ep_return_original": {
+    "n": 4880,
+    "mean": -42.8039480493736,
+    "lo": -44.16169421614497,
+    "hi": -41.44243780645632
+   },
+   "flight_time": {
+    "n": 4880,
+    "mean": 1087.5665983606557,
+    "lo": 1074.7528125,
+    "hi": 1100.7870081967214
+   },
+   "intrusion_time": {
+    "n": 4880,
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   }
+  }
+ },
+ "checkpoints": []
+}

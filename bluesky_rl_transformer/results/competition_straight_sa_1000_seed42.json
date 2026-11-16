@@ -13,6 +13,9 @@
   "time_in_restricted_area": 129.934,
   "sector_exit_events": 0.0,
   "time_outside_sector": 0.0,
+  "start_intrusions": 0.1,
+  "intrusion_events_no_start": 1.027,
+  "intrusion_time_no_start": 81.038,
   "ep_return": -9618.611466342478
  },
  "std": {
@@ -24,7 +27,11 @@
   "time_in_restricted_area": 163.2111749973022,
   "sector_exit_events": 0.0,
   "time_outside_sector": 0.0,
+  "start_intrusions": 0.3193743884534262,
+  "intrusion_events_no_start": 1.086402779819713,
+  "intrusion_time_no_start": 113.4378091995786,
   "ep_return": 2826.551196431053
  },
- "note": "ep_return uses the default reward weights of this folder"
+ "note": "ep_return uses the default reward weights of this folder",
+ "n_flights_start_in_intrusion": 94
 }

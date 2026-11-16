@@ -3,8 +3,8 @@
  "name": "scripted_nolid",
  "flights": 1200,
  "rows": 168446,
- "rows_per_second": 163.00948958385015,
- "wall_seconds": 1033.3508830070496,
+ "rows_per_second": 254.13571345768113,
+ "wall_seconds": 662.8190808296204,
  "seed0": 3000000,
  "policies": [
   "straight",
@@ -97,7 +97,7 @@
    "worker": 0,
    "rows": 12907,
    "flights": 150,
-   "seconds": 507.61881852149963,
+   "seconds": 247.5729591846466,
    "intrusion_steps": 1210,
    "area_steps": 1481,
    "outside_steps": 0
@@ -106,7 +106,7 @@
    "worker": 1,
    "rows": 12985,
    "flights": 150,
-   "seconds": 499.3977777957916,
+   "seconds": 185.77991461753845,
    "intrusion_steps": 1157,
    "area_steps": 1441,
    "outside_steps": 0
@@ -115,7 +115,7 @@
    "worker": 2,
    "rows": 13212,
    "flights": 150,
-   "seconds": 516.587521314621,
+   "seconds": 188.8826766014099,
    "intrusion_steps": 1015,
    "area_steps": 1581,
    "outside_steps": 0
@@ -124,7 +124,7 @@
    "worker": 3,
    "rows": 45150,
    "flights": 150,
-   "seconds": 1019.2270653247833,
+   "seconds": 627.0152785778046,
    "intrusion_steps": 1465,
    "area_steps": 5385,
    "outside_steps": 6976
@@ -133,7 +133,7 @@
    "worker": 4,
    "rows": 12741,
    "flights": 150,
-   "seconds": 473.3324558734894,
+   "seconds": 233.81104135513306,
    "intrusion_steps": 709,
    "area_steps": 1335,
    "outside_steps": 0
@@ -142,7 +142,7 @@
    "worker": 5,
    "rows": 12963,
    "flights": 150,
-   "seconds": 482.05540585517883,
+   "seconds": 174.34078669548035,
    "intrusion_steps": 956,
    "area_steps": 1196,
    "outside_steps": 0
@@ -151,7 +151,7 @@
    "worker": 6,
    "rows": 13548,
    "flights": 150,
-   "seconds": 496.42134284973145,
+   "seconds": 246.95299553871155,
    "intrusion_steps": 1065,
    "area_steps": 1451,
    "outside_steps": 0
@@ -160,7 +160,7 @@
    "worker": 7,
    "rows": 44940,
    "flights": 150,
-   "seconds": 984.3678543567657,
+   "seconds": 656.6644093990326,
    "intrusion_steps": 815,
    "area_steps": 3070,
    "outside_steps": 6086
