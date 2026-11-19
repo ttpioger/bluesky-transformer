@@ -144,6 +144,8 @@ def build_parser():
     p.add_argument("--save-every", type=int, default=20, help="Save the model every N updates.")
     p.add_argument("--device", default="cpu")
     p.add_argument("--learner-threads", type=int, default=6, help="Torch threads in the update phase (workers are idle then).")
+    p.add_argument("--inference-threads", type=int, default=1,
+                   help="Torch threads for policy.act in the rollout (workers wait then). 1 = as before (2026-11-19).")
     p.add_argument("--out-dir", default=".", help="Base folder for models/ and results/.")
     return p
 
@@ -247,7 +249,7 @@ def main(argv=None):
             B_cost, B_cval = np.zeros((T, E, N, C), np.float32), np.zeros((T, E, N, C), np.float32)
         n_before = len(episodes)
 
-        torch.set_num_threads(1)
+        torch.set_num_threads(args.inference_threads)
         for t in range(T):
             t0 = time.perf_counter()
             if C:
