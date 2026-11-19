@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np
 import torch
 from rl_tf.envs import (VecEnv, FlightEnv, add_reward_args, reward_kwargs, obs_dims, rollout_episode, turn_stats,
-                        lidar_cfg_from_args, METRIC_KEYS, START_KEYS)
+                        lidar_cfg_from_args, METRIC_KEYS, START_KEYS, V2_DEFAULTS, v2_kwargs)
 from rl_tf.lidar import Lidar
 from rl_tf.networks import build_policy, save_checkpoint, n_params, load_encoder, AttentionCritic
 from rl_tf.common import (setup_torch, compute_gae, pass_criterion, window_stats, write_json, policy_fn_from, wandb_upload,
@@ -104,6 +104,25 @@ def build_parser():
                         "phi = time_penalty * estimated seconds to the waypoint; this term is positive during progress "
                         "to the waypoint, so it breaks the only-negative constraint.")
     p.add_argument("--shaping-speed", type=float, default=150.0, help="Nominal speed (m/s) in the potential.")
+    # v2 (2026-11-19, single-agent rebuild). Defaults = baseline behaviour. See V2_DEFAULTS in rl_tf/envs.py.
+    p.add_argument("--action-map", choices=["rel", "goal"], default=V2_DEFAULTS["action_map"],
+                   help="goal: turn action = heading offset from the bearing to the goal (change clipped to +-d_heading).")
+    p.add_argument("--goal-offset-deg", type=float, default=V2_DEFAULTS["goal_offset_deg"],
+                   help="action_map goal: heading offset (deg) at turn action +-1.")
+    p.add_argument("--cpa-margin-penalty", type=float, default=V2_DEFAULTS["cpa_margin_penalty"],
+                   help="Per second, times max(0, 1 - d_cpa / margin) over the other aircraft. <= 0.")
+    p.add_argument("--cpa-margin-nm", type=float, default=V2_DEFAULTS["cpa_margin_nm"])
+    p.add_argument("--cpa-horizon-s", type=float, default=V2_DEFAULTS["cpa_horizon_s"])
+    p.add_argument("--zone-margin-penalty", type=float, default=V2_DEFAULTS["zone_margin_penalty"],
+                   help="Per second, times max(0, 1 - d_zone / buffer). <= 0.")
+    p.add_argument("--zone-buffer-km", type=float, default=V2_DEFAULTS["zone_buffer_km"])
+    p.add_argument("--cat-penalty", type=float, default=0.0,
+                   help="Training only, single agent: < 0 ends the flight at the first avoidable violation "
+                        "(intrusion without the start intrusions, area entry, sector exit) with this reward. 0 = off.")
+    p.add_argument("--replay-frac", type=float, default=0.0,
+                   help="Single agent: share of resets that fly a seed of an earlier failed flight again. 0 = off.")
+    p.add_argument("--replay-cap", type=int, default=256, help="Failed seeds kept per worker.")
+    p.add_argument("--replay-max", type=int, default=3, help="Replays of one seed before it leaves the pool.")
     # Lagrangian (PPO-Lagrangian, 2026-11-13); empty = off, then the training is that of before
     p.add_argument("--lagrangian", default="",
                    help="Constraints 'metric:limit,...' on the mean flight metrics (competition units per flight), e.g. "
@@ -149,9 +168,21 @@ def main(argv=None):
     allowed = METRIC_KEYS + (START_KEYS if args.setting == "single" else [])
     if any(k not in allowed for k in cost_keys):
         raise ValueError(f"--lagrangian: metrics must be from {allowed}")
-    cfg = dict(setting=args.setting, n_agents=args.n_agents, reward=reward_kwargs(args), lidar=lidar_cfg,
+    v2 = v2_kwargs(vars(args))
+    if args.setting != "single" and (args.cat_penalty < 0.0 or args.replay_frac > 0.0):
+        raise ValueError("--cat-penalty and --replay-frac: single agent only")
+    if args.cat_penalty > 0.0:
+        raise ValueError("--cat-penalty must be <= 0 (the reward has only negative terms)")
+    if not 0.0 <= args.replay_frac < 1.0:
+        raise ValueError("--replay-frac must be in [0, 1)")
+    rw0 = reward_kwargs(args)
+    if args.cat_penalty < 0.0 and abs(args.cat_penalty) <= abs(rw0["time_penalty"]) * 3000.0:
+        print(f"WARNING --cat-penalty {args.cat_penalty}: not below the time cost of a full flight "
+              f"({rw0['time_penalty'] * 3000.0:.1f}); ending a flight early can pay off.", flush=True)
+    cfg = dict(setting=args.setting, n_agents=args.n_agents, reward=rw0, lidar=lidar_cfg,
                history=args.history, shaping=args.shaping == "potential", shaping_speed=args.shaping_speed,
-               seed=args.seed, reset_seed=reset_seed)
+               seed=args.seed, reset_seed=reset_seed, v2=v2, cat_penalty=args.cat_penalty,
+               replay_frac=args.replay_frac, replay_cap=args.replay_cap, replay_max=args.replay_max)
     dims = obs_dims(lidar_cfg, args.history)
     policy = build_policy(dims, vars(args)).to(dev)
     if args.init_encoder:
@@ -321,9 +352,13 @@ def main(argv=None):
             for k in ["ep_return", "waypoint_reached", "intrusion_events", "restricted_area_events",
                       "sector_exit_events", "flight_time"]:
                 row[k] = float(np.mean([e[k] for e in new_eps]))
+            for k in ["cat_end", "replay"]:
+                if k in new_eps[0]:
+                    row[k] = float(np.mean([e.get(k, 0.0) for e in new_eps]))
             txt = (f" | eps={len(new_eps)} ep_return={row['ep_return']:.1f} waypoint={row['waypoint_reached']:.2f} "
                    f"intrusions={row['intrusion_events']:.2f} zones={row['restricted_area_events']:.2f} "
                    f"sector_exit={row['sector_exit_events']:.2f} flight_time={row['flight_time']:.0f}")
+            txt += "".join(f" {k}={row[k]:.2f}" for k in ["cat_end", "replay"] if k in row)
         curve.append(row)
         if wb is not None:
             extra = {k: float(np.mean([e[k] for e in new_eps])) for k in
@@ -351,7 +386,7 @@ def main(argv=None):
     seeds = [reset_seed] if reset_seed is not None else [EVAL_SEED0 + i for i in range(args.eval_episodes)]
     greedy_rows, turns = [], []
     if args.eval_episodes > 0:
-        env = FlightEnv(args.setting, args.n_agents, **reward_kwargs(args))
+        env = FlightEnv(args.setting, args.n_agents, v2=v2, **reward_kwargs(args))   # no cat_penalty: full flights
         fn = policy_fn_from(policy, dev, deterministic=True)
         for s in seeds:
             rows, _, tr = rollout_episode(env, fn, s, Lidar(**lidar_cfg), args.history)

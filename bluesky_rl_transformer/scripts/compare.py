@@ -18,7 +18,7 @@ import json
 import multiprocessing as mp
 from pathlib import Path
 import numpy as np
-from rl_tf.envs import FlightEnv, REWARD_DEFAULTS, METRIC_KEYS, ObsBuilder, metrics_row, turn_stats
+from rl_tf.envs import FlightEnv, REWARD_DEFAULTS, METRIC_KEYS, ObsBuilder, metrics_row, turn_stats, v2_kwargs
 from rl_tf.lidar import Lidar, NM2KM, DEG2KM, token_cfg
 from rl_tf.common import setup_torch, write_json, wandb_init, add_wandb_args, summary_table
 
@@ -94,7 +94,7 @@ def _job(job):
     fns = {"straight": lambda raw, built: {k: np.zeros(2, dtype=np.float32) for k in raw},
            "policy": policy_fn_from(policy, device, deterministic=True)}
     with contextlib.redirect_stdout(io.StringIO()):
-        env = FlightEnv("single", render_mode="rgb_array" if render_seeds else None, **rew)
+        env = FlightEnv("single", render_mode="rgb_array" if render_seeds else None, v2=v2_kwargs(a), **rew)
     out = []
     for s in seeds:
         out.append({k: fly(env, fn, s, lidar, a["history"], render=s in render_seeds, rays=rays) for k, fn in fns.items()})

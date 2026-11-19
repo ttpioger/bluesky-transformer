@@ -29,7 +29,7 @@ ROOT = Path(__file__).resolve().parents[2]                 # bluesky_rl_transfor
 sys.path.insert(0, str(ROOT))
 
 import numpy as np                                          # noqa: E402
-from rl_tf.envs import FlightEnv, REWARD_DEFAULTS, METRIC_KEYS, rollout_episode   # noqa: E402
+from rl_tf.envs import FlightEnv, REWARD_DEFAULTS, METRIC_KEYS, rollout_episode, v2_kwargs   # noqa: E402
 from rl_tf.lidar import Lidar, token_cfg                    # noqa: E402
 from rl_tf.common import setup_torch, write_json, policy_fn_from, wandb_init, add_wandb_args   # noqa: E402
 
@@ -45,7 +45,7 @@ def load(model, device):
     rew = {**REWARD_DEFAULTS, "goal_distance_penalty": 0.0, **{k: c[k] for k in REWARD_DEFAULTS if k in c}}
     lidar = Lidar(n_rays=c["n_rays"], fov_deg=c["fov_deg"], max_range_km=c["max_range_km"],
                   zone_flag=bool(c.get("zone_flag", 0)), speed=bool(c.get("lidar_speed", 0)), **token_cfg(c))
-    return policy_fn_from(policy, device, deterministic=True), rew, lidar, c["history"]
+    return policy_fn_from(policy, device, deterministic=True), rew, lidar, c["history"], v2_kwargs(c)
 
 
 def stored_rows(name, results_dir):
@@ -83,11 +83,11 @@ def main(argv=None):
     print(f"{name}: episodes {wanted}, mode {args.mode}, stream up to episode {wanted[-1]}")
 
     setup_torch(0)
-    fn, rew, lidar, history = load(args.model, args.device)
+    fn, rew, lidar, history, v2 = load(args.model, args.device)
     t0 = time.time()
     tracks, out_rows = {}, []
     with contextlib.redirect_stdout(io.StringIO()):
-        env = FlightEnv("single", 2, render_mode="rgb_array" if args.gif else None, **rew)
+        env = FlightEnv("single", 2, render_mode="rgb_array" if args.gif else None, v2=v2, **rew)
         rec = TrackRecorder(env)
         for i in range(wanted[-1] + 1):
             keep = i in wanted

@@ -10,7 +10,7 @@ from collections import deque
 import multiprocessing as mp
 import numpy as np
 from .lidar import (Lidar, own_state, state_dim, extra_dim, N_CHANNELS, ACT_FEATURES, DIST_NORM_KM, GEOM_KEY, NM2KM,
-                    to_own_frame, inflate_polygon)
+                    to_own_frame, inflate_polygon, zone_distance)
 
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")   # no window for rgb_array rendering
 
@@ -111,6 +111,49 @@ def check_reward(rw):
     return rw
 
 
+# v2 options (2026-11-19, single agent rebuild). Defaults = the baseline behaviour (no change).
+# action_map "goal": the turn action a in [-1, 1] commands the heading (bearing to the goal + a * goal_offset_deg).
+#   The wrapper sends the heading change to that target, clipped to +-d_heading of the environment (default 45 deg,
+#   constructor unchanged; the aircraft turns less than 45 deg in a 10 s decision). "rel": the action of the env.
+# cpa_margin_penalty: per second, times max over the other aircraft of (1 - d_cpa / margin) (0 when d_cpa >= margin);
+#   d_cpa = closest distance on straight lines within cpa_horizon_s. Margin = cpa_margin_nm (5 NM = separation).
+# zone_margin_penalty: per second, times (1 - d_zone / zone_buffer_km) (0 when d_zone >= buffer; 1 inside a zone).
+# Both margin weights are <= 0 (the reward has only negative terms).
+V2_DEFAULTS = dict(action_map="rel", goal_offset_deg=90.0, cpa_margin_penalty=0.0, cpa_margin_nm=7.5,
+                   cpa_horizon_s=120.0, zone_margin_penalty=0.0, zone_buffer_km=10.0)
+
+
+def v2_kwargs(c):
+    """v2 options from a dict of run arguments (old checkpoints: the defaults)."""
+    c = c if isinstance(c, dict) else vars(c)
+    out = {k: (c.get(k) if c.get(k) is not None else v) for k, v in V2_DEFAULTS.items()}
+    if out["action_map"] not in ("rel", "goal"):
+        raise ValueError(f"action_map must be rel or goal, got {out['action_map']}")
+    if out["cpa_margin_penalty"] > 0.0 or out["zone_margin_penalty"] > 0.0:
+        raise ValueError("the margin penalties must be <= 0 (the reward has only negative terms)")
+    return out
+
+
+def cpa_margin_cost(g, margin_km, horizon_s):
+    """max over the other aircraft of (1 - d_cpa / margin_km), clipped to [0, 1]; d_cpa = closest distance (km)
+    in [0, horizon_s] if both fly straight. g: geometry of one observation (own frame, km; aircraft_vel in m/s)."""
+    p = np.asarray(g["aircraft"], dtype=np.float64).reshape(-1, 2)
+    if len(p) == 0:
+        return 0.0
+    v = np.asarray(g["aircraft_vel"], dtype=np.float64).reshape(-1, 2) / 1000.0      # km/s
+    vv = (v * v).sum(-1)
+    t = np.where(vv > 1e-12, -(p * v).sum(-1) / np.maximum(vv, 1e-12), 0.0)
+    t = np.clip(t, 0.0, horizon_s)
+    d = np.hypot(*(p + v * t[:, None]).T)
+    return float(np.clip(1.0 - d / margin_km, 0.0, 1.0).max())
+
+
+def zone_margin_cost(g, buffer_km):
+    """(1 - d / buffer_km) clipped to [0, 1]; d = distance (km) from the own aircraft to the nearest zone."""
+    d = zone_distance(g["zones"])
+    return float(np.clip(1.0 - d / buffer_km, 0.0, 1.0)) if np.isfinite(d) else 0.0
+
+
 def reward_kwargs(args):
     base = REWARD_PRESETS.get(getattr(args, "reward_preset", "none"), REWARD_DEFAULTS)
     for k, v in base.items():                    # order: given flag, preset, default. The result goes into
@@ -126,10 +169,15 @@ class FlightEnv:
     `agents` is the list of live aircraft ids after the call. `ids` is the fixed list of all ids.
     """
 
-    def __init__(self, setting="multi", n_agents=2, render_mode=None, env_kw=None, zone_margin_km=0.0, **reward):
+    def __init__(self, setting="multi", n_agents=2, render_mode=None, env_kw=None, zone_margin_km=0.0, v2=None,
+                 cat_penalty=0.0, **reward):
         """env_kw (2026-11-19): extra constructor arguments of the competition environment that the rules permit
         (action_frequency, d_heading, d_speed). zone_margin_km: the restricted areas in the geometry of the
-        observation are grown by this margin (test-time option; the scored metrics use the real areas)."""
+        observation are grown by this margin (test-time option; the scored metrics use the real areas).
+        v2 (2026-11-19): see V2_DEFAULTS; None = the defaults (baseline behaviour).
+        cat_penalty (training only, single agent): < 0 ends the flight at the first avoidable violation (a new
+        intrusion that is not a start intrusion, a restricted-area entry, a sector exit) with this reward added.
+        0 = off. The scored metrics are not changed."""
         import bluesky_gym
         reward.pop("reach_reward", None)                 # key of older checkpoints; the waypoint reward is removed
         rw = check_reward({**REWARD_DEFAULTS, **reward})
@@ -141,6 +189,12 @@ class FlightEnv:
         if env_kw and set(env_kw) - allowed:
             raise ValueError(f"env_kw: only {sorted(allowed)} may change, got {sorted(env_kw)}")
         kw.update(env_kw or {})
+        self.v2 = v2_kwargs(v2 or {})
+        if cat_penalty > 0.0:
+            raise ValueError("cat_penalty must be <= 0 (the reward has only negative terms)")
+        if cat_penalty < 0.0 and setting != "single":
+            raise ValueError("cat_penalty: single agent only")
+        self.cat_penalty = float(cat_penalty)
         self.zone_margin_km = float(zone_margin_km)
         self.setting = setting
         if setting == "single":
@@ -160,8 +214,11 @@ class FlightEnv:
 
     def reset(self, seed=None):
         if self.setting == "single":
-            o, _ = self.env.reset(seed=seed)
+            o, info0 = self.env.reset(seed=seed)
             obs = {"own": o}
+            # violation counts at the reset sample (start inside an area is not avoidable)
+            self._cat_prev = dict(intr=0.0, zone=float(info0["restricted_area_events"]),
+                                  exit=float(info0["sector_exit_events"]))
         else:
             obs, _ = self.env.reset(seed=seed)
         self.agents = list(obs)
@@ -170,16 +227,47 @@ class FlightEnv:
         self._add_geometry(obs)
         return obs
 
+    def env_action(self, actions):
+        """Policy actions by id -> actions of the competition environment (action_map). "rel": no change."""
+        if self.v2["action_map"] == "rel":
+            return actions
+        import bluesky as bs
+        from core.tools import kwikqdrdist
+        inner, out = self.env.unwrapped, {}
+        for a, act in actions.items():
+            act = np.asarray(act, dtype=np.float64).copy()
+            idx = bs.traf.id2idx(self._ac_id(a))
+            if idx >= 0:
+                goal = (inner.goal_lat, inner.goal_lon) if self.setting == "single" else inner._goal[a]
+                qdr, _ = kwikqdrdist(bs.traf.lat[idx], bs.traf.lon[idx], goal[0], goal[1])
+                target = float(qdr) + float(np.clip(act[0], -1.0, 1.0)) * self.v2["goal_offset_deg"]
+                delta = (target - float(bs.traf.hdg[idx]) + 180.0) % 360.0 - 180.0
+                act[0] = float(np.clip(delta / float(inner.d_heading), -1.0, 1.0))
+            out[a] = act
+        return out
+
     def step(self, actions):
+        env_acts = self.env_action(actions)
         if self.setting == "single":
-            o, r, te, tr, info = self.env.step(np.asarray(actions["own"], dtype=np.float64))
+            o, r, te, tr, info = self.env.step(np.asarray(env_acts["own"], dtype=np.float64))
             info = {**info, **self._start_metrics}     # official metrics unchanged; START_KEYS added
             obs, rew, term, trunc, infos = {"own": o}, {"own": r}, {"own": te}, {"own": tr}, {"own": info}
             self.agents = [] if (te or tr) else ["own"]
         else:
-            obs, rew, term, trunc, infos = self.env.step(actions)
+            obs, rew, term, trunc, infos = self.env.step(env_acts)
             self.agents = list(self.env.agents)
         self._add_geometry(obs)
+        v2 = self.v2
+        if self.cat_penalty < 0.0:                     # constraints as terminations (training only)
+            i, cp = infos["own"], self._cat_prev
+            now = dict(intr=float(i["intrusion_events_no_start"]), zone=float(i["restricted_area_events"]),
+                       exit=float(i["sector_exit_events"]))
+            hit = any(now[k] > cp[k] for k in now)
+            self._cat_prev = now
+            if hit and not (term["own"] or trunc["own"]):
+                term = {"own": True}
+                self.agents = []
+            infos["own"] = {**i, "cat_end": 1.0 if hit else 0.0}
         rw, out_rew = self.rw, {}
         for a in obs:
             i, p = infos[a], self._prev[a]
@@ -195,6 +283,14 @@ class FlightEnv:
                           + rw["sector_exit_event_penalty"] * (ext - p["exit"])
                           + rw["intrusion_event_penalty"] * (intr - p["intr"])
                           + rw["turn_change_penalty"] * abs(turn - p["turn"]))
+            if v2["cpa_margin_penalty"] < 0.0:
+                out_rew[a] += v2["cpa_margin_penalty"] * (t - p["t"]) * cpa_margin_cost(
+                    obs[a][GEOM_KEY], v2["cpa_margin_nm"] * NM2KM, v2["cpa_horizon_s"])
+            if v2["zone_margin_penalty"] < 0.0:
+                out_rew[a] += v2["zone_margin_penalty"] * (t - p["t"]) * zone_margin_cost(
+                    obs[a][GEOM_KEY], v2["zone_buffer_km"])
+            if self.cat_penalty < 0.0 and infos[a].get("cat_end"):
+                out_rew[a] += self.cat_penalty
             p.update(t=t, zone=zone, exit=ext, turn=turn, intr=intr)
         return obs, out_rew, {a: bool(term[a]) for a in obs}, {a: bool(trunc[a]) for a in obs}, infos
 
@@ -405,12 +501,36 @@ def _episode_seed(cfg, worker, episode):
     return 1000 + cfg["seed"] * 1_000_000 + worker * 10_000 + episode
 
 
+def clean_flight(info):
+    """Clean as in the leaderboard: goal reached, no intrusion, no restricted-area entry, no sector exit."""
+    return (float(info["waypoint_reached"]) >= 1.0 and float(info["intrusion_events"]) == 0.0
+            and float(info["restricted_area_events"]) == 0.0 and float(info["sector_exit_events"]) == 0.0
+            and not info.get("cat_end"))
+
+
+def _replay_update(pool, seed, info, was_replay, cfg):
+    """Pool update after a flight. A start intrusion alone is not a failure to replay (not avoidable)."""
+    i = dict(info)
+    i["intrusion_events"] = i.get("intrusion_events_no_start", i["intrusion_events"])
+    if clean_flight(i):
+        pool.pop(seed, None)
+        return
+    if was_replay:
+        if pool.get(seed, 0) >= int(cfg.get("replay_max", 3)):
+            pool.pop(seed, None)
+        return
+    pool[seed] = 0
+    while len(pool) > int(cfg.get("replay_cap", 256)):
+        pool.pop(next(iter(pool)))
+
+
 def _worker(conn, cfg, worker):
     import contextlib
     import io
     from .common import step_costs
     with contextlib.redirect_stdout(io.StringIO()):          # BlueSky start-up text
-        env = FlightEnv(cfg["setting"], cfg["n_agents"], **cfg["reward"])
+        env = FlightEnv(cfg["setting"], cfg["n_agents"], v2=cfg.get("v2"), cat_penalty=cfg.get("cat_penalty", 0.0),
+                        **cfg["reward"])
     lidar, K = Lidar(**cfg["lidar"]), cfg["history"]
     ids = env.ids
     N, dims = len(ids), obs_dims(cfg["lidar"], cfg["history"])
@@ -421,9 +541,26 @@ def _worker(conn, cfg, worker):
     def phi(o):
         return potential(o, cfg["reward"]["time_penalty"], cfg["shaping_speed"]) if cfg["shaping"] else 0.0
 
+    # Failure replay (2026-11-19, single agent): the seeds of failed flights go into a pool of this worker; a share
+    # replay_frac of the resets flies a pool seed again. A seed leaves the pool after a clean flight or replay_max
+    # replays (unavoidable failures). New seeds keep the baseline sequence (the counter moves on new seeds only).
+    replay_frac = float(cfg.get("replay_frac", 0.0))
+    if replay_frac > 0.0:
+        rrng = np.random.default_rng(cfg["seed"] * 1000 + worker + 7)
+        pool = {}                                   # seed -> replays so far (insertion order = age)
+        st.update(seed=None, replay=False)
+
     def do_reset():
-        st["obs"] = env.reset(seed=_episode_seed(cfg, worker, st["episode"]))
-        st["episode"] += 1
+        if replay_frac > 0.0 and pool and rrng.random() < replay_frac:
+            seed = list(pool)[int(rrng.integers(len(pool)))]
+            pool[seed] += 1
+            st.update(seed=seed, replay=True)
+        else:
+            seed = _episode_seed(cfg, worker, st["episode"])
+            st["episode"] += 1
+            if replay_frac > 0.0:
+                st.update(seed=seed, replay=False)
+        st["obs"] = env.reset(seed=seed)
         st["builders"] = {a: ObsBuilder(lidar, K) for a in st["obs"]}
         for a in st["obs"]:
             st["builders"][a].reset(st["obs"][a])
@@ -470,7 +607,13 @@ def _worker(conn, cfg, worker):
                     st["ret"][a] += rew[a]
                     st["builders"][a].push(nobs[a], acts[a])
                     if te[a] or tr[a]:
-                        episodes.append(metrics_row(infos[a], st["ret"][a]))
+                        row = metrics_row(infos[a], st["ret"][a])
+                        if "cat_end" in infos[a]:
+                            row["cat_end"] = float(infos[a]["cat_end"])
+                        if replay_frac > 0.0:
+                            row["replay"] = float(st["replay"])
+                            _replay_update(pool, st["seed"], infos[a], st["replay"], cfg)
+                        episodes.append(row)
                 st["obs"] = nobs
                 done = not env.agents
                 if done:

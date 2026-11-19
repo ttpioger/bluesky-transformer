@@ -42,7 +42,7 @@ import time
 from pathlib import Path
 import numpy as np
 import torch
-from rl_tf.envs import FlightEnv, REWARD_DEFAULTS, rollout_episode, turn_stats
+from rl_tf.envs import FlightEnv, REWARD_DEFAULTS, rollout_episode, turn_stats, v2_kwargs
 from rl_tf.lidar import Lidar, token_cfg
 from rl_tf.common import setup_torch, write_json
 
@@ -75,7 +75,7 @@ def _job(job):
         policy.actor[4].register_forward_hook(hook)
     fn = policy_fn_from(policy, "cpu", deterministic=True)
     with contextlib.redirect_stdout(io.StringIO()):
-        env = FlightEnv("single", **rew)
+        env = FlightEnv("single", v2=v2_kwargs(a), **rew)
     out = []
     for s in seeds:
         buf["h"].clear()

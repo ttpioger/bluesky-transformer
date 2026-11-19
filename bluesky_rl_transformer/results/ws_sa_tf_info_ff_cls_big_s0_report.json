@@ -1,0 +1,1194 @@
+{
+ "status": "EXPLORATORY",
+ "name": "sa_tf_info_ff_cls_big_s0",
+ "model": "models/sa_tf_info_ff_cls_big_s0.pt",
+ "n_flights": 200,
+ "practice_seeds": [
+  800000000,
+  800000199
+ ],
+ "deterministic": true,
+ "rule": "pass: mean return higher AND goal rate not lower AND mean intrusion events not higher (practice flights, against the original); chosen = passing candidate with the highest return",
+ "read": {
+  "n_weights": 790857,
+  "norms": {
+   "log_std": {
+    "shape": [
+     2
+    ],
+    "norm": 0.3199480568706488
+   },
+   "encoder.pos": {
+    "shape": [
+     1,
+     30,
+     128
+    ],
+    "norm": 8.114034234722332
+   },
+   "encoder.ac_type": {
+    "shape": [
+     1,
+     1,
+     128
+    ],
+    "norm": 0.7210026206723141
+   },
+   "encoder.zone_type": {
+    "shape": [
+     1,
+     1,
+     128
+    ],
+    "norm": 0.7369360723219053
+   },
+   "encoder.goal_type": {
+    "shape": [
+     1,
+     1,
+     128
+    ],
+    "norm": 0.9956251893697906
+   },
+   "encoder.act_pos": {
+    "shape": [
+     1,
+     4,
+     128
+    ],
+    "norm": 2.201576682629797
+   },
+   "encoder.edge_pos": {
+    "shape": [
+     1,
+     8,
+     128
+    ],
+    "norm": 2.937588312850356
+   },
+   "encoder.cls_tok": {
+    "shape": [
+     1,
+     1,
+     128
+    ],
+    "norm": 1.10568745888673
+   },
+   "encoder.freqs": {
+    "shape": [
+     4
+    ],
+    "norm": 28.964053942474038
+   },
+   "encoder.patch_embed.weight": {
+    "shape": [
+     128,
+     64
+    ],
+    "norm": 8.576747164145694
+   },
+   "encoder.patch_embed.bias": {
+    "shape": [
+     128
+    ],
+    "norm": 1.659510030547971
+   },
+   "encoder.state_net.0.weight": {
+    "shape": [
+     128,
+     32
+    ],
+    "norm": 9.030800296127325
+   },
+   "encoder.state_net.0.bias": {
+    "shape": [
+     128
+    ],
+    "norm": 1.3578280104852214
+   },
+   "encoder.state_net.2.weight": {
+    "shape": [
+     128,
+     128
+    ],
+    "norm": 12.289136103495322
+   },
+   "encoder.state_net.2.bias": {
+    "shape": [
+     128
+    ],
+    "norm": 0.802185690487593
+   },
+   "encoder.state_token.weight": {
+    "shape": [
+     128,
+     128
+    ],
+    "norm": 13.261945107897558
+   },
+   "encoder.state_token.bias": {
+    "shape": [
+     128
+    ],
+    "norm": 1.4850273292168106
+   },
+   "encoder.blocks.layers.0.self_attn.in_proj_weight": {
+    "shape": [
+     384,
+     128
+    ],
+    "norm": 21.7837179631239
+   },
+   "encoder.blocks.layers.0.self_attn.in_proj_bias": {
+    "shape": [
+     384
+    ],
+    "norm": 0.9518559008956097
+   },
+   "encoder.blocks.layers.0.self_attn.out_proj.weight": {
+    "shape": [
+     128,
+     128
+    ],
+    "norm": 13.931442665440853
+   },
+   "encoder.blocks.layers.0.self_attn.out_proj.bias": {
+    "shape": [
+     128
+    ],
+    "norm": 0.9348111715529458
+   },
+   "encoder.blocks.layers.0.linear1.weight": {
+    "shape": [
+     256,
+     128
+    ],
+    "norm": 17.531270046132185
+   },
+   "encoder.blocks.layers.0.linear1.bias": {
+    "shape": [
+     256
+    ],
+    "norm": 2.1329894714606885
+   },
+   "encoder.blocks.layers.0.linear2.weight": {
+    "shape": [
+     128,
+     256
+    ],
+    "norm": 15.43271759316486
+   },
+   "encoder.blocks.layers.0.linear2.bias": {
+    "shape": [
+     128
+    ],
+    "norm": 0.8573409673519037
+   },
+   "encoder.blocks.layers.0.norm1.weight": {
+    "shape": [
+     128
+    ],
+    "norm": 9.063105315803698
+   },
+   "encoder.blocks.layers.0.norm1.bias": {
+    "shape": [
+     128
+    ],
+    "norm": 0.7168967503247118
+   },
+   "encoder.blocks.layers.0.norm2.weight": {
+    "shape": [
+     128
+    ],
+    "norm": 10.288036625661809
+   },
+   "encoder.blocks.layers.0.norm2.bias": {
+    "shape": [
+     128
+    ],
+    "norm": 1.2836469284426768
+   },
+   "encoder.blocks.layers.1.self_attn.in_proj_weight": {
+    "shape": [
+     384,
+     128
+    ],
+    "norm": 20.927607026916736
+   },
+   "encoder.blocks.layers.1.self_attn.in_proj_bias": {
+    "shape": [
+     384
+    ],
+    "norm": 0.8641630017082365
+   },
+   "encoder.blocks.layers.1.self_attn.out_proj.weight": {
+    "shape": [
+     128,
+     128
+    ],
+    "norm": 10.558795689306463
+   },
+   "encoder.blocks.layers.1.self_attn.out_proj.bias": {
+    "shape": [
+     128
+    ],
+    "norm": 0.7841211905766771
+   },
+   "encoder.blocks.layers.1.linear1.weight": {
+    "shape": [
+     256,
+     128
+    ],
+    "norm": 18.015170602261694
+   },
+   "encoder.blocks.layers.1.linear1.bias": {
+    "shape": [
+     256
+    ],
+    "norm": 1.7388986846180765
+   },
+   "encoder.blocks.layers.1.linear2.weight": {
+    "shape": [
+     128,
+     256
+    ],
+    "norm": 14.277275199921514
+   },
+   "encoder.blocks.layers.1.linear2.bias": {
+    "shape": [
+     128
+    ],
+    "norm": 0.7660630635936665
+   },
+   "encoder.blocks.layers.1.norm1.weight": {
+    "shape": [
+     128
+    ],
+    "norm": 9.72818816619528
+   },
+   "encoder.blocks.layers.1.norm1.bias": {
+    "shape": [
+     128
+    ],
+    "norm": 0.4916807671716735
+   },
+   "encoder.blocks.layers.1.norm2.weight": {
+    "shape": [
+     128
+    ],
+    "norm": 9.829835365050426
+   },
+   "encoder.blocks.layers.1.norm2.bias": {
+    "shape": [
+     128
+    ],
+    "norm": 1.4681689437741736
+   },
+   "encoder.blocks.layers.2.self_attn.in_proj_weight": {
+    "shape": [
+     384,
+     128
+    ],
+    "norm": 21.322751850828734
+   },
+   "encoder.blocks.layers.2.self_attn.in_proj_bias": {
+    "shape": [
+     384
+    ],
+    "norm": 0.719380036812398
+   },
+   "encoder.blocks.layers.2.self_attn.out_proj.weight": {
+    "shape": [
+     128,
+     128
+    ],
+    "norm": 11.08013517527159
+   },
+   "encoder.blocks.layers.2.self_attn.out_proj.bias": {
+    "shape": [
+     128
+    ],
+    "norm": 0.6022676125505976
+   },
+   "encoder.blocks.layers.2.linear1.weight": {
+    "shape": [
+     256,
+     128
+    ],
+    "norm": 18.923524578647246
+   },
+   "encoder.blocks.layers.2.linear1.bias": {
+    "shape": [
+     256
+    ],
+    "norm": 1.5203786728519149
+   },
+   "encoder.blocks.layers.2.linear2.weight": {
+    "shape": [
+     128,
+     256
+    ],
+    "norm": 15.436994596231587
+   },
+   "encoder.blocks.layers.2.linear2.bias": {
+    "shape": [
+     128
+    ],
+    "norm": 0.6696404691344782
+   },
+   "encoder.blocks.layers.2.norm1.weight": {
+    "shape": [
+     128
+    ],
+    "norm": 10.079584831011328
+   },
+   "encoder.blocks.layers.2.norm1.bias": {
+    "shape": [
+     128
+    ],
+    "norm": 0.8453357718013604
+   },
+   "encoder.blocks.layers.2.norm2.weight": {
+    "shape": [
+     128
+    ],
+    "norm": 10.023874903536544
+   },
+   "encoder.blocks.layers.2.norm2.bias": {
+    "shape": [
+     128
+    ],
+    "norm": 1.0614345400591432
+   },
+   "encoder.norm.weight": {
+    "shape": [
+     128
+    ],
+    "norm": 10.486199610281698
+   },
+   "encoder.norm.bias": {
+    "shape": [
+     128
+    ],
+    "norm": 0.5972849600877883
+   },
+   "encoder.dense.0.weight": {
+    "shape": [
+     256,
+     256
+    ],
+    "norm": 15.999477975818163
+   },
+   "encoder.dense.0.bias": {
+    "shape": [
+     256
+    ],
+    "norm": 0.92053794646211
+   },
+   "encoder.dense.2.weight": {
+    "shape": [
+     256,
+     256
+    ],
+    "norm": 12.306402686277202
+   },
+   "encoder.dense.2.bias": {
+    "shape": [
+     256
+    ],
+    "norm": 0.9408973269403432
+   },
+   "encoder.ac_embed.0.weight": {
+    "shape": [
+     128,
+     72
+    ],
+    "norm": 12.130016952620299
+   },
+   "encoder.ac_embed.0.bias": {
+    "shape": [
+     128
+    ],
+    "norm": 0.996247992359517
+   },
+   "encoder.ac_embed.2.weight": {
+    "shape": [
+     128,
+     128
+    ],
+    "norm": 13.996930333125633
+   },
+   "encoder.ac_embed.2.bias": {
+    "shape": [
+     128
+    ],
+    "norm": 0.9348485316891082
+   },
+   "encoder.zone_embed.0.weight": {
+    "shape": [
+     128,
+     99
+    ],
+    "norm": 13.122224449468737
+   },
+   "encoder.zone_embed.0.bias": {
+    "shape": [
+     128
+    ],
+    "norm": 0.7471458178066516
+   },
+   "encoder.zone_embed.2.weight": {
+    "shape": [
+     128,
+     128
+    ],
+    "norm": 14.257342923571176
+   },
+   "encoder.zone_embed.2.bias": {
+    "shape": [
+     128
+    ],
+    "norm": 0.930254132899595
+   },
+   "encoder.goal_embed.0.weight": {
+    "shape": [
+     128,
+     54
+    ],
+    "norm": 10.232403177831928
+   },
+   "encoder.goal_embed.0.bias": {
+    "shape": [
+     128
+    ],
+    "norm": 1.1486085819614698
+   },
+   "encoder.goal_embed.2.weight": {
+    "shape": [
+     128,
+     128
+    ],
+    "norm": 13.50427815413383
+   },
+   "encoder.goal_embed.2.bias": {
+    "shape": [
+     128
+    ],
+    "norm": 1.2266926532312974
+   },
+   "encoder.act_embed.0.weight": {
+    "shape": [
+     128,
+     2
+    ],
+    "norm": 5.939529895800885
+   },
+   "encoder.act_embed.0.bias": {
+    "shape": [
+     128
+    ],
+    "norm": 5.734621311408378
+   },
+   "encoder.act_embed.2.weight": {
+    "shape": [
+     128,
+     128
+    ],
+    "norm": 13.111640007221128
+   },
+   "encoder.act_embed.2.bias": {
+    "shape": [
+     128
+    ],
+    "norm": 1.281115865603792
+   },
+   "encoder.edge_embed.0.weight": {
+    "shape": [
+     128,
+     54
+    ],
+    "norm": 10.310331921049851
+   },
+   "encoder.edge_embed.0.bias": {
+    "shape": [
+     128
+    ],
+    "norm": 0.9797793894065032
+   },
+   "encoder.edge_embed.2.weight": {
+    "shape": [
+     128,
+     128
+    ],
+    "norm": 13.395124546850546
+   },
+   "encoder.edge_embed.2.bias": {
+    "shape": [
+     128
+    ],
+    "norm": 1.2417533045472808
+   },
+   "actor.0.weight": {
+    "shape": [
+     64,
+     256
+    ],
+    "norm": 7.800016547613679
+   },
+   "actor.0.bias": {
+    "shape": [
+     64
+    ],
+    "norm": 0.4564738068284457
+   },
+   "actor.2.weight": {
+    "shape": [
+     64,
+     64
+    ],
+    "norm": 5.205715633908917
+   },
+   "actor.2.bias": {
+    "shape": [
+     64
+    ],
+    "norm": 0.7648373151239626
+   },
+   "actor.4.weight": {
+    "shape": [
+     2,
+     64
+    ],
+    "norm": 0.8066790595157086
+   },
+   "actor.4.bias": {
+    "shape": [
+     2
+    ],
+    "norm": 0.16122962134144012
+   },
+   "critic.query.weight": {
+    "shape": [
+     64,
+     256
+    ],
+    "norm": 4.606034103884882
+   },
+   "critic.query.bias": {
+    "shape": [
+     64
+    ],
+    "norm": 0.26833541811482187
+   },
+   "critic.key.weight": {
+    "shape": [
+     64,
+     256
+    ],
+    "norm": 4.627378768252527
+   },
+   "critic.key.bias": {
+    "shape": [
+     64
+    ],
+    "norm": 0.2896339271995843
+   },
+   "critic.value.weight": {
+    "shape": [
+     64,
+     256
+    ],
+    "norm": 6.659600745750205
+   },
+   "critic.value.bias": {
+    "shape": [
+     64
+    ],
+    "norm": 0.6025672261473444
+   },
+   "critic.mha.in_proj_weight": {
+    "shape": [
+     192,
+     64
+    ],
+    "norm": 9.191277774635532
+   },
+   "critic.mha.in_proj_bias": {
+    "shape": [
+     192
+    ],
+    "norm": 0.43415752710497235
+   },
+   "critic.mha.out_proj.weight": {
+    "shape": [
+     64,
+     64
+    ],
+    "norm": 3.7948217989205046
+   },
+   "critic.mha.out_proj.bias": {
+    "shape": [
+     64
+    ],
+    "norm": 0.4255851629673232
+   },
+   "critic.layers.0.weight": {
+    "shape": [
+     64,
+     64
+    ],
+    "norm": 4.681746459424121
+   },
+   "critic.layers.0.bias": {
+    "shape": [
+     64
+    ],
+    "norm": 1.0990503729626178
+   },
+   "critic.layers.2.weight": {
+    "shape": [
+     1,
+     64
+    ],
+    "norm": 1.1793140203030963
+   },
+   "critic.layers.2.bias": {
+    "shape": [
+     1
+    ],
+    "norm": 0.24376794695854187
+   }
+  },
+  "rows": {
+   "turn": {
+    "norm": 0.671881562684792,
+    "bias": -0.02091965638101101,
+    "top_units": [
+     [
+      61,
+      -0.16909898817539215
+     ],
+     [
+      28,
+      -0.16246290504932404
+     ],
+     [
+      44,
+      0.14663243293762207
+     ],
+     [
+      49,
+      0.14602257311344147
+     ],
+     [
+      48,
+      -0.1393718123435974
+     ],
+     [
+      58,
+      0.1380409598350525
+     ],
+     [
+      7,
+      -0.13081705570220947
+     ],
+     [
+      22,
+      0.12621411681175232
+     ]
+    ]
+   },
+   "speed": {
+    "norm": 0.44643730890841804,
+    "bias": 0.15986669063568115,
+    "top_units": [
+     [
+      55,
+      0.18889731168746948
+     ],
+     [
+      37,
+      -0.13563847541809082
+     ],
+     [
+      11,
+      -0.1205516904592514
+     ],
+     [
+      58,
+      0.11526421457529068
+     ],
+     [
+      13,
+      0.11024335771799088
+     ],
+     [
+      23,
+      -0.10295170545578003
+     ],
+     [
+      7,
+      -0.08135771751403809
+     ],
+     [
+      49,
+      -0.07622426003217697
+     ]
+    ]
+   }
+  }
+ },
+ "diagnosis": {
+  "steps": 20586,
+  "share_saturated": 0.47653745263771496,
+  "abs_z_quantiles": {
+   "0.1": 0.4125513285398483,
+   "0.25": 1.0073456764221191,
+   "0.5": 1.7811435461044312,
+   "0.75": 2.2466266751289368,
+   "0.9": 2.5299160480499268
+  },
+  "mean_abs_turn_deg": 36.82180477620017,
+  "sign_flip_rate_mean": 0.8797809700885191,
+  "lag1_corr_mean": -0.7751287616508736,
+  "probe": {
+   "fit_flights": 100,
+   "test_flights": 100,
+   "r2_test": 0.7182105388176678,
+   "p": [
+    66.52500743367752,
+    -19.532828117458166,
+    -20.59896962593482,
+    -9.255678185162616,
+    -30.869148001042547,
+    47.80848399543676,
+    -56.8923508571315,
+    3.3392898687344132,
+    11.835278043512998,
+    -48.57855730895868,
+    -11.36763374687036,
+    3.4127036346872046,
+    -19.53148988238167,
+    3.250025548886642,
+    13.1117310943302,
+    104.98153883325253,
+    39.69189714739315,
+    37.73430900048557,
+    38.590414941011936,
+    4.382611865389045,
+    -11.47844260058948,
+    -12.879526945040144,
+    -65.64886867079474,
+    33.844231327076244,
+    18.753161536860752,
+    -32.93871691780528,
+    14.531004564248597,
+    54.933899185511024,
+    -2.530495446324025,
+    -52.01449177064119,
+    -21.359388431653464,
+    -1.6952057477621594,
+    -10.576125239034198,
+    -72.22031549017784,
+    -60.23903850753959,
+    19.522092364025404,
+    -33.2522348322143,
+    -30.49901422694073,
+    27.525533524584617,
+    26.297665439406344,
+    -13.11454939936425,
+    -8.262706663654528,
+    -31.959349813869217,
+    2.4559152237774846,
+    23.575887223345138,
+    24.789297932229292,
+    10.004559424777296,
+    -3.9999771860137443,
+    -16.719722808495057,
+    -20.83741382697127,
+    31.19838715976116,
+    9.507922761598575,
+    -41.0636347300013,
+    10.421669109294779,
+    -11.774038583059873,
+    0.847234007381445,
+    -13.165035746807312,
+    32.60150035687688,
+    12.171002693021965,
+    -9.516579035413471,
+    -6.158992317707413,
+    -8.002196894567355,
+    -22.479272491136022,
+    -20.71032742212948
+   ],
+   "q": -18.420868638717014
+  }
+ },
+ "original": {
+  "ep_return": -44.56824192071956,
+  "waypoint_reached": 1.0,
+  "flight_time": 1024.565,
+  "intrusion_events": 0.325,
+  "intrusion_time": 16.775,
+  "time_in_restricted_area": 19.945,
+  "time_outside_sector": 8.315,
+  "mean_abs_turn_deg": 37.05982420297671,
+  "turn_sign_flip_rate": 0.8797809700885191
+ },
+ "candidates": {
+  "E1c050": {
+   "kind": "gain",
+   "value": 0.5,
+   "file": "models/sa_tf_info_ff_cls_big_s0_ws_E1c050.pt",
+   "changed_weights": 65,
+   "mean": {
+    "ep_return": -39.60894026993274,
+    "waypoint_reached": 1.0,
+    "flight_time": 990.125,
+    "intrusion_events": 0.335,
+    "intrusion_time": 16.1,
+    "time_in_restricted_area": 14.04,
+    "time_outside_sector": 5.65,
+    "mean_abs_turn_deg": 26.583943270536466,
+    "turn_sign_flip_rate": 0.8900534241077294
+   },
+   "checks": {
+    "return_higher": true,
+    "goal_not_lower": true,
+    "intrusions_not_higher": false
+   },
+   "pass": false,
+   "paired": {
+    "ep_return": {
+     "mean": 4.959301650786818,
+     "ci95": [
+      1.712578644038595,
+      8.683082688843244
+     ]
+    },
+    "waypoint_reached": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "flight_time": {
+     "mean": -34.44,
+     "ci95": [
+      -66.86025,
+      -7.399500000000008
+     ]
+    },
+    "intrusion_events": {
+     "mean": 0.01,
+     "ci95": [
+      -0.04,
+      0.055
+     ]
+    },
+    "intrusion_time": {
+     "mean": -0.675,
+     "ci95": [
+      -4.15,
+      2.4801249999999984
+     ]
+    },
+    "time_in_restricted_area": {
+     "mean": -5.905,
+     "ci95": [
+      -13.930375,
+      0.9753749999999946
+     ]
+    },
+    "time_outside_sector": {
+     "mean": -2.665,
+     "ci95": [
+      -8.305125,
+      2.6903749999999946
+     ]
+    },
+    "mean_abs_turn_deg": {
+     "mean": -10.475880932440255,
+     "ci95": [
+      -10.742043579962816,
+      -10.206666972568545
+     ]
+    },
+    "turn_sign_flip_rate": {
+     "mean": 0.010272454019210349,
+     "ci95": [
+      0.0037169191400410976,
+      0.01674824236735449
+     ]
+    }
+   }
+  },
+  "E1c070": {
+   "kind": "gain",
+   "value": 0.7,
+   "file": "models/sa_tf_info_ff_cls_big_s0_ws_E1c070.pt",
+   "changed_weights": 65,
+   "mean": {
+    "ep_return": -41.91142496552575,
+    "waypoint_reached": 1.0,
+    "flight_time": 1001.275,
+    "intrusion_events": 0.34,
+    "intrusion_time": 17.36,
+    "time_in_restricted_area": 16.04,
+    "time_outside_sector": 7.265,
+    "mean_abs_turn_deg": 32.488393972705126,
+    "turn_sign_flip_rate": 0.8853433256028516
+   },
+   "checks": {
+    "return_higher": true,
+    "goal_not_lower": true,
+    "intrusions_not_higher": false
+   },
+   "pass": false,
+   "paired": {
+    "ep_return": {
+     "mean": 2.6568169551938006,
+     "ci95": [
+      -0.17397371943945333,
+      5.824025381734763
+     ]
+    },
+    "waypoint_reached": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "flight_time": {
+     "mean": -23.29,
+     "ci95": [
+      -56.86525,
+      7.810374999999994
+     ]
+    },
+    "intrusion_events": {
+     "mean": 0.015,
+     "ci95": [
+      -0.035,
+      0.07
+     ]
+    },
+    "intrusion_time": {
+     "mean": 0.585,
+     "ci95": [
+      -1.980125,
+      3.165
+     ]
+    },
+    "time_in_restricted_area": {
+     "mean": -3.905,
+     "ci95": [
+      -9.485249999999999,
+      1.4451249999999982
+     ]
+    },
+    "time_outside_sector": {
+     "mean": -1.05,
+     "ci95": [
+      -6.265,
+      4.205124999999998
+     ]
+    },
+    "mean_abs_turn_deg": {
+     "mean": -4.571430230271593,
+     "ci95": [
+      -4.802972004590422,
+      -4.343522598500982
+     ]
+    },
+    "turn_sign_flip_rate": {
+     "mean": 0.005562355514332373,
+     "ci95": [
+      -8.962525935132191e-05,
+      0.01109074415399724
+     ]
+    }
+   }
+  },
+  "E2k050": {
+   "kind": "inertia",
+   "value": 0.8905717730522156,
+   "file": "models/sa_tf_info_ff_cls_big_s0_ws_E2k050.pt",
+   "changed_weights": 65,
+   "mean": {
+    "ep_return": -39.43960758638583,
+    "waypoint_reached": 1.0,
+    "flight_time": 982.77,
+    "intrusion_events": 0.335,
+    "intrusion_time": 15.915,
+    "time_in_restricted_area": 16.345,
+    "time_outside_sector": 4.325,
+    "mean_abs_turn_deg": 30.21728620972791,
+    "turn_sign_flip_rate": 0.8400067610787915
+   },
+   "checks": {
+    "return_higher": true,
+    "goal_not_lower": true,
+    "intrusions_not_higher": false
+   },
+   "pass": false,
+   "paired": {
+    "ep_return": {
+     "mean": 5.1286343343337215,
+     "ci95": [
+      0.9326918357513313,
+      9.140243846575206
+     ]
+    },
+    "waypoint_reached": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "flight_time": {
+     "mean": -41.795,
+     "ci95": [
+      -76.575125,
+      -12.448125000000026
+     ]
+    },
+    "intrusion_events": {
+     "mean": 0.01,
+     "ci95": [
+      -0.045,
+      0.07
+     ]
+    },
+    "intrusion_time": {
+     "mean": -0.86,
+     "ci95": [
+      -4.01,
+      2.1251249999999984
+     ]
+    },
+    "time_in_restricted_area": {
+     "mean": -3.6,
+     "ci95": [
+      -12.820375,
+      5.62
+     ]
+    },
+    "time_outside_sector": {
+     "mean": -3.99,
+     "ci95": [
+      -8.31,
+      -0.39
+     ]
+    },
+    "mean_abs_turn_deg": {
+     "mean": -6.842537993248808,
+     "ci95": [
+      -7.335463388829938,
+      -6.36293381382779
+     ]
+    },
+    "turn_sign_flip_rate": {
+     "mean": -0.03977420900972757,
+     "ci95": [
+      -0.04942396622861069,
+      -0.030443276442802987
+     ]
+    }
+   }
+  },
+  "E2k100": {
+   "kind": "inertia",
+   "value": 1.7811435461044312,
+   "file": "models/sa_tf_info_ff_cls_big_s0_ws_E2k100.pt",
+   "changed_weights": 65,
+   "mean": {
+    "ep_return": -39.6004116957984,
+    "waypoint_reached": 1.0,
+    "flight_time": 1001.755,
+    "intrusion_events": 0.35,
+    "intrusion_time": 14.74,
+    "time_in_restricted_area": 14.76,
+    "time_outside_sector": 4.57,
+    "mean_abs_turn_deg": 21.665733745414244,
+    "turn_sign_flip_rate": 0.7230147071075856
+   },
+   "checks": {
+    "return_higher": true,
+    "goal_not_lower": true,
+    "intrusions_not_higher": false
+   },
+   "pass": false,
+   "paired": {
+    "ep_return": {
+     "mean": 4.967830224921155,
+     "ci95": [
+      -0.5432980763348328,
+      10.23613954042735
+     ]
+    },
+    "waypoint_reached": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "flight_time": {
+     "mean": -22.81,
+     "ci95": [
+      -65.16725000000001,
+      15.971874999999974
+     ]
+    },
+    "intrusion_events": {
+     "mean": 0.025,
+     "ci95": [
+      -0.045,
+      0.095
+     ]
+    },
+    "intrusion_time": {
+     "mean": -2.035,
+     "ci95": [
+      -6.255,
+      1.8952499999999963
+     ]
+    },
+    "time_in_restricted_area": {
+     "mean": -5.185,
+     "ci95": [
+      -16.790125,
+      7.070374999999995
+     ]
+    },
+    "time_outside_sector": {
+     "mean": -3.745,
+     "ci95": [
+      -8.930375,
+      0.93
+     ]
+    },
+    "mean_abs_turn_deg": {
+     "mean": -15.39409045756247,
+     "ci95": [
+      -15.892746957883453,
+      -14.908336805018266
+     ]
+    },
+    "turn_sign_flip_rate": {
+     "mean": -0.15676626298093332,
+     "ci95": [
+      -0.16796207481096082,
+      -0.14539319876110113
+     ]
+    }
+   }
+  }
+ },
+ "chosen": null,
+ "wall_seconds": 511.3597481250763
+}

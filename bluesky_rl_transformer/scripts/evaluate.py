@@ -8,7 +8,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 import numpy as np
-from rl_tf.envs import FlightEnv, REWARD_DEFAULTS, METRIC_KEYS, controller, rollout_episode, turn_stats
+from rl_tf.envs import FlightEnv, REWARD_DEFAULTS, METRIC_KEYS, controller, rollout_episode, turn_stats, v2_kwargs
 from rl_tf.lidar import Lidar, NM2KM, DEG2KM, token_cfg
 from rl_tf.common import (setup_torch, write_json, window_stats, policy_fn_from, wandb_init, add_wandb_args,
                           summary_table)
@@ -161,7 +161,7 @@ def main(argv=None):
     if (args.model is None) == (args.policy is None):
         p.error("give exactly one of --model and --policy")
     setup_torch(0)
-    rew, lidar_cfg, history, n_par = dict(REWARD_DEFAULTS), {}, 4, 0
+    rew, lidar_cfg, history, n_par, v2 = dict(REWARD_DEFAULTS), {}, 4, 0, None
     if args.model:
         from rl_tf.networks import load_policy
         policy, ck = load_policy(args.model, args.device)
@@ -172,6 +172,7 @@ def main(argv=None):
         lidar_cfg = dict(n_rays=a["n_rays"], fov_deg=a["fov_deg"], max_range_km=a["max_range_km"],
                          zone_flag=bool(a.get("zone_flag", 0)), speed=bool(a.get("lidar_speed", 0)), **token_cfg(a))
         history, n_par = a["history"], ck["n_params"]
+        v2 = v2_kwargs(a)
         fn = policy_fn_from(policy, args.device, deterministic=not args.stochastic)
         name = args.name or Path(args.model).stem
     else:
@@ -179,7 +180,7 @@ def main(argv=None):
         base = controller if args.policy == "controller" else (lambda o: np.zeros(2, dtype=np.float32))
         fn = lambda raw, built: {k: base(o) for k, o in raw.items()}
         name = args.name or f"{args.policy}_{setting}"
-    env = FlightEnv(setting, n_agents, render_mode="rgb_array" if args.gif else None, **rew)
+    env = FlightEnv(setting, n_agents, render_mode="rgb_array" if args.gif else None, v2=v2, **rew)
     lidar = Lidar(**lidar_cfg)
     gif_eps = set(range(args.episodes)) if args.gif_episodes is None else {int(x) for x in args.gif_episodes.split(",")}
     rec = None if args.no_tracks else TrackRecorder(env)

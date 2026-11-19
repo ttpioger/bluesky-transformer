@@ -701,6 +701,47 @@ def test_ensemble_two_copies_equal_one_model_and_zone_switch():
     assert z.stats() == {"ens_decisions": 2, "ens_second_model": 1}
 
 
+def test_v2_margin_costs_and_kwargs():
+    from rl_tf.envs import cpa_margin_cost, zone_margin_cost, v2_kwargs, V2_DEFAULTS
+    g = dict(aircraft=np.array([[20.0, 0.0]]), aircraft_vel=np.array([[-100.0, 0.0]]), zones=[])
+    assert abs(cpa_margin_cost(g, 10.0, 300.0) - 1.0) < 1e-9          # head-on: d_cpa = 0 at t = 200 s
+    assert cpa_margin_cost(g, 10.0, 100.0) == 0.0                      # horizon 100 s: d = 10 km = margin
+    g2 = dict(aircraft=np.array([[0.0, 8.0]]), aircraft_vel=np.array([[0.0, 50.0]]), zones=[])
+    assert abs(cpa_margin_cost(g2, 10.0, 120.0) - 0.2) < 1e-9          # moving away: d_cpa = now = 8 km
+    assert cpa_margin_cost(dict(aircraft=np.zeros((0, 2)), aircraft_vel=np.zeros((0, 2))), 10.0, 120.0) == 0.0
+    assert abs(zone_margin_cost(dict(zones=[square(10.0, 0.0, 2.0)]), 10.0) - 0.2) < 1e-9   # 8 km away
+    assert zone_margin_cost(dict(zones=[square(0.0, 0.0, 1.0)]), 10.0) == 1.0                # inside
+    assert zone_margin_cost(dict(zones=[]), 10.0) == 0.0
+    assert v2_kwargs({}) == V2_DEFAULTS and v2_kwargs({"action_map": None}) == V2_DEFAULTS
+    for bad in ({"action_map": "x"}, {"cpa_margin_penalty": 1.0}):
+        try:
+            v2_kwargs(bad)
+            raise AssertionError(f"no error for {bad}")
+        except ValueError:
+            pass
+
+
+def test_failure_replay_pool():
+    from rl_tf.envs import _replay_update, clean_flight
+    ok = dict(waypoint_reached=1.0, intrusion_events=0.0, restricted_area_events=0.0, sector_exit_events=0.0)
+    assert clean_flight(ok) and not clean_flight({**ok, "cat_end": 1.0}) and not clean_flight({**ok, "waypoint_reached": 0.0})
+    cfg, pool = {"replay_cap": 2, "replay_max": 2}, {}
+    _replay_update(pool, 5, {**ok, "intrusion_events": 1.0, "intrusion_events_no_start": 0.0}, False, cfg)
+    assert pool == {}                                                  # start intrusion only: not replayed
+    for sd in (1, 2, 3):
+        _replay_update(pool, sd, {**ok, "restricted_area_events": 1.0}, False, cfg)
+    assert list(pool) == [2, 3]                                        # cap 2: the oldest seed leaves
+    pool[2] = 1
+    _replay_update(pool, 2, {**ok, "restricted_area_events": 1.0}, True, cfg)
+    assert 2 in pool                                                   # 1 replay < max 2: stays
+    pool[2] = 2
+    _replay_update(pool, 2, {**ok, "restricted_area_events": 1.0}, True, cfg)
+    assert 2 not in pool                                               # max replays reached
+    pool[3] = 1
+    _replay_update(pool, 3, ok, True, cfg)
+    assert 3 not in pool                                               # clean on replay: leaves
+
+
 def main():
     t0, failed = time.time(), 0
     tests = sorted(k for k in globals() if k.startswith("test_"))

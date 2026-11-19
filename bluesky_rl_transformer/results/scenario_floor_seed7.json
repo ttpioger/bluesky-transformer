@@ -1,0 +1,23 @@
+{
+ "seed": 7,
+ "episodes": 1000,
+ "flights_spawn_intrusion": 100,
+ "spawn_intrusion_events": 105,
+ "start_in_area": 0,
+ "goal_in_area": 0,
+ "start_area_lt_5nm": 0,
+ "goal_area_lt_5nm": 0,
+ "start_area_lt_10nm": 0,
+ "goal_area_lt_10nm": 1,
+ "min_d_start_area_nm": 10.0,
+ "min_d_goal_area_nm": 9.99,
+ "min_d_start_edge_nm": 10.0,
+ "min_d_goal_edge_nm": 10.0,
+ "no_spawn_first_los_lt_s": {
+  "30": 21,
+  "60": 46,
+  "120": 80,
+  "300": 220
+ },
+ "note": "straight-line LoS uses the first intruder leg and the agent straight to the goal"
+}

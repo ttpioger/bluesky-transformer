@@ -34,7 +34,7 @@ import multiprocessing as mp
 import time
 from pathlib import Path
 import numpy as np
-from rl_tf.envs import FlightEnv, REWARD_DEFAULTS, METRIC_KEYS, START_KEYS, rollout_episode
+from rl_tf.envs import FlightEnv, REWARD_DEFAULTS, METRIC_KEYS, START_KEYS, rollout_episode, v2_kwargs
 from rl_tf.lidar import Lidar, token_cfg
 from rl_tf.common import setup_torch, write_json, wandb_init, add_wandb_args, summary_table, SUMMARY_ROWS
 
@@ -49,15 +49,19 @@ def _job(job):
     plan = job[6] if len(job) > 6 else None
     opts = (job[7] if len(job) > 7 else None) or {}           # test-time options (2026-11-19), {} = none
     setup_torch(0)
-    rew, lidar, history = dict(REWARD_DEFAULTS), Lidar(), 1
+    rew, lidar, history, v2 = dict(REWARD_DEFAULTS), Lidar(), 1, None
     if model is None:
         fn = lambda raw, built: {k: np.zeros(2, dtype=np.float32) for k in raw}
     else:
         policy, policy_fn, rew, lidar, history, c = _load_member(model, device)
         fn = policy_fn
+        v2 = v2_kwargs(c)                                    # action mapping of the training (2026-11-19)
         if opts.get("ensemble"):
             from rl_tf.ensemble import EnsembleFn
             second = _load_member(opts["ensemble"], device)
+            v2b = v2_kwargs(second[5])
+            if (v2b["action_map"], v2b["goal_offset_deg"]) != (v2["action_map"], v2["goal_offset_deg"]):
+                raise ValueError(f"ensemble: {opts['ensemble']} has another action mapping than {model}")
             fn = EnsembleFn([(policy_fn, lidar, history), (second[1], second[3], second[4])],
                             mode=opts["ensemble_mode"], switch_km=opts["switch_km"])
         if plan is not None:
@@ -75,7 +79,7 @@ def _job(job):
     max_steps = max(400, int(np.ceil(3100 / af)) + 1)          # 3000 s budget at af seconds per decision
     with contextlib.redirect_stdout(io.StringIO()):
         env = FlightEnv("single" if kind == "sa" else "multi", N_AGENTS_MA, env_kw=env_kw,
-                        zone_margin_km=opts.get("zone_margin_km", 0.0), **rew)
+                        zone_margin_km=opts.get("zone_margin_km", 0.0), v2=v2, **rew)
         for i in range(a):                                   # move the random stream to episode a, no flight
             env.env.reset(seed=seed if i == 0 else None)
         rows = []
