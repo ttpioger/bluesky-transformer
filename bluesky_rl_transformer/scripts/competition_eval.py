@@ -18,6 +18,14 @@ the value after the horizon. The world model must sit on the same encoder weight
 Check: --plan-level 1 --plan-threshold 2 never searches and must give the same metrics as no planner.
 Output name: NAME_planL (results/NAME_planL_competition_KIND.json), with the planner settings and the share of
 decisions where the planner searched.
+
+Test-time options (2026-11-19), no training, permitted by docs/competition/COMPETITION.md:
+  --action-frequency N --d-heading D --d-speed S   decision rate and action scale of the environment
+                                                   (same turn rate as trained: N 5, D 22.5, S 3.333);
+  --zone-margin-km M    the policy sees each restricted area grown by M km (the metrics use the real areas);
+  --ensemble PATH --ensemble-mode mean|zone [--switch-km K]   a second model (rl_tf/ensemble.py).
+The output name gets the tags _afN _dhD _dsS _zmM _ensMODE_MODEL[K]. Without options the jobs are the same as before.
+Check of the ensemble: --ensemble with the same model, mode mean, must give the same flights as the model alone.
 """
 from __future__ import annotations
 import argparse
@@ -39,20 +47,19 @@ def _job(job):
     import io
     model, kind, a, b, seed, device = job[:6]
     plan = job[6] if len(job) > 6 else None
+    opts = (job[7] if len(job) > 7 else None) or {}           # test-time options (2026-11-19), {} = none
     setup_torch(0)
     rew, lidar, history = dict(REWARD_DEFAULTS), Lidar(), 1
     if model is None:
         fn = lambda raw, built: {k: np.zeros(2, dtype=np.float32) for k in raw}
     else:
-        from rl_tf.networks import load_policy
-        from rl_tf.common import policy_fn_from
-        policy, ck = load_policy(model, device)
-        c = ck["args"]
-        rew = {**REWARD_DEFAULTS, "goal_distance_penalty": 0.0, **{k: c[k] for k in REWARD_DEFAULTS if k in c}}
-        lidar = Lidar(n_rays=c["n_rays"], fov_deg=c["fov_deg"], max_range_km=c["max_range_km"],
-                      zone_flag=bool(c.get("zone_flag", 0)), speed=bool(c.get("lidar_speed", 0)), **token_cfg(c))
-        history = c["history"]
-        fn = policy_fn_from(policy, device, deterministic=True)
+        policy, policy_fn, rew, lidar, history, c = _load_member(model, device)
+        fn = policy_fn
+        if opts.get("ensemble"):
+            from rl_tf.ensemble import EnsembleFn
+            second = _load_member(opts["ensemble"], device)
+            fn = EnsembleFn([(policy_fn, lidar, history), (second[1], second[3], second[4])],
+                            mode=opts["ensemble_mode"], switch_km=opts["switch_km"])
         if plan is not None:
             from rl_tf.world_model import load_world_model, same_weights, Planner, PlannerFn
             wm, _ = load_world_model(plan["world_model"], device)
@@ -63,28 +70,45 @@ def _job(job):
             cfg = {k: v for k, v in plan.items() if k != "world_model"}
             fn = PlannerFn(Planner(wm, policy, gamma=c["gamma"], reward_scale=c["reward_scale"], device=device,
                                    **{**cfg, "seed": cfg["seed"] + a}), device, lidar)
+    env_kw = opts.get("env_kw") or {}
+    af = int(env_kw.get("action_frequency", 10))
+    max_steps = max(400, int(np.ceil(3100 / af)) + 1)          # 3000 s budget at af seconds per decision
     with contextlib.redirect_stdout(io.StringIO()):
-        env = FlightEnv("single" if kind == "sa" else "multi", N_AGENTS_MA, **rew)
+        env = FlightEnv("single" if kind == "sa" else "multi", N_AGENTS_MA, env_kw=env_kw,
+                        zone_margin_km=opts.get("zone_margin_km", 0.0), **rew)
         for i in range(a):                                   # move the random stream to episode a, no flight
             env.env.reset(seed=seed if i == 0 else None)
         rows = []
         for i in range(a, b):
             if hasattr(fn, "reset"):
                 fn.reset()
-            ep, _, _ = rollout_episode(env, fn, seed if i == 0 else None, lidar, history)
+            ep, _, _ = rollout_episode(env, fn, seed if i == 0 else None, lidar, history, max_steps=max_steps)
             extra = fn.stats() if hasattr(fn, "stats") else {}
             rows += [{"episode_index": i, "aircraft": ac, **r, **extra} for ac, r in ep.items()]
         env.close()
     return rows
 
 
-def run(model, kind, episodes, seed, workers, device="cpu", plan=None):
-    """All flights of the protocol, in episode order. One row per flight (per aircraft and episode)."""
+def _load_member(model, device):
+    """A saved policy and its settings: (policy, deterministic policy_fn, reward weights, Lidar, history, args)."""
+    from rl_tf.networks import load_policy
+    from rl_tf.common import policy_fn_from
+    policy, ck = load_policy(model, device)
+    c = ck["args"]
+    rew = {**REWARD_DEFAULTS, "goal_distance_penalty": 0.0, **{k: c[k] for k in REWARD_DEFAULTS if k in c}}
+    lidar = Lidar(n_rays=c["n_rays"], fov_deg=c["fov_deg"], max_range_km=c["max_range_km"],
+                  zone_flag=bool(c.get("zone_flag", 0)), speed=bool(c.get("lidar_speed", 0)), **token_cfg(c))
+    return policy, policy_fn_from(policy, device, deterministic=True), rew, lidar, c["history"], c
+
+
+def run(model, kind, episodes, seed, workers, device="cpu", plan=None, opts=None):
+    """All flights of the protocol, in episode order. One row per flight (per aircraft and episode).
+    opts: test-time options (env_kw, zone_margin_km, ensemble, ensemble_mode, switch_km); None = none."""
     # Single agent: one process. The check with several processes failed there (2026-11-12, cause not found), and
     # one process follows the official loop step by step.
     w = 1 if kind == "sa" else max(1, min(workers, episodes))
     edges = np.linspace(0, episodes, w + 1).astype(int)
-    jobs = [(model, kind, int(edges[i]), int(edges[i + 1]), seed, device) + ((plan,) if plan is not None else ())
+    jobs = [(model, kind, int(edges[i]), int(edges[i + 1]), seed, device) + ((plan, opts) if (plan or opts) else ())
             for i in range(w)]
     if w == 1:
         parts = [_job(jobs[0])]
@@ -168,6 +192,18 @@ def main(argv=None):
     p.add_argument("--plan-order", choices=["independent", "sequential"], default="independent",
                    help="Multi agent: all aircraft search at once against the policy rollouts of the others, or one "
                         "after another in callsign order (a later aircraft sees the chosen plans of the earlier ones).")
+    # test-time options (2026-11-19), no training; all permitted by docs/competition/COMPETITION.md
+    p.add_argument("--action-frequency", type=int, default=None,
+                   help="Seconds of simulation per decision (environment default 10).")
+    p.add_argument("--d-heading", type=float, default=None, help="Degrees of turn per unit of action (default 45).")
+    p.add_argument("--d-speed", type=float, default=None, help="Knots of speed change per unit of action (default 20/3).")
+    p.add_argument("--zone-margin-km", type=float, default=0.0,
+                   help="The policy sees each restricted area grown by this margin (km). Scored metrics: real areas.")
+    p.add_argument("--ensemble", default=None, help="Second model (models/NAME.pt) for a test-time ensemble.")
+    p.add_argument("--ensemble-mode", choices=["mean", "zone"], default="mean",
+                   help="mean: mean action of the two models; zone: the second model near a restricted area.")
+    p.add_argument("--switch-km", type=float, default=20.0,
+                   help="Mode zone: the second model flies when an area edge is within this distance (km).")
     add_wandb_args(p)
     args = p.parse_args(argv)
     if args.self_check:
@@ -183,6 +219,21 @@ def main(argv=None):
                 "rounds": args.plan_rounds, "horizon": args.plan_horizon, "elites": args.plan_elites,
                 "threshold": args.plan_threshold, "turn_cost": args.plan_turn_cost, "init_std": args.plan_init_std,
                 "seed": args.plan_seed, "order": args.plan_order}
+    env_kw = {k: v for k, v in [("action_frequency", args.action_frequency), ("d_heading", args.d_heading),
+                                ("d_speed", args.d_speed)] if v is not None}
+    opts = {"env_kw": env_kw, "zone_margin_km": args.zone_margin_km, "ensemble": args.ensemble,
+            "ensemble_mode": args.ensemble_mode, "switch_km": args.switch_km}
+    if plan and (env_kw or args.zone_margin_km > 0 or args.ensemble):
+        p.error("the planner does not combine with the test-time options")
+    tags = "".join(t for t in [
+        f"_af{args.action_frequency}" if args.action_frequency is not None else "",
+        f"_dh{args.d_heading:g}" if args.d_heading is not None else "",
+        f"_ds{args.d_speed:g}" if args.d_speed is not None else "",
+        f"_zm{args.zone_margin_km:g}" if args.zone_margin_km > 0 else "",
+        f"_ens{args.ensemble_mode}_{Path(args.ensemble).stem}" if args.ensemble else "",
+        f"{args.switch_km:g}" if args.ensemble and args.ensemble_mode == "zone" else ""])
+    if not tags:
+        opts = None                                      # no option: the same jobs as before 2026-11-19
     import torch
     c = torch.load(args.model, map_location="cpu", weights_only=False)
     if plan is not None:
@@ -190,7 +241,7 @@ def main(argv=None):
                          else ("critic" if c["args"]["setting"] == "single" else "head"))
     kind = args.env or ("sa" if c["args"]["setting"] == "single" else "ma")
     suffix = (f"_plan{args.plan_level}" + ("_seq" if args.plan_order == "sequential" else "")) if plan else ""
-    name, out = args.name or Path(args.model).stem + suffix, Path(args.out_dir)
+    name, out = args.name or Path(args.model).stem + suffix + tags, Path(args.out_dir)
     official = args.episodes == N_EPISODES and args.seed == SEED
     if not official:
         print(f"NOTE: {args.episodes} episodes of seed {args.seed}; the official protocol is {N_EPISODES} episodes of seed {SEED}.")
@@ -211,7 +262,7 @@ def main(argv=None):
         if all("start_intrusions" in r for r in s_rows):
             straight["n_flights_start_in_intrusion"] = sum(r["start_intrusions"] > 0 for r in s_rows)
         write_json(cache, straight)
-    rows = run(args.model, kind, args.episodes, args.seed, args.workers, args.device, plan)
+    rows = run(args.model, kind, args.episodes, args.seed, args.workers, args.device, plan, opts)
     mean, std = stats(rows)
     wall = time.time() - t0
     unit = "episodes" if kind == "sa" else "agent episodes"
@@ -228,6 +279,11 @@ def main(argv=None):
                  "note": "start_intrusions and *_no_start are not official metrics: they leave out intrusions with "
                          "aircraft that are within 5 NM at the reset sample, until that aircraft goes out of 5 NM"}
         print(f"flights that start in intrusion: {start['n_flights_start_in_intrusion']} of {len(rows)}")
+    if opts:
+        print(f"test-time options: {opts}")
+    if args.ensemble and args.ensemble_mode == "zone":
+        n2, nd = sum(r.get("ens_second_model", 0) for r in rows), sum(r.get("ens_decisions", 0) for r in rows)
+        print(f"ensemble zone: second model in {n2} of {nd} decisions ({100 * n2 / max(nd, 1):.1f} %)")
     if plan:
         ps = plan_stats(rows)
         print(f"planner level {plan['level']}: searched in {ps['searched']} of {ps['decisions']} decisions "
@@ -238,7 +294,7 @@ def main(argv=None):
         "deterministic": True, "mean": mean, "std": std, "std_note": "population std over the flights (one model seed)",
         "fly_straight": {k: straight[k] for k in ["mean", "std", "n_flights", "n_flights_start_in_intrusion"]
                          if k in straight}, "table": {"columns": cols, "rows": table},
-        "start_intrusion": start, "wall_seconds": wall, "plan": plan,
+        "start_intrusion": start, "wall_seconds": wall, "plan": plan, "test_time": opts,
         "plan_stats": plan_stats(rows) if plan else None, "rows": rows})
     if wb is not None:
         wb.summary.update({f"competition/{k}_{s}": v for s, d in [("mean", mean), ("std", std)] for k, v in d.items()})

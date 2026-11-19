@@ -10,7 +10,7 @@ from collections import deque
 import multiprocessing as mp
 import numpy as np
 from .lidar import (Lidar, own_state, state_dim, extra_dim, N_CHANNELS, ACT_FEATURES, DIST_NORM_KM, GEOM_KEY, NM2KM,
-                    to_own_frame)
+                    to_own_frame, inflate_polygon)
 
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")   # no window for rgb_array rendering
 
@@ -126,7 +126,10 @@ class FlightEnv:
     `agents` is the list of live aircraft ids after the call. `ids` is the fixed list of all ids.
     """
 
-    def __init__(self, setting="multi", n_agents=2, render_mode=None, **reward):
+    def __init__(self, setting="multi", n_agents=2, render_mode=None, env_kw=None, zone_margin_km=0.0, **reward):
+        """env_kw (2026-11-19): extra constructor arguments of the competition environment that the rules permit
+        (action_frequency, d_heading, d_speed). zone_margin_km: the restricted areas in the geometry of the
+        observation are grown by this margin (test-time option; the scored metrics use the real areas)."""
         import bluesky_gym
         reward.pop("reach_reward", None)                 # key of older checkpoints; the waypoint reward is removed
         rw = check_reward({**REWARD_DEFAULTS, **reward})
@@ -134,6 +137,11 @@ class FlightEnv:
         kw = dict(reach_reward=0.0, drift_penalty=rw["drift_penalty"],
                   intrusion_penalty=rw["intrusion_penalty"], restricted_area_penalty=rw["restricted_penalty"],
                   sector_exit_penalty=rw["sector_exit_penalty"])
+        allowed = {"action_frequency", "d_heading", "d_speed"}
+        if env_kw and set(env_kw) - allowed:
+            raise ValueError(f"env_kw: only {sorted(allowed)} may change, got {sorted(env_kw)}")
+        kw.update(env_kw or {})
+        self.zone_margin_km = float(zone_margin_km)
         self.setting = setting
         if setting == "single":
             import gymnasium as gym
@@ -222,7 +230,10 @@ class FlightEnv:
             vel = np.stack([ve * np.sin(h) + vn * np.cos(h), ve * np.cos(h) - vn * np.sin(h)], axis=-1).reshape(-1, 2)
             goal = (inner.goal_lat, inner.goal_lon) if self.setting == "single" else inner._goal[a]
             t_now = float(inner.metrics[inner.agent]["flight_time"]) if self.setting == "single" else float(inner.sim_time)
-            g = dict(zones=[frame(z.vertices) for z in sc.obstacles], sector=frame(sc.sector),
+            zones = [frame(z.vertices) for z in sc.obstacles]
+            if self.zone_margin_km > 0.0:
+                zones = [inflate_polygon(z, self.zone_margin_km) for z in zones]
+            g = dict(zones=zones, sector=frame(sc.sector),
                      aircraft=to_own_frame(bs.traf.lat[others], bs.traf.lon[others], lat0, lon0, hdg).reshape(-1, 2),
                      aircraft_vel=vel, goal=frame([goal])[0], goal_radius=float(inner.distance_margin),
                      own_lat=lat0, own_lon=lon0, own_hdg=hdg,

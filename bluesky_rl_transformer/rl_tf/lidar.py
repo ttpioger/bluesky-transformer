@@ -120,6 +120,33 @@ def points_in_polygon(pts, v):
     return ((span & (pts[:, 0:1] < xc)).sum(axis=1) % 2) == 1
 
 
+def inflate_polygon(v, margin_km):
+    """Test-time safety margin (2026-11-19): the polygon v [V, 2] (km) grown by margin_km on all sides, mitre joins
+    (corners stay corners, mitre limit 2). margin_km <= 0 returns v unchanged."""
+    v = np.asarray(v, dtype=np.float64).reshape(-1, 2)
+    if margin_km <= 0.0 or len(v) < 3:
+        return v
+    from shapely.geometry import Polygon
+    g = Polygon(v).buffer(float(margin_km), join_style="mitre", mitre_limit=2.0)
+    return np.asarray(g.exterior.coords, dtype=np.float64)[:-1]
+
+
+def zone_distance(polys):
+    """Distance (km) from the own aircraft (origin) to the nearest restricted-area edge; 0 inside an area;
+    inf without areas."""
+    best = np.inf
+    for v in polys:
+        v = np.asarray(v, dtype=np.float64).reshape(-1, 2)
+        if len(v) < 3:
+            continue
+        if points_in_polygon(np.zeros((1, 2)), v)[0]:
+            return 0.0
+        p, d = v, np.roll(v, -1, axis=0) - v
+        s = np.clip(-(p * d).sum(1) / np.maximum((d * d).sum(1), 1e-12), 0.0, 1.0)
+        best = min(best, float(np.linalg.norm(p + s[:, None] * d, axis=1).min()))
+    return best
+
+
 def to_own_frame(lat, lon, lat0, lon0, hdg_deg):
     """Flat-earth lat/lon (degrees) -> own frame km (x = nose, y = starboard). Heading: 0 = north, clockwise."""
     east = (np.asarray(lon, dtype=np.float64) - lon0) * np.cos(np.deg2rad(lat0)) * DEG2KM

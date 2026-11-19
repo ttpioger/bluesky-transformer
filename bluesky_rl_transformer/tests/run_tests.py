@@ -670,6 +670,37 @@ def test_policy_act_features_do_not_change_actions():
     assert torch.equal(b[3], pol.encoder(state.reshape(6, 28), lidar.reshape(6, 12, 120)).reshape(2, 3, -1))
 
 
+def test_inflate_polygon_and_zone_distance():
+    from rl_tf.lidar import inflate_polygon, zone_distance
+    sq = square(10.0, 0.0, 2.0)                        # x from 8 to 12
+    big = inflate_polygon(sq, 1.0)
+    assert np.allclose(np.sort(big[:, 0]), [7, 7, 13, 13]) and np.allclose(np.sort(big[:, 1]), [-3, -3, 3, 3])
+    assert inflate_polygon(sq, 0.0) is not None and np.array_equal(inflate_polygon(sq, 0.0), sq)
+    assert abs(zone_distance([sq]) - 8.0) < 1e-9 and abs(zone_distance([big]) - 7.0) < 1e-9
+    assert zone_distance([square(0.0, 0.0, 1.0)]) == 0.0 and zone_distance([]) == np.inf
+
+
+def test_ensemble_two_copies_equal_one_model_and_zone_switch():
+    from rl_tf.ensemble import EnsembleFn
+    lid = Lidar(n_rays=12)
+    f0 = lambda raw, built: {a: np.tanh(built[a][0][-4:-2] + built[a][1].mean()).astype(np.float32) for a in raw}
+    f1 = lambda raw, built: {a: np.full(2, 0.5, np.float32) for a in raw}
+    obs = [fake_obs(zone=(30.0 + 5 * t, 0.0, 5.0), ac=(10.0, 2.0 * t)) for t in range(4)]
+    ens = EnsembleFn([(f0, lid, 3), (f0, lid, 3)], mode="mean")
+    b, act = ObsBuilder(lid, 3), None
+    for t, o in enumerate(obs):                        # reference: one model with its own frame stack
+        if t == 0:
+            b.reset(o)
+        else:
+            b.push(o, act)
+        act = f0({"own": o}, {"own": b.get()})["own"]
+        assert np.array_equal(ens({"own": o}, None)["own"], act)
+    z = EnsembleFn([(f0, lid, 3), (f1, lid, 3)], mode="zone", switch_km=20.0)
+    assert not np.array_equal(z({"own": fake_obs(zone=(40.0, 0.0, 5.0))}, None)["own"], np.full(2, 0.5))   # 35 km
+    assert np.array_equal(z({"own": fake_obs(zone=(20.0, 0.0, 5.0))}, None)["own"], np.full(2, 0.5))       # 15 km
+    assert z.stats() == {"ens_decisions": 2, "ens_second_model": 1}
+
+
 def main():
     t0, failed = time.time(), 0
     tests = sorted(k for k in globals() if k.startswith("test_"))
