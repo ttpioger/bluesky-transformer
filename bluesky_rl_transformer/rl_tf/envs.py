@@ -123,6 +123,14 @@ V2_DEFAULTS = dict(action_map="rel", goal_offset_deg=90.0, cpa_margin_penalty=0.
                    cpa_horizon_s=120.0, zone_margin_penalty=0.0, zone_buffer_km=10.0)
 
 
+def cat_prob_at(env_steps, start, end, ramp_steps):
+    """Random CaT schedule (2026-11-19): linear from start to end over ramp_steps env steps, then end."""
+    if ramp_steps <= 0:
+        return float(end)
+    f = min(1.0, max(0.0, env_steps / float(ramp_steps)))
+    return float(start + (end - start) * f)
+
+
 def v2_kwargs(c):
     """v2 options from a dict of run arguments (old checkpoints: the defaults)."""
     c = c if isinstance(c, dict) else vars(c)
@@ -170,14 +178,17 @@ class FlightEnv:
     """
 
     def __init__(self, setting="multi", n_agents=2, render_mode=None, env_kw=None, zone_margin_km=0.0, v2=None,
-                 cat_penalty=0.0, **reward):
+                 cat_penalty=0.0, cat_seed=None, **reward):
         """env_kw (2026-11-19): extra constructor arguments of the competition environment that the rules permit
         (action_frequency, d_heading, d_speed). zone_margin_km: the restricted areas in the geometry of the
         observation are grown by this margin (test-time option; the scored metrics use the real areas).
         v2 (2026-11-19): see V2_DEFAULTS; None = the defaults (baseline behaviour).
         cat_penalty (training only, single agent): < 0 ends the flight at the first avoidable violation (a new
         intrusion that is not a start intrusion, a restricted-area entry, a sector exit) with this reward added.
-        0 = off. The scored metrics are not changed."""
+        0 = off. The scored metrics are not changed.
+        cat_prob (2026-11-19, set with set_cat_prob; default 1.0): probability that a violation ends the flight
+        (random CaT, after Chane-Sane et al. 2024, arXiv:2403.18765). 1.0 = always (no random draw, as before).
+        A violation that does not end the flight gets only the usual event penalties. cat_seed: seed of that draw."""
         import bluesky_gym
         reward.pop("reach_reward", None)                 # key of older checkpoints; the waypoint reward is removed
         rw = check_reward({**REWARD_DEFAULTS, **reward})
@@ -195,6 +206,8 @@ class FlightEnv:
         if cat_penalty < 0.0 and setting != "single":
             raise ValueError("cat_penalty: single agent only")
         self.cat_penalty = float(cat_penalty)
+        self.cat_prob = 1.0
+        self._cat_rng = np.random.default_rng(cat_seed)
         self.zone_margin_km = float(zone_margin_km)
         self.setting = setting
         if setting == "single":
@@ -264,6 +277,8 @@ class FlightEnv:
                        exit=float(i["sector_exit_events"]))
             hit = any(now[k] > cp[k] for k in now)
             self._cat_prev = now
+            if hit and self.cat_prob < 1.0:            # random CaT: no draw at cat_prob 1.0 (behaviour as before)
+                hit = bool(self._cat_rng.random() < self.cat_prob)
             if hit and not (term["own"] or trunc["own"]):
                 term = {"own": True}
                 self.agents = []
@@ -293,6 +308,12 @@ class FlightEnv:
                 out_rew[a] += self.cat_penalty
             p.update(t=t, zone=zone, exit=ext, turn=turn, intr=intr)
         return obs, out_rew, {a: bool(term[a]) for a in obs}, {a: bool(trunc[a]) for a in obs}, infos
+
+    def set_cat_prob(self, p):
+        """Random CaT (2026-11-19): probability in (0, 1] that a violation ends the flight, from the next step on."""
+        if not 0.0 < float(p) <= 1.0:
+            raise ValueError("cat_prob must be in (0, 1]")
+        self.cat_prob = float(p)
 
     def set_density(self, n_intruders, n_obstacles):
         """Curriculum (2026-11-13): the scenario generator makes n_intruders other aircraft and n_obstacles restricted
@@ -530,7 +551,7 @@ def _worker(conn, cfg, worker):
     from .common import step_costs
     with contextlib.redirect_stdout(io.StringIO()):          # BlueSky start-up text
         env = FlightEnv(cfg["setting"], cfg["n_agents"], v2=cfg.get("v2"), cat_penalty=cfg.get("cat_penalty", 0.0),
-                        **cfg["reward"])
+                        cat_seed=cfg["seed"] * 1000 + worker + 13, **cfg["reward"])
     lidar, K = Lidar(**cfg["lidar"]), cfg["history"]
     ids = env.ids
     N, dims = len(ids), obs_dims(cfg["lidar"], cfg["history"])
@@ -625,6 +646,9 @@ def _worker(conn, cfg, worker):
                 if C:
                     msg["cost"] = cost
                 conn.send(msg)
+            elif cmd == "cat_prob":               # random CaT: effective from the next step
+                env.set_cat_prob(data)
+                conn.send(True)
             elif cmd == "density":                # curriculum: effective from the next reset
                 env.set_density(*data)
                 conn.send(True)
@@ -675,6 +699,13 @@ class VecEnv:
         if "cost" in res[0]:                           # Lagrangian: [E, N, C] cost of this step
             out["cost"] = np.stack([r["cost"] for r in res])
         return out
+
+    def set_cat_prob(self, p):
+        """Random CaT: all workers use the new probability from their next step on."""
+        for c in self.conns:
+            c.send(("cat_prob", float(p)))
+        for c in self.conns:
+            c.recv()
 
     def set_density(self, n_intruders, n_obstacles):
         """Curriculum: all workers use the new counts from their next reset on."""

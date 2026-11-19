@@ -742,6 +742,14 @@ def test_failure_replay_pool():
     assert 3 not in pool                                               # clean on replay: leaves
 
 
+def test_random_cat_schedule():
+    from rl_tf.envs import cat_prob_at
+    assert cat_prob_at(0, 0.1, 1.0, 0) == 1.0                          # no ramp: the end value
+    assert abs(cat_prob_at(0, 0.1, 1.0, 1000) - 0.1) < 1e-12
+    assert abs(cat_prob_at(500, 0.1, 1.0, 1000) - 0.55) < 1e-12
+    assert cat_prob_at(5000, 0.1, 1.0, 1000) == 1.0                    # after the ramp: the end value
+
+
 def main():
     t0, failed = time.time(), 0
     tests = sorted(k for k in globals() if k.startswith("test_"))

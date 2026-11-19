@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np
 import torch
 from rl_tf.envs import (VecEnv, FlightEnv, add_reward_args, reward_kwargs, obs_dims, rollout_episode, turn_stats,
-                        lidar_cfg_from_args, METRIC_KEYS, START_KEYS, V2_DEFAULTS, v2_kwargs)
+                        lidar_cfg_from_args, METRIC_KEYS, START_KEYS, V2_DEFAULTS, v2_kwargs, cat_prob_at)
 from rl_tf.lidar import Lidar
 from rl_tf.networks import build_policy, save_checkpoint, n_params, load_encoder, AttentionCritic
 from rl_tf.common import (setup_torch, compute_gae, pass_criterion, window_stats, write_json, policy_fn_from, wandb_upload,
@@ -119,6 +119,11 @@ def build_parser():
     p.add_argument("--cat-penalty", type=float, default=0.0,
                    help="Training only, single agent: < 0 ends the flight at the first avoidable violation "
                         "(intrusion without the start intrusions, area entry, sector exit) with this reward. 0 = off.")
+    p.add_argument("--cat-prob-start", type=float, default=1.0,
+                   help="Random CaT (Chane-Sane et al. 2024): probability that a violation ends the flight at step 0. "
+                        "1.0 = always (as before).")
+    p.add_argument("--cat-prob-end", type=float, default=1.0, help="Random CaT: probability after the ramp.")
+    p.add_argument("--cat-prob-steps", type=int, default=0, help="Random CaT: env steps of the linear ramp.")
     p.add_argument("--replay-frac", type=float, default=0.0,
                    help="Single agent: share of resets that fly a seed of an earlier failed flight again. 0 = off.")
     p.add_argument("--replay-cap", type=int, default=256, help="Failed seeds kept per worker.")
@@ -175,6 +180,11 @@ def main(argv=None):
         raise ValueError("--cat-penalty and --replay-frac: single agent only")
     if args.cat_penalty > 0.0:
         raise ValueError("--cat-penalty must be <= 0 (the reward has only negative terms)")
+    if not (0.0 < args.cat_prob_start <= 1.0 and 0.0 < args.cat_prob_end <= 1.0):
+        raise ValueError("--cat-prob-start and --cat-prob-end must be in (0, 1]")
+    random_cat = args.cat_penalty < 0.0 and min(args.cat_prob_start, args.cat_prob_end) < 1.0
+    if min(args.cat_prob_start, args.cat_prob_end) < 1.0 and args.cat_penalty == 0.0:
+        raise ValueError("--cat-prob-start/--cat-prob-end < 1 need --cat-penalty < 0")
     if not 0.0 <= args.replay_frac < 1.0:
         raise ValueError("--replay-frac must be in [0, 1)")
     rw0 = reward_kwargs(args)
@@ -226,7 +236,13 @@ def main(argv=None):
     sync = (lambda: torch.cuda.synchronize()) if str(dev).startswith("cuda") else (lambda: None)
 
     density = None
+    cat_prob = None
     while total < args.steps:
+        if random_cat:                                 # random CaT schedule, set at the start of each rollout
+            p_now = cat_prob_at(total, args.cat_prob_start, args.cat_prob_end, args.cat_prob_steps)
+            if p_now != cat_prob:
+                cat_prob = p_now
+                vec.set_cat_prob(cat_prob)
         T = max(1, min(args.rollout_steps, int(np.ceil((args.steps - total) / E))))
         if stages and curriculum_stage(stages, total) != density:
             density = curriculum_stage(stages, total)
