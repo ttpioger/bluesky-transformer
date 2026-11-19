@@ -1,0 +1,25 @@
+/home/tpioger/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/home/tpioger/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/home/tpioger/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/home/tpioger/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/home/tpioger/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/home/tpioger/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/home/tpioger/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/home/tpioger/bluesky-transformer/.venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+time_v2_w8: setting single, aircraft 1, workers 8, n_params {'policy': 790853, 'encoder': 699904, 'actor_head': 20740, 'critic_head': 70209}
+env_steps=4096 policy_loss=1.9591 value_loss=0.9704 log_std=0.00 | eps=115 ep_return=-122.0 waypoint=0.07 intrusions=0.70 zones=0.42 sector_exit=0.00 flight_time=336 cat_end=0.93 replay=0.26
+env_steps=8192 policy_loss=1.1416 value_loss=0.5224 log_std=0.01 | eps=114 ep_return=-116.8 waypoint=0.05 intrusions=0.77 zones=0.39 sector_exit=0.01 flight_time=343 cat_end=0.95 replay=0.32
+env_steps=12288 policy_loss=0.4304 value_loss=0.2805 log_std=0.01 | eps=110 ep_return=-111.6 waypoint=0.06 intrusions=0.77 zones=0.28 sector_exit=0.00 flight_time=345 cat_end=0.94 replay=0.33
+env_steps=16384 policy_loss=0.0699 value_loss=0.1906 log_std=0.01 | eps=104 ep_return=-119.8 waypoint=0.05 intrusions=0.66 zones=0.45 sector_exit=0.00 flight_time=363 cat_end=0.95 replay=0.26
+env_steps=20000 policy_loss=0.1525 value_loss=0.1002 log_std=0.01 | eps=93 ep_return=-111.5 waypoint=0.05 intrusions=0.62 zones=0.41 sector_exit=0.00 flight_time=371 cat_end=0.95 replay=0.28
+timing (s, share of wall): env 70.4 (51%), inference 27.8 (20%), update 39.2 (28%), other 0.2 (0%)
+Saved models/time_v2_w8.pt
+Wrote results/time_v2_w8_summary.json
