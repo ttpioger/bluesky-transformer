@@ -68,6 +68,9 @@ def main(argv=None):
     p.add_argument("--out-dir", default=str(Path(__file__).resolve().parent))
     p.add_argument("--device", default="cpu")
     add_wandb_args(p)
+    p.add_argument("--wandb-name", default=None,
+                   help="W&B run name and id. Default NAME_failures. The id is the name (resume=allow), so give a "
+                        "new name if an earlier run of that name was cancelled or deleted.")
     args = p.parse_args(argv)
 
     from scripts.evaluate import TrackRecorder, tracks_figure, save_gif
@@ -127,7 +130,7 @@ def main(argv=None):
                 "episodes": wanted, "stored_file": str(spath), "n_match": n_match, "wall_seconds": wall,
                 "rows": out_rows})
 
-    wb = wandb_init(args.wandb, args.wandb_project, f"{name}_failures",
+    wb = wandb_init(args.wandb, args.wandb_project, args.wandb_name or f"{name}_failures",
                     config={"model": args.model, "episodes": wanted, "mode": args.mode, "seed": SEED})
     if wb is not None:
         import wandb
