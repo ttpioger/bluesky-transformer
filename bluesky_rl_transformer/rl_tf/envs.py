@@ -187,7 +187,7 @@ class FlightEnv:
     """
 
     def __init__(self, setting="multi", n_agents=2, render_mode=None, env_kw=None, zone_margin_km=0.0, v2=None,
-                 cat_penalty=0.0, cat_seed=None, **reward):
+                 cat_penalty=0.0, cat_seed=None, fast_metrics=False, **reward):
         """env_kw (2026-11-19): extra constructor arguments of the competition environment that the rules permit
         (action_frequency, d_heading, d_speed). zone_margin_km: the restricted areas in the geometry of the
         observation are grown by this margin (test-time option; the scored metrics use the real areas).
@@ -230,6 +230,9 @@ class FlightEnv:
         elif setting == "multi":
             from bluesky_zoo.competition_v0 import CompetitionZooEnv
             self.env = CompetitionZooEnv(n_agents=n_agents, render_mode=render_mode, **kw)
+            if fast_metrics:                           # training only (2026-11-20), see rl_tf/fast_metrics.py
+                from .fast_metrics import install
+                install(self.env)
             self.ids = list(self.env.possible_agents)
         else:
             raise ValueError("setting must be single or multi")
@@ -572,7 +575,8 @@ def _worker(conn, cfg, worker):
     from .common import step_costs
     with contextlib.redirect_stdout(io.StringIO()):          # BlueSky start-up text
         env = FlightEnv(cfg["setting"], cfg["n_agents"], v2=cfg.get("v2"), cat_penalty=cfg.get("cat_penalty", 0.0),
-                        cat_seed=cfg["seed"] * 1000 + worker + 13, **cfg["reward"])
+                        cat_seed=cfg["seed"] * 1000 + worker + 13, fast_metrics=cfg.get("fast_metrics", False),
+                        **cfg["reward"])
     lidar, K = Lidar(**cfg["lidar"]), cfg["history"]
     ids = env.ids
     N, dims = len(ids), obs_dims(cfg["lidar"], cfg["history"])

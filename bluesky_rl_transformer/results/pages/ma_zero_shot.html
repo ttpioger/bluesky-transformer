@@ -1,0 +1,485 @@
+<title>SA→MA Zero-Shot Transfer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column (~70ch) with full-width figure panels; academic order Question → Next step. */
+:root {
+  --bg: #f4f6f8; --panel: #fcfcfb; --fg: #121820; --muted: #556070; --rule: #d6dce4;
+  --s42: #2a78d6; --s7: #eb6834; --unav: #9aa3ae; --pill: #fff1d6; --pill-fg: #7a4a00;
+  --f-head: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  --f-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111417; --panel: #1a1a19; --fg: #eef0f2; --muted: #a9b2bd; --rule: #2e343b;
+  --s42: #3987e5; --s7: #d95926; --unav: #6d7681; --pill: #3a2c10; --pill-fg: #ffd27a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #111417; --panel: #1a1a19; --fg: #eef0f2; --muted: #a9b2bd; --rule: #2e343b;
+  --s42: #3987e5; --s7: #d95926; --unav: #6d7681; --pill: #3a2c10; --pill-fg: #ffd27a; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 16px/1.55 var(--f-body); }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 28px; }
+h1, h2, h3 { font-family: var(--f-head); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(1.9rem, 4vw, 2.6rem); font-weight: 700; }
+h2 { font-size: 1.45rem; font-weight: 600; padding-top: 6px; border-top: 1px solid var(--rule); }
+h3 { font-size: 1.1rem; font-weight: 600; }
+p { margin: 0; max-width: 70ch; }
+section { display: grid; gap: 12px; min-width: 0; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; color: var(--muted); font-size: .92rem; }
+.pill { font: 500 .75rem/1 var(--f-mono); letter-spacing: .06em; padding: 5px 8px; border-radius: 4px;
+  background: var(--pill); color: var(--pill-fg); }
+.mono, td.n, .tile b { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.tile { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; display: grid; gap: 4px; }
+.tile span { color: var(--muted); font-size: .85rem; letter-spacing: .03em; text-transform: uppercase; }
+.tile b { font-size: 1.9rem; font-weight: 500; }
+.tile small { color: var(--muted); }
+ul { margin: 0; padding-left: 1.2em; max-width: 70ch; display: grid; gap: 4px; }
+.tbl { overflow-x: auto; background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; }
+table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+th, td { padding: 7px 12px; text-align: left; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+th { font-weight: 600; color: var(--muted); font-size: .82rem; letter-spacing: .03em; }
+td.n { text-align: right; }
+tr:last-child td { border-bottom: 0; }
+tr.key td { font-weight: 600; }
+figure { margin: 0; background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; display: grid; gap: 10px; min-width: 0; }
+figcaption { color: var(--muted); font-size: .9rem; max-width: 80ch; }
+figcaption b { color: var(--fg); }
+.chart { width: 100%; overflow-x: auto; }
+.chart svg { display: block; width: 100%; height: auto; min-width: 520px; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: .88rem; color: var(--muted); }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.seg button { font: 600 .88rem var(--f-body); padding: 6px 12px; border: 0; background: var(--panel); color: var(--muted); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.seg button:focus-visible { outline: 2px solid var(--s42); outline-offset: -2px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+#tip { position: fixed; pointer-events: none; background: var(--fg); color: var(--bg); font: 500 .8rem/1.35 var(--f-mono);
+  padding: 6px 8px; border-radius: 4px; max-width: 260px; z-index: 5; }
+.vids { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px; }
+.vid { display: grid; gap: 6px; min-width: 0; align-content: start; }
+.vid video, .vid img { display: block; width: 100%; max-width: 100%; height: auto; aspect-ratio: 1; border: 1px solid var(--rule); border-radius: 4px; background: var(--bg); }
+.vid video:focus-visible { outline: 2px solid var(--s42); outline-offset: 2px; }
+.vcap { color: var(--muted); font-size: .9rem; }
+.vcap b { color: var(--fg); }
+.legend i.ring { background: transparent; border: 2px solid var(--fg); border-radius: 50%; }
+.legend i.dot { border: 1px solid var(--muted); border-radius: 50%; }
+footer { color: var(--muted); font-size: .85rem; display: grid; gap: 6px; border-top: 1px solid var(--rule); padding-top: 12px; }
+footer code { font-family: var(--f-mono); font-size: .8rem; }
+svg text { fill: var(--muted); font-family: var(--f-mono); font-size: 11px; }
+svg .lab { fill: var(--fg); font-family: var(--f-body); font-size: 12.5px; }
+svg .val { fill: var(--fg); font-weight: 500; }
+svg .grid { stroke: var(--rule); stroke-width: 1; }
+svg .axis { stroke: var(--muted); stroke-width: 1; }
+@media (prefers-reduced-motion: no-preference) { svg rect.m, svg circle.m { transition: opacity .15s; } }
+svg .m:hover { opacity: .8; }
+</style>
+
+<div class="wrap">
+<header style="display:grid;gap:10px">
+  <h1>SA→MA Zero-Shot Transfer</h1>
+  <div class="meta">
+    <span class="pill">EXPLORATORY</span>
+    <span>Created 2026-11-20 17:25 · Updated 2026-11-20 18:28</span>
+    <span>Model <span class="mono">sa_v2m_s0_c2</span> · n_params <span class="mono">790,853</span></span>
+    <span>BlueSky-Gym AI4REAL-NET competition, multi-agent track</span>
+  </div>
+</header>
+
+<div class="tiles">
+  <div class="tile"><span>Our clean flights, seed 42</span><b>90.35 %</b><small>9035 of 10,000 aircraft flights, no MA training</small></div>
+  <div class="tile"><span>Maximum possible, seed 42</span><b>99.56 %</b><small>44 flights cannot be clean (floor replay)</small></div>
+  <div class="tile"><span>MA leader, seed 42</span><b>99.55 %</b><small>self-reported, unofficial leaderboard</small></div>
+</div>
+
+<section>
+  <h2>Question</h2>
+  <p>A policy trained only in the single-agent (SA) environment flies each of the 10 aircraft in the multi-agent (MA) environment. How many MA flights are clean with no MA training? Which failures remain, and which of them can a policy avoid?</p>
+  <p>A clean flight reaches its goal with 0 intrusions, 0 restricted-area entries and 0 sector exits.</p>
+</section>
+
+<section>
+  <h2>Method</h2>
+  <ul>
+    <li><b>Policy.</b> Lidar ray-token Transformer encoder with a PPO actor. It sees only its own observation: lidar, tokens for the nearest aircraft and zones, and its goal. The observation has the same format in SA and MA, so the policy cannot tell a scripted intruder from another agent.</li>
+    <li><b>Transfer.</b> Each of the 10 MA aircraft runs its own copy of the same weights (decentralized, shared weights). There is no MA training and no change to the weights.</li>
+    <li><b>Floor.</b> <span class="mono">analysis/scenario_floor_ma.py</span> replays the MA scenario generator with no simulator. It marks a flight as unavoidable when the start lies inside a restricted area (the environment counts the entry at reset) or the goal lies 5 km or more inside an area (5 km = capture radius). Check: every start-inside-area flight has an area event in the evaluation rows. The check passes on both seeds (0 violations, 10,000 of 10,000 rows matched).</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Setup</h2>
+  <ul>
+    <li><b>Environment.</b> Competition MA env: 10 agents, 5 restricted areas, no scripted intruders, 3000 s limit.</li>
+    <li><b>Split.</b> Seed 7 = validation; the model was chosen on seed 7 only (clean %, then goal %). Seed 42 = leaderboard test seed, not used for any choice. 1000 episodes per seed = 10,000 aircraft flights. Deterministic policy.</li>
+    <li><b>Training (SA only).</b> 2 M steps (<span class="mono">sa_v2m_s0</span>), then 2 M more from that model (<span class="mono">sa_v2m_s0_c2</span>). 64 workers, PPO lr 5e-4, γ 0.99, clip 0.2, rollout 512, 2 epochs, batch 128. Encoder: d_model 128, 3 layers, 4 heads, 120 lidar rays to 50 km, 10 aircraft tokens, 5 zone tokens, history 4.</li>
+    <li><b>Reward and v2 options (SA training).</b> Preset <span class="mono">los</span> (loss of separation −0.5/s and −3 per event, area −0.3/s and −2 per entry, outside sector −0.2/s, time −0.015/s), heading −0.05, scale 0.05. Goal-relative action map (±90° from the goal bearing). Constraints-as-terminations (CaT): the first avoidable violation ends the training flight with −100. Margin costs −0.02 (7.5 NM aircraft margin, 10 km zone buffer).</li>
+    <li><b>Model seeds.</b> One training seed. The ± values are the population std over flights, not over training seeds.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Results</h2>
+  <h3>Metrics per seed</h3>
+  <div class="tbl">
+  <table>
+    <thead><tr><th>Metric</th><th>Ours, seed 7 (validation)</th><th>Ours, seed 42 (test)</th><th>Fly straight, seed 42</th><th>MA leader, seed 42</th></tr></thead>
+    <tbody>
+      <tr class="key"><td>Clean flights</td><td class="n">89.97 %</td><td class="n">90.35 %</td><td class="n">—</td><td class="n">99.55 %</td></tr>
+      <tr><td>Goal reached (share)</td><td class="n">0.9892 ± 0.1034</td><td class="n">0.9886 ± 0.1062</td><td class="n">1.0000</td><td class="n">1.0000</td></tr>
+      <tr><td>Intrusion events / flight</td><td class="n">0.0186 ± 0.1423</td><td class="n">0.0230 ± 0.1651</td><td class="n">0.8768</td><td class="n">0.0</td></tr>
+      <tr><td>Intrusion time (s)</td><td class="n">0.9 ± 9.7</td><td class="n">1.0 ± 9.5</td><td class="n">64.8</td><td class="n">—</td></tr>
+      <tr><td>Area events / flight</td><td class="n">0.1505 ± 0.5636</td><td class="n">0.1346 ± 0.5275</td><td class="n">0.7990</td><td class="n">0.0056</td></tr>
+      <tr><td>Area time (s)</td><td class="n">23.0 ± 115.1</td><td class="n">19.8 ± 102.7</td><td class="n">121.7</td><td class="n">—</td></tr>
+      <tr><td>Sector exits / flight</td><td class="n">0.0049 ± 0.0698</td><td class="n">0.0053 ± 0.0726</td><td class="n">0.0000</td><td class="n">0.0000</td></tr>
+      <tr><td>Time outside sector (s)</td><td class="n">3.4 ± 71.5</td><td class="n">4.0 ± 76.7</td><td class="n">0.0</td><td class="n">—</td></tr>
+      <tr><td>Flight time (s)</td><td class="n">1034.8 ± 435.9</td><td class="n">1020.8 ± 426.7</td><td class="n">847.7</td><td class="n">887.9</td></tr>
+      <tr><td>Unavoidable flights (floor)</td><td class="n">59</td><td class="n">44</td><td class="n">—</td><td class="n">—</td></tr>
+      <tr><td>Avoidable failures</td><td class="n">944</td><td class="n">921</td><td class="n">—</td><td class="n">—</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Leader comparison: <b>not matched</b>. Seed 42 and 1000 episodes are the same, but the leaderboard's counting rule for MA clean % (per aircraft or per episode) is not verified. The leader's values are self-reported.</p>
+
+  <h3>Second model (same training, soft variant)</h3>
+  <div class="tbl">
+  <table>
+    <thead><tr><th>Model</th><th>Clean, seed 7</th><th>Goal, seed 7</th><th>Clean, seed 42</th><th>Goal, seed 42</th></tr></thead>
+    <tbody>
+      <tr class="key"><td class="mono">sa_v2m_s0_c2 (chosen)</td><td class="n">89.97 %</td><td class="n">98.92 %</td><td class="n">90.35 %</td><td class="n">98.86 %</td></tr>
+      <tr><td class="mono">sa_v2m_soft_c2</td><td class="n">88.90 %</td><td class="n">99.82 %</td><td class="n">89.35 %</td><td class="n">99.82 %</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Comparison with the team's MA-trained policy (R1), seed 42</h3>
+  <p>R1 is a policy of a teammate. It trains in the MA environment. "Shared, 40M" has a shared actor-critic and 40 M training steps. "Separate critic" is the variant with its own critic network. Our policy has 4 M SA training steps and 0 MA training steps. The better value of each row is in bold.</p>
+  <div class="tbl">
+  <table>
+    <thead><tr><th>Metric (per aircraft flight)</th><th>Ours, zero-shot (<span class="mono">sa_v2m_s0_c2</span>)</th><th>R1 a shared, 40M</th><th>R1 a separate critic</th></tr></thead>
+    <tbody>
+      <tr><td>Training environment</td><td class="n">SA only</td><td class="n">MA</td><td class="n">MA</td></tr>
+      <tr><td>Training steps</td><td class="n">4 M (SA)</td><td class="n">40 M (MA)</td><td class="n">not stated</td></tr>
+      <tr><td>Training seeds</td><td class="n">1</td><td class="n">1</td><td class="n">1</td></tr>
+      <tr><td>n_params</td><td class="n">790,853</td><td class="n">not stated</td><td class="n">not stated</td></tr>
+      <tr class="key"><td>Arrived without any violation (clean) [%]</td><td class="n">90.35</td><td class="n"><b>90.77</b></td><td class="n">88.55</td></tr>
+      <tr><td>Goal completion [%]</td><td class="n"><b>98.86</b></td><td class="n">97.95</td><td class="n">98.29</td></tr>
+      <tr><td>Flight time [s]</td><td class="n"><b>1020.77</b></td><td class="n">1081.61</td><td class="n">1079.01</td></tr>
+      <tr><td>Intrusion events</td><td class="n">0.0230</td><td class="n"><b>0.0170</b></td><td class="n">0.0212</td></tr>
+      <tr><td>Intrusion time [s]</td><td class="n">1.0144</td><td class="n"><b>0.5694</b></td><td class="n">1.0162</td></tr>
+      <tr><td>Restricted-area events</td><td class="n">0.1346</td><td class="n"><b>0.0487</b></td><td class="n">0.0965</td></tr>
+      <tr><td>Restricted-area time [s]</td><td class="n">19.7888</td><td class="n"><b>1.7467</b></td><td class="n">4.3911</td></tr>
+      <tr><td>Sector-exit events</td><td class="n"><b>0.0053</b></td><td class="n">0.0275</td><td class="n">0.0194</td></tr>
+      <tr><td>Time outside sector [s]</td><td class="n">4.0066</td><td class="n">3.7095</td><td class="n"><b>2.8773</b></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>R1 comparison: <b>matched on protocol</b> (MA environment, seed 42, 1000 episodes, as stated by the user). <b>Not verified:</b> the R1 rule for the clean count and for the mean flight time, because this repository has no R1 result file. The R1 values come from a screenshot.</p>
+  <ul>
+    <li><b>Clean flights.</b> R1 shared is 0.42 points above ours. R1 separate critic is 1.80 points below ours. The standard error of our clean share is 0.47 points (over the 1000 episodes; the 10 flights of one episode are not independent). If R1 has the same standard error, the standard error of a difference is about 0.66 points. The data does not support a ranking between ours and R1 shared. It supports that ours is above R1 separate critic (about 2.7 standard errors).</li>
+    <li><b>Restricted areas.</b> R1 shared has 2.8 times fewer area events than ours (0.0487 against 0.1346) and 11 times less area time (1.75 s against 19.79 s). Area entries are our main failure.</li>
+    <li><b>Sector and goal.</b> Ours has 5.2 times fewer sector-exit events than R1 shared (0.0053 against 0.0275), a higher goal completion (98.86 % against 97.95 %) and a flight time that is 61 s shorter.</li>
+    <li><b>What the data does not show.</b> It does not show the cause of these differences. The two methods differ in network, reward, training environment and training steps at the same time.</li>
+  </ul>
+
+  <h3>Unofficial Hugging Face leaderboard, multi-agent track, seed 42</h3>
+  <p>The table shows the five teams of the leaderboard and our three policies in the order of the leaderboard rule: clean flights, then goal reached, then intrusions, restricted area, outside sector and flight time. Our policies are not submitted. Their rows are marked.</p>
+  <div class="tbl">
+  <table>
+    <thead><tr><th>Place</th><th>Team or policy</th><th>Clean flights [%]</th><th>Goal reached [%]</th><th>Intrusions</th><th>Restricted area</th><th>Outside sector</th><th>Flight time [s]</th><th>Submitted</th></tr></thead>
+    <tbody>
+      <tr><td class="n">1</td><td>TEAM ROBIN</td><td class="n">99.55</td><td class="n">100.00</td><td class="n">0.0000</td><td class="n">0.0056</td><td class="n">0.0000</td><td class="n">887.9</td><td class="n">2026-11-06</td></tr>
+      <tr><td class="n">2</td><td>somnathab3</td><td class="n">99.55</td><td class="n">100.00</td><td class="n">0.0000</td><td class="n">0.0065</td><td class="n">0.0000</td><td class="n">945.9</td><td class="n">2026-11-05</td></tr>
+      <tr><td class="n">3</td><td>IASL</td><td class="n">99.34</td><td class="n">99.68</td><td class="n">0.0008</td><td class="n">0.0039</td><td class="n">0.0000</td><td class="n">980.4</td><td class="n">2026-10-24</td></tr>
+      <tr><td class="n">4</td><td>Smart</td><td class="n">98.11</td><td class="n">98.86</td><td class="n">0.0060</td><td class="n">0.0051</td><td class="n">0.0001</td><td class="n">1107.3</td><td class="n">2026-10-17</td></tr>
+      <tr><td class="n">5</td><td>solomon</td><td class="n">93.67</td><td class="n">98.04</td><td class="n">0.0178</td><td class="n">0.0527</td><td class="n">0.0001</td><td class="n">1024.6</td><td class="n">2026-11-12</td></tr>
+      <tr><td class="n">(6)</td><td>Team, R1 a shared, 40M · not submitted</td><td class="n">90.77</td><td class="n">97.95</td><td class="n">0.0170</td><td class="n">0.0487</td><td class="n">0.0275</td><td class="n">1081.6</td><td class="n">—</td></tr>
+      <tr class="key"><td class="n">(7)</td><td>Ours, zero-shot <span class="mono">sa_v2m_s0_c2</span> · not submitted</td><td class="n">90.35</td><td class="n">98.86</td><td class="n">0.0230</td><td class="n">0.1346</td><td class="n">0.0053</td><td class="n">1020.8</td><td class="n">—</td></tr>
+      <tr><td class="n">(8)</td><td>Team, R1 a separate critic · not submitted</td><td class="n">88.55</td><td class="n">98.29</td><td class="n">0.0212</td><td class="n">0.0965</td><td class="n">0.0194</td><td class="n">1079.0</td><td class="n">—</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Leaderboard comparison: <b>matched on seed and episode count</b> (seed 42, 1000 episodes). <b>Not matched:</b> the evaluation script. The leaderboard uses its own script with a scenario check; our values come from <span class="mono">scripts.competition_eval</span>. The leaderboard values are self-reported. The columns Intrusions, Restricted area and Outside sector are events per flight (the default view of the leaderboard; the screenshot does not show the unit).</p>
+  <ul>
+    <li><b>Place.</b> Each of our three policies alone has place 6 of 6. Our zero-shot policy is 3.32 points below place 5 (93.67 %) and 9.20 points below place 1 (99.55 %).</li>
+    <li><b>Restricted areas are the gap.</b> We have 0.1346 area events per flight. Place 5 has 0.0527 (2.6 times fewer) and place 1 has 0.0056 (24 times fewer).</li>
+    <li><b>Sector exits.</b> We have 0.0053 sector-exit events per flight. No team has more than 0.0001.</li>
+    <li><b>Goal and flight time.</b> Our goal share (98.86 %) is equal to place 4 and above place 5 (98.04 %). Our flight time (1020.8 s) is shorter than place 4 (1107.3 s) and place 5 (1024.6 s), and longer than places 1 to 3.</li>
+    <li><b>The top is at the floor.</b> Places 1 and 2 have 99.55 % clean flights. Our floor replay gives a maximum of 99.56 % on seed 42. The difference is 1 flight in 10,000.</li>
+  </ul>
+
+  <figure>
+    <h3>Fig. 1 · Clean flights against the floor, the team's MA policy and the leaderboard</h3>
+    <div class="legend"><span><i style="background:var(--s7)"></i>Seed 7 (validation)</span><span><i style="background:var(--s42)"></i>Seed 42 (test)</span></div>
+    <div class="chart" id="f1"></div>
+    <figcaption><b>Clean flights (% of 10,000 aircraft flights) per seed.</b> The axis starts at 85 % to show the gap; marks are dots, not bars. "Maximum possible" is 100 % minus the unavoidable flights of the floor replay. Our model reaches about 90 % on both seeds; the floor is 99.41 % (seed 7) and 99.56 % (seed 42). The two R1 rows are the team's MA-trained policy; they have a seed-42 value only. The five leaderboard rows are self-reported values of the unofficial Hugging Face leaderboard (seed 42).</figcaption>
+  </figure>
+
+  <figure>
+    <h3>Fig. 2 · Clean rate by straight-line geometry</h3>
+    <div class="legend"><span><i style="background:var(--s7)"></i>Seed 7</span><span><i style="background:var(--s42)"></i>Seed 42</span></div>
+    <div class="chart" id="f2"></div>
+    <figcaption><b>Share of clean flights (%) split by whether the straight start→goal line crosses a restricted area.</b> Unavoidable flights are left out. Flights with a clear straight line are nearly all clean (99.37 % on seed 42); flights that need a detour are clean in 83.28 % of cases. On seed 42, 892 of the 921 avoidable failures are flights whose straight line crosses an area.</figcaption>
+  </figure>
+
+  <div class="row"><span style="color:var(--muted);font-size:.9rem">Figs. 3–5 show</span>
+    <div class="seg" role="group" aria-label="Seed for figures 3 to 5">
+      <button type="button" id="b42" aria-pressed="true">Seed 42 (test)</button>
+      <button type="button" id="b7" aria-pressed="false">Seed 7 (validation)</button>
+    </div>
+  </div>
+
+  <figure>
+    <h3>Fig. 3 · Failed flights by failure type</h3>
+    <div class="legend"><span><i id="l3" style="background:var(--s42)"></i>Avoidable</span><span><i style="background:var(--unav)"></i>Unavoidable (floor)</span></div>
+    <div class="chart" id="f3"></div>
+    <figcaption><b>Number of failed flights that show each failure type</b> (a flight can show several types, so the bars add up to more than the number of failed flights). Area entries dominate: 752 avoidable flights on seed 42 have one. Unavoidable flights are those that start inside an area or have their goal 5 km or more inside one.</figcaption>
+  </figure>
+
+  <figure>
+    <h3>Fig. 4 · Time inside restricted areas (avoidable area failures)</h3>
+    <div class="chart" id="f4"></div>
+    <figcaption><b>Number of avoidable flights with an area entry, by total time inside areas (s).</b> Bins have unequal widths. The median is about 150 s (q25 32 s, q75 about 375 s), so most entries are crossings, not edge clips. A wider zone margin alone will not remove them.</figcaption>
+  </figure>
+
+  <figure>
+    <h3>Fig. 5 · Flight time of flights that reach the goal</h3>
+    <div class="chart" id="f5"></div>
+    <figcaption><b>Number of flights by flight time (s), 200 s bins, goal reached only.</b> The dashed line is the fly-straight mean. Our median is 903 s on seed 42 against a fly-straight mean of 847.7 s; a long tail of detours goes past 2000 s.</figcaption>
+  </figure>
+
+  <figure>
+    <h3>Fig. 6 · Flight videos on four scenario seeds</h3>
+    <div class="legend">
+      <span><i style="background:#74808f"></i>Restricted area</span>
+      <span><i style="background:#22dd22"></i>Sector boundary</span>
+      <span><i class="ring"></i>Aircraft</span>
+      <span><i class="dot" style="background:#ffffff"></i>Goal (a thin line joins each aircraft to its goal)</span>
+    </div>
+    <div class="vids">
+      <div class="vid">
+        <video id="v7" controls muted loop playsinline preload="metadata" poster="videos/ma_s7.jpg" src="videos/ma_s7.mp4" data-gif="videos/ma_s7.gif" aria-label="Video: 10 aircraft, scenario seed 7"></video>
+        <div class="vcap"><b>Seed 7</b> (validation stream, episode 0) · 10 of 10 flights clean</div>
+      </div>
+      <div class="vid">
+        <video id="v42" controls muted loop playsinline preload="metadata" poster="videos/ma_s42.jpg" src="videos/ma_s42.mp4" data-gif="videos/ma_s42.gif" aria-label="Video: 10 aircraft, scenario seed 42"></video>
+        <div class="vcap"><b>Seed 42</b> (test stream, episode 0) · 10 of 10 flights clean</div>
+      </div>
+      <div class="vid">
+        <video id="v2" controls muted loop playsinline preload="metadata" poster="videos/ma_s2.jpg" src="videos/ma_s2.mp4" data-gif="videos/ma_s2.gif" aria-label="Video: 10 aircraft, scenario seed 2"></video>
+        <div class="vcap"><b>Seed 2</b> · 10 of 10 flights clean · one long detour (2313 s)</div>
+      </div>
+      <div class="vid">
+        <video id="v3" controls muted loop playsinline preload="metadata" poster="videos/ma_s3.jpg" src="videos/ma_s3.mp4" data-gif="videos/ma_s3.gif" aria-label="Video: 10 aircraft, scenario seed 3"></video>
+        <div class="vcap"><b>Seed 3</b> · 10 of 10 flights clean</div>
+      </div>
+    </div>
+    <div class="tbl">
+    <table>
+      <thead><tr><th>Scenario seed</th><th>Clean flights</th><th>Goal reached</th><th>Intrusion events</th><th>Area entries</th><th>Sector exits</th><th>Flight time, mean (s)</th><th>Flight time, min–max (s)</th><th>Video length</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">7</td><td class="n">10 / 10</td><td class="n">10 / 10</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">930.4</td><td class="n">665–1425</td><td class="n">14.4 s</td></tr>
+        <tr><td class="mono">42</td><td class="n">10 / 10</td><td class="n">10 / 10</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">867.8</td><td class="n">602–1165</td><td class="n">11.8 s</td></tr>
+        <tr><td class="mono">2</td><td class="n">10 / 10</td><td class="n">10 / 10</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">1258.5</td><td class="n">636–2313</td><td class="n">23.3 s</td></tr>
+        <tr><td class="mono">3</td><td class="n">10 / 10</td><td class="n">10 / 10</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">867.8</td><td class="n">614–1464</td><td class="n">14.8 s</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <figcaption><b>The policy <span class="mono">sa_v2m_s0_c2</span> flies all 10 aircraft in one MA episode per scenario seed (deterministic, no lidar rays drawn).</b> One video frame is one decision step of 10 s, shown at 10 frames per second, so 1 s of video is 100 s of flight. An aircraft leaves the picture when it reaches its goal. Seeds 7 and 42 are episode 0 of the two evaluation streams; their flight times are equal to the evaluation rows. Seeds 2 and 3 are not part of the 1000-episode evaluations. All 40 flights in these four episodes are clean. Fig. 7 shows episodes with failed flights.</figcaption>
+  </figure>
+
+  <figure>
+    <h3>Fig. 7 · Flight videos of episodes with failed flights</h3>
+    <div class="legend">
+      <span><i style="background:#74808f"></i>Restricted area</span>
+      <span><i style="background:#22dd22"></i>Sector boundary</span>
+      <span><i class="ring"></i>Aircraft</span>
+      <span><i class="dot" style="background:#ffffff"></i>Goal</span>
+    </div>
+    <div class="vids">
+      <div class="vid">
+        <video id="vf8" controls muted loop playsinline preload="metadata" poster="videos/ma_fail_s8.jpg" src="videos/ma_fail_s8.mp4" data-gif="videos/ma_fail_s8.gif" aria-label="Video: 10 aircraft, scenario seed 8, four flights enter a restricted area"></video>
+        <div class="vcap"><b>Seed 8 · area entries.</b> 6 of 10 flights clean. Four flights enter a restricted area (21, 85, 568 and 835 s inside).</div>
+      </div>
+      <div class="vid">
+        <video id="vf22" controls muted loop playsinline preload="metadata" poster="videos/ma_fail_s22.jpg" src="videos/ma_fail_s22.mp4" data-gif="videos/ma_fail_s22.gif" aria-label="Video: 10 aircraft, scenario seed 22, three flights have an intrusion and an area entry"></video>
+        <div class="vcap"><b>Seed 22 · intrusions and area entries.</b> 7 of 10 flights clean. Three flights have an intrusion (37, 169 and 206 s) and an area entry (318, 334 and 439 s inside).</div>
+      </div>
+      <div class="vid">
+        <video id="vf5" controls muted loop playsinline preload="metadata" poster="videos/ma_fail_s5.jpg" src="videos/ma_fail_s5.mp4" data-gif="videos/ma_fail_s5.gif" aria-label="Video: 10 aircraft, scenario seed 5, one flight does not reach its goal"></video>
+        <div class="vcap"><b>Seed 5 · goal missed.</b> 9 of 10 flights clean. One flight has no violation but does not reach its goal in the 3000 s limit.</div>
+      </div>
+    </div>
+    <div class="tbl">
+    <table>
+      <thead><tr><th>Scenario seed</th><th>Clean flights</th><th>Goal reached</th><th>Flights with an intrusion</th><th>Flights with an area entry</th><th>Flights with a sector exit</th><th>Flight time, mean (s)</th><th>Flight time, min–max (s)</th><th>Video length</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">8</td><td class="n">6 / 10</td><td class="n">10 / 10</td><td class="n">0</td><td class="n">4</td><td class="n">0</td><td class="n">1441.3</td><td class="n">605–2565</td><td class="n">25.8 s</td></tr>
+        <tr><td class="mono">22</td><td class="n">7 / 10</td><td class="n">10 / 10</td><td class="n">3</td><td class="n">3</td><td class="n">0</td><td class="n">1194.1</td><td class="n">641–2194</td><td class="n">22.1 s</td></tr>
+        <tr><td class="mono">5</td><td class="n">9 / 10</td><td class="n">9 / 10</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">1485.6</td><td class="n">656–3000</td><td class="n">30.1 s</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <figcaption><b>Three episodes chosen because they contain failed flights, one per failure type.</b> Same policy, speed and drawing as Fig. 6. The episodes come from a scan of the scenario seeds 4 to 23 (20 episodes, 200 flights). In this scan, 178 of 200 flights are clean (89.0 %) and 10 of 20 episodes are fully clean. Of the 22 failed flights, 21 have an area entry, 3 have an intrusion, 4 miss the goal and 0 leave the sector. These seeds are not part of the 1000-episode evaluations, except seed 7.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>Limits</h2>
+  <ul>
+    <li>One training seed. The spread over training seeds is unknown.</li>
+    <li>The MA clean % uses our per-aircraft counting. The leaderboard's MA counting rule is not verified, so the leader comparison is not matched.</li>
+    <li>The floor uses a flat NM projection and straight-line geometry. It covers start and goal inside areas only. It does not count conflicts that no policy can solve; the replay check covers the start-inside-area case only.</li>
+    <li>The cause of the area crossings is not proven. The data shows where they occur (flights that need a detour), not why the policy enters the area.</li>
+    <li>The R1 values come from a screenshot, with one training seed and no result file in this repository. Its counting rules are not verified. The standard error of an R1 value is not known.</li>
+    <li>The videos are not a random sample of the evaluation. Fig. 6 shows four clean episodes. Fig. 7 shows three episodes that were chosen for their failures. The videos show where a failure occurs, not its cause.</li>
+    <li>Status EXPLORATORY: these results come from an evaluation, not from a planned, reported experiment.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Next step</h2>
+  <p>Fine-tune this policy in the MA environment, starting from <span class="mono">sa_v2m_s0_c2</span>. The target is the avoidable area entries on detour flights: 892 of the 921 avoidable failures on seed 42. Choose the model on seeds 7 and 11; test once on seed 42.</p>
+</section>
+
+<footer>
+  <span>Sources (read 2026-11-20):</span>
+  <code>results/s7ma_sa_v2m_s0_c2_competition_ma.json · results/s42ma_sa_v2m_s0_c2_competition_ma.json · results/s7ma_sa_v2m_soft_c2_competition_ma.json · results/s42ma_sa_v2m_soft_c2_competition_ma.json · results/competition_straight_ma_1000_seed7.json · results/competition_straight_ma_1000_seed42.json · results/scenario_floor_ma_seed7.json · results/scenario_floor_ma_seed42.json · results/scenario_floor_ma_seed{7,42}_rows.json · results/sa_v2m_s0_c2_summary.json · results/sa_v2m_s0_summary.json · leader values: unofficial HF leaderboard (yojul), state 2026-11-19</code>
+  <span>Leaderboard source (read 2026-11-20): screenshot from the user of the unofficial Hugging Face leaderboard, multi-agent track, 5 teams, last submission 2026-11-12.</span>
+  <span>R1 source (read 2026-11-20): screenshot from the user, table "R1 a shared, 40M" and "R1 a separate critic", a teammate's MA training; protocol (MA, seed 42, 1000 episodes) as stated by the user.</span>
+  <span>Video sources (rendered and read 2026-11-20 18:08):</span>
+  <code>results/sa_v2m_s0_c2_ma_s7_eval.json · results/sa_v2m_s0_c2_ma_s42_eval.json · results/sa_v2m_s0_c2_ma_s2_eval.json (seeds 2 and 3) · gifs/sa_v2m_s0_c2_ma_{s7_ep0,s42_ep0,s2_ep0,s2_ep1}.gif · results/pages/videos/ma_s{7,42,2,3}.mp4 · failure scan (seeds 4 to 23, rendered and read 2026-11-20 18:24): results/sa_v2m_s0_c2_ma_scan_{4,8,12,16,20}_eval.json · gifs/sa_v2m_s0_c2_ma_fail_s{8,22,5}.gif · results/pages/videos/ma_fail_s{8,22,5}.mp4 · command: scripts.evaluate --model models/sa_v2m_s0_c2.pt --setting multi --n-agents 10 --no-rays</code>
+</footer>
+</div>
+<div id="tip" hidden></div>
+
+<script>
+const D = {
+  42: { col: "--s42", fail: { A: [752, 44], I: [204, 5], G: [105, 9], S: [53, 0] },
+        area: [120, 56, 76, 84, 118, 182, 97, 19], ft: [0, 0, 24, 3204, 3113, 1732, 741, 420, 217, 122, 102, 67, 53, 49, 42],
+        straight: 847.7, med: 903 },
+  7:  { col: "--s7", fail: { A: [818, 59], I: [170, 6], G: [102, 6], S: [49, 0] },
+        area: [124, 68, 89, 93, 115, 194, 117, 18], ft: [0, 0, 25, 3095, 3005, 1777, 826, 420, 251, 164, 86, 70, 70, 50, 53],
+        straight: 851.6, med: 916 }
+};
+const AREA_BINS = ["0–15", "15–30", "30–60", "60–120", "120–240", "240–480", "480–960", "960–2000"];
+const FT_BINS = Array.from({ length: 15 }, (_, i) => i * 200);
+const NS = "http://www.w3.org/2000/svg";
+const tip = document.getElementById("tip");
+function el(tag, attrs, parent, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function svg(id, w, h) {
+  const box = document.getElementById(id); box.innerHTML = "";
+  return el("svg", { viewBox: `0 0 ${w} ${h}`, role: "img" }, box);
+}
+function hover(node, text) {
+  node.classList.add("m");
+  node.addEventListener("mousemove", e => { tip.hidden = false; tip.textContent = text;
+    tip.style.left = Math.min(e.clientX + 12, innerWidth - 270) + "px"; tip.style.top = (e.clientY + 12) + "px"; });
+  node.addEventListener("mouseleave", () => { tip.hidden = true; });
+}
+const C = v => `var(${v})`;
+
+// Fig 1: dot strip, x 85–100 %
+(function () {
+  const W = 760, H = 384, L = 215, R = 30, T = 14, rowH = 34;
+  const s = svg("f1", W, H), x = v => L + (v - 85) / 15 * (W - L - R);
+  for (let v = 85; v <= 100; v += 2.5) {
+    el("line", { x1: x(v), x2: x(v), y1: T, y2: T + rowH * 10, class: "grid" }, s);
+    el("text", { x: x(v), y: T + rowH * 10 + 16, "text-anchor": "middle" }, s, v + " %");
+  }
+  const rows = [["Ours (sa_v2m_s0_c2)", 89.97, 90.35, "start"], ["Ours, soft variant", 88.90, 89.35],
+                ["R1 a shared, 40M (MA-trained)", null, 90.77, "start"], ["R1 a separate critic (MA-trained)", null, 88.55, "start"],
+                ["Maximum possible (floor)", 99.41, 99.56],
+                ["Leaderboard 1 · TEAM ROBIN", null, 99.55, "end"], ["Leaderboard 2 · somnathab3", null, 99.55, "end"],
+                ["Leaderboard 3 · IASL", null, 99.34, "end"], ["Leaderboard 4 · Smart", null, 98.11, "end"],
+                ["Leaderboard 5 · solomon", null, 93.67, "start"]];
+  rows.forEach((r, i) => {
+    const y = T + rowH * i + rowH / 2;
+    el("text", { x: L - 12, y: y + 4, "text-anchor": "end", class: "lab" }, s, r[0]);
+    if (r[1] !== null) hover(el("circle", { cx: x(r[1]), cy: y, r: 6, fill: C("--s7"), stroke: C("--panel"), "stroke-width": 2 }, s), `${r[0]} · seed 7: ${r[1].toFixed(2)} %`);
+    hover(el("circle", { cx: x(r[2]), cy: y, r: 6, fill: C("--s42"), stroke: C("--panel"), "stroke-width": 2 }, s), `${r[0]} · seed 42: ${r[2].toFixed(2)} %`);
+    const lx = r[1] !== null && r[1] > r[2] ? x(r[1]) : x(r[2]);
+    if (r[3]) el("text", { x: (r[3] === "end" ? x(r[2]) - 10 : lx + 10), y: y + 4, class: "val", "text-anchor": r[3] }, s, r[2].toFixed(2) + " %");
+  });
+})();
+
+// Fig 2: grouped bars, clean % by geometry
+(function () {
+  const W = 760, H = 250, L = 56, R = 20, T = 16, B = 46;
+  const s = svg("f2", W, H), ph = H - T - B, y = v => T + ph - v / 100 * ph;
+  for (let v = 0; v <= 100; v += 20) {
+    el("line", { x1: L, x2: W - R, y1: y(v), y2: y(v), class: v ? "grid" : "axis" }, s);
+    el("text", { x: L - 8, y: y(v) + 4, "text-anchor": "end" }, s, v + " %");
+  }
+  const groups = [["Straight line crosses an area", [[7, 4506, 5417], [42, 4442, 5334]]],
+                  ["Straight line clear", [[7, 4491, 4524], [42, 4593, 4622]]]];
+  const gw = (W - L - R) / 2, bw = 74;
+  groups.forEach((g, gi) => {
+    const cx = L + gw * gi + gw / 2;
+    g[1].forEach((b, bi) => {
+      const v = 100 * b[1] / b[2], bx = cx + (bi ? 4 : -bw - 4);
+      hover(el("path", { d: `M${bx},${y(0)} V${y(v) + 4} q0,-4 4,-4 H${bx + bw - 4} q4,0 4,4 V${y(0)} Z`, fill: C(b[0] === 42 ? "--s42" : "--s7") }, s),
+        `${g[0]} · seed ${b[0]}: ${b[1]} of ${b[2]} clean (${v.toFixed(2)} %)`);
+      el("text", { x: bx + bw / 2, y: y(v) - 6, "text-anchor": "middle", class: "val" }, s, v.toFixed(1) + " %");
+    });
+    el("text", { x: cx, y: H - 20, "text-anchor": "middle", class: "lab" }, s, g[0]);
+  });
+})();
+
+function bars(id, labels, series, colorVar, unavVals, xTitle) {
+  const W = 760, H = 260, L = 56, R = 16, T = 18, B = 52;
+  const s = svg(id, W, H), max = Math.max(...series.map((v, i) => v + (unavVals ? unavVals[i] : 0)));
+  const nice = Math.pow(10, Math.floor(Math.log10(max))), top = Math.ceil(max / nice * 2) / 2 * nice;
+  const ph = H - T - B, y = v => T + ph - v / top * ph, n = labels.length, bw = (W - L - R) / n;
+  for (let k = 0; k <= 4; k++) {
+    const v = top * k / 4;
+    el("line", { x1: L, x2: W - R, y1: y(v), y2: y(v), class: k ? "grid" : "axis" }, s);
+    el("text", { x: L - 8, y: y(v) + 4, "text-anchor": "end" }, s, Math.round(v));
+  }
+  labels.forEach((lab, i) => {
+    const bx = L + bw * i + 2, w = bw - 4, v = series[i], u = unavVals ? unavVals[i] : 0;
+    if (v > 0) hover(el("path", { d: `M${bx},${y(0)} V${y(v) + (u ? 0 : 4)} ${u ? `H${bx + w}` : `q0,-4 4,-4 H${bx + w - 4} q4,0 4,4`} V${y(0)} Z`, fill: C(colorVar) }, s),
+      `${lab}: ${v} flights${unavVals ? " avoidable" : ""}`);
+    if (u > 0) hover(el("path", { d: `M${bx},${y(v) - 2} V${y(v + u) + 4} q0,-4 4,-4 H${bx + w - 4} q4,0 4,4 V${y(v) - 2} Z`, fill: C("--unav") }, s),
+      `${lab}: ${u} flights unavoidable`);
+    if (unavVals || n <= 8) el("text", { x: bx + w / 2, y: y(v + u) - 6, "text-anchor": "middle", class: "val" }, s, unavVals ? `${v} + ${u}` : v);
+    el("text", { x: bx + w / 2, y: H - 32, "text-anchor": "middle" }, s, lab);
+  });
+  el("text", { x: L + (W - L - R) / 2, y: H - 8, "text-anchor": "middle", class: "lab" }, s, xTitle);
+  return { s, y, L, bw, H, T, B };
+}
+
+function draw(seed) {
+  const d = D[seed];
+  document.getElementById("l3").style.background = C(d.col);
+  const keys = ["A", "I", "G", "S"], names = { A: "Area entry", I: "Intrusion", G: "Goal missed", S: "Sector exit" };
+  bars("f3", keys.map(k => names[k]), keys.map(k => d.fail[k][0]), d.col, keys.map(k => d.fail[k][1]), "Failure type");
+  bars("f4", AREA_BINS, d.area, d.col, null, "Time inside restricted areas (s)");
+  const ftLabels = FT_BINS.map(b => String(b)), f5 = bars("f5", ftLabels, d.ft, d.col, null, "Flight time, lower bin edge (s)");
+  const xs = v => f5.L + f5.bw * (v / 200);
+  el("line", { x1: xs(d.straight), x2: xs(d.straight), y1: f5.T, y2: f5.H - f5.B, stroke: C("--fg"), "stroke-width": 1.5, "stroke-dasharray": "4 3" }, f5.s);
+  el("text", { x: xs(d.straight) + 6, y: f5.T + 10, class: "lab" }, f5.s, `fly-straight mean ${d.straight} s`);
+}
+function pick(seed) {
+  document.getElementById("b42").setAttribute("aria-pressed", seed === 42);
+  document.getElementById("b7").setAttribute("aria-pressed", seed === 7);
+  draw(seed);
+}
+document.getElementById("b42").addEventListener("click", () => pick(42));
+document.getElementById("b7").addEventListener("click", () => pick(7));
+pick(42);
+
+// Fig 6: if the browser cannot play an MP4 file, show the GIF of the same episode.
+document.querySelectorAll(".vid video").forEach(v => {
+  const swap = () => { const i = new Image(); i.src = v.dataset.gif; i.alt = v.getAttribute("aria-label"); v.replaceWith(i); };
+  if (v.error) swap(); else v.addEventListener("error", swap, { once: true });
+});
+</script>

@@ -1,0 +1,27 @@
+{
+ "host": "symphony-gp73leopard8re",
+ "cpu": "x86_64",
+ "numpy": "2.2.6",
+ "episodes": 3,
+ "first_seed": 11,
+ "n_agents": 10,
+ "decisions": 551,
+ "token_calls": 4927,
+ "events_in_finished_flights": {
+  "intrusion_events": 12,
+  "restricted_area_events": 22,
+  "sector_exit_events": 7,
+  "waypoint_reached": 20
+ },
+ "n_differences": 0,
+ "differences": [],
+ "ms_per_decision": {
+  "env_ref": 37.77286388581763,
+  "env_fast": 21.323933733230312
+ },
+ "ms_per_token_call": {
+  "ref": 0.7560486783236505,
+  "fast": 0.3726949427774137
+ },
+ "status": "EXPLORATORY"
+}

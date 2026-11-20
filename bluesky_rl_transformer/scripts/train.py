@@ -181,6 +181,10 @@ def build_parser():
     p.add_argument("--seed-layout", choices=["narrow", "wide"], default="narrow",
                    help="Training scenario seeds. narrow: 10 000 per worker (as before). wide: 1 000 000 per worker; "
                         "use it when a worker flies more than 10 000 flights (about 1.5 M steps per worker).")
+    p.add_argument("--fast-metrics", type=int, default=0, choices=[0, 1],
+                   help="Multi agent only (2026-11-20): the training workers compute the scored metrics once per "
+                        "simulation step for all aircraft (rl_tf/fast_metrics.py). Bit-identical metrics, see "
+                        "scripts.check_fast_path. Validation and evaluation keep the original code. 0 = off.")
     p.add_argument("--device", default="cpu")
     p.add_argument("--learner-threads", type=int, default=6, help="Torch threads in the update phase (workers are idle then).")
     p.add_argument("--inference-threads", type=int, default=1,
@@ -235,6 +239,8 @@ def main(argv=None):
     v2 = v2_kwargs(vars(args))
     if args.setting != "single" and (args.cat_penalty < 0.0 or args.replay_frac > 0.0 or args.skip_start_events):
         raise ValueError("--cat-penalty, --replay-frac and --skip-start-events: single agent only")
+    if args.fast_metrics and args.setting == "single":
+        raise ValueError("--fast-metrics: multi agent only")
     if args.cat_penalty > 0.0:
         raise ValueError("--cat-penalty must be <= 0 (the reward has only negative terms)")
     if not (0.0 < args.cat_prob_start <= 1.0 and 0.0 < args.cat_prob_end <= 1.0):
@@ -269,7 +275,8 @@ def main(argv=None):
                history=args.history, shaping=args.shaping == "potential", shaping_speed=args.shaping_speed,
                seed=args.seed, reset_seed=reset_seed, v2=v2, cat_penalty=args.cat_penalty,
                replay_frac=args.replay_frac, replay_cap=args.replay_cap, replay_max=args.replay_max,
-               seed_layout=args.seed_layout, worker_state=rs["worker_state"] if rs else None)
+               seed_layout=args.seed_layout, worker_state=rs["worker_state"] if rs else None,
+               fast_metrics=bool(args.fast_metrics))
     dims = obs_dims(lidar_cfg, args.history)
     policy = build_policy(dims, vars(args)).to(dev)
     if args.init_encoder and rs is None:

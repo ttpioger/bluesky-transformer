@@ -1,0 +1,335 @@
+<title>CaT Token Policy</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column (~70ch) with full-width table and figure panels; academic order Question → Next step. Same system as the SA→MA page. */
+:root {
+  --bg: #f4f6f8; --panel: #fcfcfb; --fg: #121820; --muted: #556070; --rule: #d6dce4;
+  --s42: #2a78d6; --s7: #eb6834; --ma: #1b8f7d; --floor: #9aa3ae; --pill: #fff1d6; --pill-fg: #7a4a00;
+  --t-cls: #121820; --t-ray: #2a78d6; --t-state: #7b5cd6; --t-ac: #eb6834; --t-zone: #c0392b; --t-goal: #d9a400; --t-edge: #1b8f7d; --t-act: #8a94a0;
+  --f-head: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  --f-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111417; --panel: #1a1a19; --fg: #eef0f2; --muted: #a9b2bd; --rule: #2e343b;
+  --s42: #3987e5; --s7: #d95926; --ma: #35b8a3; --floor: #6d7681; --pill: #3a2c10; --pill-fg: #ffd27a;
+  --t-cls: #eef0f2; --t-ray: #3987e5; --t-state: #9a82ea; --t-ac: #e8743f; --t-zone: #e05a4c; --t-goal: #e8bd2e; --t-edge: #35b8a3; --t-act: #7d8792; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #111417; --panel: #1a1a19; --fg: #eef0f2; --muted: #a9b2bd; --rule: #2e343b;
+  --s42: #3987e5; --s7: #d95926; --ma: #35b8a3; --floor: #6d7681; --pill: #3a2c10; --pill-fg: #ffd27a;
+  --t-cls: #eef0f2; --t-ray: #3987e5; --t-state: #9a82ea; --t-ac: #e8743f; --t-zone: #e05a4c; --t-goal: #e8bd2e; --t-edge: #35b8a3; --t-act: #7d8792; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 16px/1.55 var(--f-body); }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 28px; }
+h1, h2, h3 { font-family: var(--f-head); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(1.9rem, 4vw, 2.6rem); font-weight: 700; }
+h2 { font-size: 1.45rem; font-weight: 600; padding-top: 6px; border-top: 1px solid var(--rule); }
+h3 { font-size: 1.1rem; font-weight: 600; padding-top: 6px; }
+p { margin: 0; max-width: 70ch; }
+a { color: var(--s42); }
+section { display: grid; gap: 12px; min-width: 0; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; color: var(--muted); font-size: .92rem; }
+.pill { font: 500 .75rem/1 var(--f-mono); letter-spacing: .06em; padding: 5px 8px; border-radius: 4px; background: var(--pill); color: var(--pill-fg); }
+.mono, td.n, .tile b, .bar b { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.tile { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
+.tile span { color: var(--muted); font-size: .85rem; letter-spacing: .03em; text-transform: uppercase; }
+.tile b { font-size: 1.9rem; font-weight: 500; }
+.tile small { color: var(--muted); }
+ul, ol { margin: 0; padding-left: 1.2em; max-width: 70ch; display: grid; gap: 4px; }
+.tbl { overflow-x: auto; background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; }
+table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+th, td { padding: 7px 12px; text-align: left; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: .82rem; letter-spacing: .03em; white-space: nowrap; }
+td.n { text-align: right; white-space: nowrap; }
+td.k { white-space: nowrap; font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+tr.key td { font-weight: 600; }
+td.new { box-shadow: inset 3px 0 0 var(--s7); }
+figure { margin: 0; background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; display: grid; gap: 10px; min-width: 0; }
+figure h3 { padding-top: 0; }
+figcaption { color: var(--muted); font-size: .9rem; max-width: 80ch; }
+figcaption b { color: var(--fg); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .88rem; color: var(--muted); }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; }
+.strip { display: grid; gap: 4px; }
+.strip .name { font-size: .9rem; }
+.strip .cells { display: flex; height: 26px; border-radius: 4px; overflow: hidden; gap: 2px; max-width: 100%; }
+.strip .cells i { display: block; height: 100%; min-width: 3px; }
+.bars { display: grid; gap: 6px; }
+.bars h4 { margin: 8px 0 0; font: 600 .82rem var(--f-body); letter-spacing: .03em; color: var(--muted); text-transform: uppercase; }
+.bar { display: grid; grid-template-columns: minmax(120px, 230px) 1fr 4.2em; gap: 10px; align-items: center; font-size: .9rem; }
+.bar .track { height: 16px; background: var(--bg); border-radius: 3px; position: relative; overflow: hidden; }
+.bar .track i { position: absolute; inset: 0 auto 0 0; border-radius: 3px; }
+.bar b { font-weight: 500; text-align: right; }
+.axis { display: grid; grid-template-columns: minmax(120px, 230px) 1fr 4.2em; gap: 10px; font: 400 .72rem var(--f-mono); color: var(--muted); }
+.axis div { display: flex; justify-content: space-between; }
+.eq { font-family: var(--f-mono); font-size: .86rem; background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 10px 14px; overflow-x: auto; white-space: pre; }
+footer { color: var(--muted); font-size: .85rem; display: grid; gap: 6px; border-top: 1px solid var(--rule); padding-top: 12px; }
+footer code { font-family: var(--f-mono); font-size: .8rem; }
+</style>
+
+<div class="wrap">
+<header style="display:grid;gap:10px">
+  <h1>CaT Token Policy</h1>
+  <div class="meta">
+    <span class="pill">EXPLORATORY</span>
+    <span>Created 2026-11-20 18:30</span>
+    <span>Models <span class="mono">sa_tf_tok3_s0</span> · <span class="mono">sa_tf_info_ff_cls_big_s0</span> · <span class="mono">sa_v2m_s0_c2</span></span>
+    <span>BlueSky-Gym AI4REAL-NET competition</span>
+  </div>
+</header>
+
+<div class="tiles">
+  <div class="tile"><span>SA clean flights, seed 7</span><b>57.7 → 68.2 %</b><small>big token model (2 M steps) → CaT model (4 M steps), 1000 flights</small></div>
+  <div class="tile"><span>SA maximum, seed 7</span><b>90.0 %</b><small>100 of 1000 flights start with an intrusion</small></div>
+  <div class="tile"><span>MA clean flights, seed 42</span><b>90.35 %</b><small>CaT model in the 10-aircraft environment, no MA training</small></div>
+</div>
+
+<section>
+  <h2>Question</h2>
+  <p>Three single-agent (SA) policies exist: tok3, the big token model, and the model trained with constraints as terminations (CaT). What does each policy see, what action does it give, which reward trains it, and how does it perform in test? How does the CaT policy go to the multi-agent (MA) problem?</p>
+  <p>A clean flight reaches its goal with 0 intrusions, 0 restricted-area entries and 0 sector exits. An intrusion is another aircraft within 5 NM.</p>
+</section>
+
+<section>
+  <h2>Method</h2>
+
+  <h3>1 · The three models</h3>
+  <div class="tbl">
+  <table>
+    <thead><tr><th>Part</th><th>tok3 <span class="mono">sa_tf_tok3_s0</span></th><th>Big token <span class="mono">sa_tf_info_ff_cls_big_s0</span></th><th>CaT <span class="mono">sa_v2m_s0</span> → <span class="mono">sa_v2m_s0_c2</span></th></tr></thead>
+    <tbody>
+      <tr><td class="k">Encoder</td><td>Transformer, 2 layers, d_model 64, 4 heads</td><td>Transformer, 3 layers, d_model 128, 4 heads</td><td>same as big token</td></tr>
+      <tr><td class="k">Tokens</td><td>51</td><td>60</td><td>60</td></tr>
+      <tr><td class="k">n_params</td><td class="mono">327,237</td><td class="mono">790,853</td><td class="mono">790,853</td></tr>
+      <tr><td class="k">Extra inputs</td><td>—</td><td>8 sector-edge tokens, closest point of approach in the aircraft tokens, Fourier features, read-out token</td><td>same as big token</td></tr>
+      <tr><td class="k">Turn action</td><td>change of heading</td><td>change of heading</td><td class="new">heading relative to the goal bearing</td></tr>
+      <tr><td class="k">Reward</td><td>preset <span class="mono">los</span> + heading term</td><td>same as tok3</td><td class="new">same + 2 margin costs + CaT end −100</td></tr>
+      <tr><td class="k">Flight end in training</td><td>goal or 3000 s</td><td>goal or 3000 s</td><td class="new">goal, 3000 s, or the first avoidable violation</td></tr>
+      <tr><td class="k">Failure replay</td><td>no</td><td>no</td><td class="new">yes, 30 % of the resets</td></tr>
+      <tr><td class="k">Action noise at start (log_std)</td><td>0</td><td>0</td><td class="new">−1</td></tr>
+      <tr><td class="k">Training steps</td><td>2 M</td><td>2 M</td><td>2 M, then 2 M more from that model (4 M)</td></tr>
+      <tr><td class="k">Workers, device, time</td><td>8, cuda, 1.97 h</td><td>8, cpu, 4.62 h</td><td>64, cpu, 1.95 h + 2.67 h</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>An orange edge marks what is new in the CaT model. The network of the CaT model is equal to the network of the big token model.</p>
+
+  <h3>2 · Inputs</h3>
+  <p>The policy sees only its own aircraft. It has two input blocks, each with the last 4 decision steps.</p>
+  <ul>
+    <li><b>Lidar.</b> 120 rays around the aircraft (360°), range 50 km. A ray gives the distance to its nearest hit: <span class="mono">1 − distance / 50 km</span>. There are 4 channels: restricted area, sector boundary, other aircraft (5 NM disc), and the closing speed of the aircraft on that ray. A ray that hits the own goal gives 0.</li>
+    <li><b>Own state.</b> 8 values per step: airspeed, inside-sector flag, cos and sin of the angle to the goal, distance to the goal, last turn action, last speed action, inside-area flag.</li>
+  </ul>
+  <p>The encoder changes these inputs into tokens. The lidar tokens see near objects. The other tokens give exact values that the rays do not give.</p>
+  <div class="tbl">
+  <table>
+    <thead><tr><th>Token type</th><th>Count</th><th>Content (own frame: x = nose, y = starboard)</th><th>tok3</th><th>Big, CaT</th></tr></thead>
+    <tbody>
+      <tr><td class="k">Lidar</td><td class="n">30</td><td>4 adjacent rays × 4 channels × 4 steps = 64 numbers</td><td>yes</td><td>yes</td></tr>
+      <tr><td class="k">State</td><td class="n">1</td><td>own state, 4 steps</td><td>yes</td><td>yes</td></tr>
+      <tr><td class="k">Aircraft</td><td class="n">10</td><td>the 10 nearest aircraft in lidar range: x, y, relative velocity, distance, closing speed. Big and CaT: also time and distance at the closest point of approach</td><td>yes</td><td>yes</td></tr>
+      <tr><td class="k">Restricted area</td><td class="n">5</td><td>nearest edge point, both ends of the area as seen from the aircraft, flag "the line to the goal crosses the area", flag "inside"</td><td>yes</td><td>yes</td></tr>
+      <tr><td class="k">Goal</td><td class="n">1</td><td>x, y, distance, bearing, share of the 3000 s that is left</td><td>yes</td><td>yes</td></tr>
+      <tr><td class="k">Last actions</td><td class="n">4</td><td>turn and speed of the last 4 steps</td><td>yes</td><td>yes</td></tr>
+      <tr><td class="k">Sector edge</td><td class="n">8</td><td>nearest point of the sector edge in each of 8 directions, flag "outside"</td><td>no</td><td>yes</td></tr>
+      <tr><td class="k">Read-out</td><td class="n">1</td><td>learned token that collects the result</td><td>no</td><td>yes</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <figure>
+    <h3>Fig. 1 · Tokens per model</h3>
+    <div class="legend">
+      <span><i style="background:var(--t-cls)"></i>Read-out 1</span><span><i style="background:var(--t-ray)"></i>Lidar 30</span><span><i style="background:var(--t-state)"></i>State 1</span><span><i style="background:var(--t-ac)"></i>Aircraft 10</span><span><i style="background:var(--t-zone)"></i>Restricted area 5</span><span><i style="background:var(--t-goal)"></i>Goal 1</span><span><i style="background:var(--t-edge)"></i>Sector edge 8</span><span><i style="background:var(--t-act)"></i>Last actions 4</span>
+    </div>
+    <div class="strip"><div class="name"><b>tok3</b> · 51 tokens</div>
+      <div class="cells" style="width:85%"><i style="flex:30;background:var(--t-ray)"></i><i style="flex:1;background:var(--t-state)"></i><i style="flex:10;background:var(--t-ac)"></i><i style="flex:5;background:var(--t-zone)"></i><i style="flex:1;background:var(--t-goal)"></i><i style="flex:4;background:var(--t-act)"></i></div></div>
+    <div class="strip"><div class="name"><b>Big token and CaT</b> · 60 tokens</div>
+      <div class="cells" style="width:100%"><i style="flex:1;background:var(--t-cls)"></i><i style="flex:30;background:var(--t-ray)"></i><i style="flex:1;background:var(--t-state)"></i><i style="flex:10;background:var(--t-ac)"></i><i style="flex:5;background:var(--t-zone)"></i><i style="flex:1;background:var(--t-goal)"></i><i style="flex:8;background:var(--t-edge)"></i><i style="flex:4;background:var(--t-act)"></i></div></div>
+    <figcaption><b>Number of input tokens of the Transformer by type; the width of a block is its token count.</b> The order of the blocks is for reading only, except the read-out token at place 0. Half of the tokens are lidar tokens. The big token model adds the sector-edge tokens and the read-out token.</figcaption>
+  </figure>
+
+  <h3>3 · Action</h3>
+  <ul>
+    <li><b>Output.</b> 2 numbers in [−1, 1]: turn and speed. One decision each 10 s. The actor is a small MLP (64, 64) on the encoder output. Training samples from a Gaussian around the mean; the test uses the mean.</li>
+    <li><b>Speed.</b> Speed change = action × 6.67 m/s per decision (environment value <span class="mono">d_speed</span> = 20/3). Same in all three models.</li>
+    <li><b>Turn, tok3 and big token.</b> Heading change = action × 45° per decision (<span class="mono">d_heading</span>). The policy must find the goal direction itself.</li>
+    <li><b>Turn, CaT model (goal map).</b> Target heading = bearing to the goal + action × 90°. A wrapper sends the heading change to that target, limited to ±45° per decision. Action 0 flies to the goal. The policy cannot command a heading away from the goal by more than 90°.</li>
+  </ul>
+
+  <h3>4 · Reward</h3>
+  <p>The reward has only negative terms. There is no reward for the goal. Learning uses the reward times 0.05.</p>
+  <div class="tbl">
+  <table>
+    <thead><tr><th>Term</th><th>Unit</th><th>tok3, big token</th><th>CaT model</th></tr></thead>
+    <tbody>
+      <tr><td class="k">Time</td><td>per second flown</td><td class="n">−0.015</td><td class="n">−0.015</td></tr>
+      <tr><td class="k">Heading</td><td>per second, × (1 − cos ψ); ψ = angle between heading and goal bearing</td><td class="n">−0.05</td><td class="n">−0.05</td></tr>
+      <tr><td class="k">Intrusion</td><td>per second / per event</td><td class="n">−0.5 / −3</td><td class="n">−0.5 / −3</td></tr>
+      <tr><td class="k">Restricted area</td><td>per second / per entry</td><td class="n">−0.3 / −2</td><td class="n">−0.3 / −2</td></tr>
+      <tr><td class="k">Outside sector</td><td>per second / per exit</td><td class="n">−0.2 / 0</td><td class="n">−0.2 / 0</td></tr>
+      <tr><td class="k">Aircraft margin</td><td>per second, × (1 − d_cpa / 7.5 NM); d_cpa = closest distance in the next 120 s on straight lines</td><td class="n">—</td><td class="n new">−0.02</td></tr>
+      <tr><td class="k">Area margin</td><td>per second, × (1 − distance to the nearest area / 10 km)</td><td class="n">—</td><td class="n new">−0.02</td></tr>
+      <tr><td class="k">CaT end</td><td>once, at the first avoidable violation; the flight ends</td><td class="n">—</td><td class="n new">−100</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Sizes for comparison (not scaled): a flight of 1000 s costs −15 from the time term. An area entry with 150 s inside costs −47. A flight to the 3000 s limit costs −45 from the time term. A CaT end costs −100.</p>
+
+  <h3>5 · Training with CaT</h3>
+  <ul>
+    <li><b>Rule.</b> An avoidable violation is a new intrusion, a restricted-area entry or a sector exit. The first one ends the training flight and adds −100. An intrusion that exists at the start of the flight does not count, because the policy cannot avoid it.</li>
+    <li><b>Probability.</b> The code can end a flight with a probability below 1 (random CaT). These runs use probability 1: each violation ends the flight.</li>
+    <li><b>Effect on the data.</b> A flight after a violation gives no more steps. The policy thus trains only on states with no violation before them.</li>
+    <li><b>Failure replay.</b> The scenario seed of a failed flight goes into a pool (256 seeds at most per worker). 30 % of the resets fly a pool seed again. A seed leaves the pool after a clean flight or after 3 replays.</li>
+    <li><b>Test.</b> CaT is off in test. A test flight continues after a violation, and the official metrics count all of it.</li>
+    <li><b>PPO.</b> Same as before: lr 5e-4, γ 0.99, λ 0.95, clip 0.2, rollout 512 steps, 2 epochs, batch 128, no entropy term. Actor and critic share the encoder.</li>
+    <li><b>Source of CaT.</b> Chane-Sane et al. 2024, arXiv:2403.18765, as cited in <span class="mono">rl_tf/envs.py</span>. DOI not verified.</li>
+  </ul>
+
+  <h3>6 · Port to the MA problem</h3>
+  <p>The MA environment has 10 aircraft with one goal each, 5 restricted areas and no scripted intruders. The observation of the policy has the same format in SA and MA, so the SA weights run in MA with no change.</p>
+  <div class="tbl">
+  <table>
+    <thead><tr><th>Part</th><th>SA training</th><th>MA zero-shot (done)</th><th>MA fine-tune (planned, not run)</th></tr></thead>
+    <tbody>
+      <tr><td class="k">Other aircraft</td><td>10 scripted intruders</td><td>the 9 other aircraft; each runs the same policy</td><td>same as zero-shot</td></tr>
+      <tr><td class="k">Lidar and tokens</td><td>built for the own aircraft</td><td>built for each aircraft from its own position: 120 rays, 60 tokens. An other agent looks the same as an intruder</td><td>same as zero-shot</td></tr>
+      <tr><td class="k">Weights</td><td>one network</td><td>one copy per aircraft, shared weights, no communication</td><td>start from <span class="mono">sa_v2m_s0_c2</span> (<span class="mono">--init-policy</span> loads encoder, actor and log_std)</td></tr>
+      <tr><td class="k">Goal action map</td><td>bearing to the own goal</td><td>bearing to the goal of each aircraft</td><td>same as zero-shot</td></tr>
+      <tr><td class="k">Critic</td><td>attention over the aircraft encodings</td><td>not used in test</td><td>new critic (not loaded), one value per environment</td></tr>
+      <tr><td class="k">Reward terms and margin costs</td><td>on</td><td>not used in test</td><td>work per aircraft with no code change</td></tr>
+      <tr><td class="k">CaT end</td><td>on</td><td>off</td><td>does not run as coded: the code stops with "single agent only". The MA environment cannot remove one aircraft at a violation with no code change</td></tr>
+      <tr><td class="k">Failure replay, start-intrusion skip</td><td>on</td><td>off</td><td>single agent only as coded</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <ul>
+    <li><b>Done.</b> Zero-shot test of the CaT model in MA on seeds 7 and 42. See Results and the page <a href="https://claude.ai/artifact/VsCpM2C3KQK5VFCDLBdTua">SA→MA Zero-Shot Transfer</a> (videos, failure analysis, leaderboard).</li>
+    <li><b>Open choice for the fine-tune.</b> The safety signal in MA cannot be the CaT end as coded. Two options exist: larger event penalties (as in the fine-tune <span class="mono">sa_tf_big_ftpen10_s0</span>, −10 per event), or a code change that makes CaT work per aircraft. Neither option has a result in MA.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Setup</h2>
+  <ul>
+    <li><b>SA environment.</b> Competition SA env: 1 controlled aircraft, 10 scripted intruders, 5 restricted areas, 3000 s limit, 10 s per decision.</li>
+    <li><b>MA environment.</b> Competition MA env: 10 controlled aircraft, 5 restricted areas, 3000 s limit.</li>
+    <li><b>Test protocol.</b> <span class="mono">scripts.competition_eval</span>: 1000 episodes of one scenario seed, deterministic policy. SA: 1000 flights. MA: 10,000 aircraft flights.</li>
+    <li><b>Seeds.</b> Seed 42 is the leaderboard test seed. Seed 7 is the validation seed. tok3 has a seed-42 result only (its model file is not on this machine). The CaT models have no SA result on seed 42, because seed 42 is kept for the test.</li>
+    <li><b>Model seeds.</b> One training seed (0) per model.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Results</h2>
+  <figure>
+    <h3>Fig. 2 · Clean flights in test</h3>
+    <div class="legend"><span><i style="background:var(--s42)"></i>SA, seed 42</span><span><i style="background:var(--s7)"></i>SA, seed 7</span><span><i style="background:var(--ma)"></i>MA (CaT model, zero-shot)</span><span><i style="background:var(--floor)"></i>Maximum possible</span></div>
+    <div class="bars">
+      <div class="axis"><span></span><div><span>0 %</span><span>25</span><span>50</span><span>75</span><span>100 %</span></div><span></span></div>
+      <h4>SA, seed 42, 1000 flights</h4>
+      <div class="bar"><span>tok3, 2 M steps</span><div class="track"><i style="width:57.8%;background:var(--s42)"></i></div><b>57.8 %</b></div>
+      <div class="bar"><span>Big token, 2 M steps</span><div class="track"><i style="width:61.2%;background:var(--s42)"></i></div><b>61.2 %</b></div>
+      <h4>SA, seed 7, 1000 flights</h4>
+      <div class="bar"><span>Big token, 2 M steps</span><div class="track"><i style="width:57.7%;background:var(--s7)"></i></div><b>57.7 %</b></div>
+      <div class="bar"><span>CaT, 2 M steps</span><div class="track"><i style="width:58.6%;background:var(--s7)"></i></div><b>58.6 %</b></div>
+      <div class="bar"><span>CaT, 4 M steps</span><div class="track"><i style="width:68.2%;background:var(--s7)"></i></div><b>68.2 %</b></div>
+      <div class="bar"><span>Maximum possible</span><div class="track"><i style="width:90%;background:var(--floor)"></i></div><b>90.0 %</b></div>
+      <h4>MA, 10,000 aircraft flights, CaT model at 4 M steps</h4>
+      <div class="bar"><span>Seed 7</span><div class="track"><i style="width:89.97%;background:var(--ma)"></i></div><b>89.97 %</b></div>
+      <div class="bar"><span>Seed 42</span><div class="track"><i style="width:90.35%;background:var(--ma)"></i></div><b>90.35 %</b></div>
+      <div class="bar"><span>Maximum possible, seed 42</span><div class="track"><i style="width:99.56%;background:var(--floor)"></i></div><b>99.56 %</b></div>
+    </div>
+    <figcaption><b>Share of clean flights (%) per model and test protocol.</b> The SA maximum is 90.0 % on seed 7, because 100 of the 1000 flights start with an intrusion. The MA maximum comes from the floor replay of the SA→MA page. Compare bars only inside one group: the groups have different environments or seeds.</figcaption>
+  </figure>
+
+  <h3>SA test, seed 42 (1000 flights)</h3>
+  <div class="tbl">
+  <table>
+    <thead><tr><th>Metric (per flight)</th><th>Fly straight</th><th>tok3</th><th>Big token</th></tr></thead>
+    <tbody>
+      <tr class="key"><td>Clean flights [%]</td><td class="n">—</td><td class="n">57.8</td><td class="n">61.2</td></tr>
+      <tr><td>Goal reached [%]</td><td class="n">100.0</td><td class="n">99.4</td><td class="n">99.8</td></tr>
+      <tr><td>Flight time [s]</td><td class="n">852.0</td><td class="n">1009.5</td><td class="n">1000.6</td></tr>
+      <tr><td>Intrusion events / time [s]</td><td class="n">1.127 / 96.3</td><td class="n">0.441 / 16.0</td><td class="n">0.293 / 13.8</td></tr>
+      <tr><td>Area events / time [s]</td><td class="n">0.813 / 129.9</td><td class="n">0.134 / 7.7</td><td class="n">0.181 / 19.4</td></tr>
+      <tr><td>Sector exits / time outside [s]</td><td class="n">0.000 / 0.0</td><td class="n">0.049 / 11.6</td><td class="n">0.057 / 6.9</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>SA test, seed 7 (1000 flights)</h3>
+  <div class="tbl">
+  <table>
+    <thead><tr><th>Metric (per flight)</th><th>Fly straight</th><th>Big token, 2 M</th><th>CaT, 2 M <span class="mono">sa_v2m_s0</span></th><th>CaT, 4 M <span class="mono">sa_v2m_s0_c2</span></th></tr></thead>
+    <tbody>
+      <tr class="key"><td>Clean flights [%]</td><td class="n">—</td><td class="n">57.7</td><td class="n">58.6</td><td class="n">68.2</td></tr>
+      <tr><td>Clean, start intrusions not counted [%]</td><td class="n">—</td><td class="n">63.8</td><td class="n">63.5</td><td class="n">75.3</td></tr>
+      <tr><td>Goal reached [%]</td><td class="n">100.0</td><td class="n">99.6</td><td class="n">96.8</td><td class="n">98.9</td></tr>
+      <tr><td>Flight time [s]</td><td class="n">851.7</td><td class="n">1018.3</td><td class="n">1230.7</td><td class="n">1084.0</td></tr>
+      <tr><td>Intrusion events / time [s]</td><td class="n">1.137 / 98.1</td><td class="n">0.317 / 14.9</td><td class="n">0.361 / 24.5</td><td class="n">0.303 / 18.7</td></tr>
+      <tr><td>Area events / time [s]</td><td class="n">0.849 / 128.1</td><td class="n">0.204 / 18.6</td><td class="n">0.270 / 67.4</td><td class="n">0.196 / 27.5</td></tr>
+      <tr><td>Sector exits / time outside [s]</td><td class="n">0.000 / 0.0</td><td class="n">0.060 / 11.8</td><td class="n">0.049 / 27.8</td><td class="n">0.017 / 6.5</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>MA test, CaT model at 4 M steps, zero-shot (10,000 aircraft flights per seed)</h3>
+  <div class="tbl">
+  <table>
+    <thead><tr><th>Metric (per aircraft flight)</th><th>Seed 7</th><th>Seed 42</th></tr></thead>
+    <tbody>
+      <tr class="key"><td>Clean flights [%]</td><td class="n">89.97</td><td class="n">90.35</td></tr>
+      <tr><td>Goal reached [%]</td><td class="n">98.92</td><td class="n">98.86</td></tr>
+      <tr><td>Flight time [s]</td><td class="n">1034.8</td><td class="n">1020.8</td></tr>
+      <tr><td>Intrusion events / time [s]</td><td class="n">0.0186 / 0.9</td><td class="n">0.0230 / 1.0</td></tr>
+      <tr><td>Area events / time [s]</td><td class="n">0.1505 / 23.0</td><td class="n">0.1346 / 19.8</td></tr>
+      <tr><td>Sector exits / time outside [s]</td><td class="n">0.0049 / 3.4</td><td class="n">0.0053 / 4.0</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>tok3 and the big token model have no MA result.</p>
+
+  <h3>What the data supports</h3>
+  <ul>
+    <li><b>tok3 → big token (seed 42).</b> Clean flights go from 57.8 % to 61.2 %. Intrusion events go down (0.441 → 0.293). Restricted-area events and time go up (0.134 → 0.181; 7.7 s → 19.4 s).</li>
+    <li><b>CaT at 4 M steps (seed 7).</b> Clean flights are 68.2 % against 57.7 % for the big token model. This is 10.5 points, about 4.9 standard errors (unpaired binomial, 1000 flights each). Sector exits go from 0.060 to 0.017.</li>
+    <li><b>MA.</b> The CaT model has 0.02 intrusion events per flight in MA against 0.30 in SA. Restricted-area events are at the same level in both (0.13 to 0.20).</li>
+  </ul>
+  <h3>What the data does not support</h3>
+  <ul>
+    <li><b>CaT at equal steps is not better.</b> At 2 M steps the CaT model has 58.6 % against 57.7 % (0.9 points, less than one standard error). Its goal share is lower (96.8 % against 99.6 %), its flights are 212 s longer, and its area time is 3.6 times higher.</li>
+    <li><b>The gain at 4 M steps is not proven to come from CaT.</b> The CaT model at 4 M has twice the training steps of the big token model. No big token model with 4 M steps exists. The CaT model also changes four things at one time: action map, margin costs, CaT end and failure replay.</li>
+    <li><b>A plain fine-tune is as good.</b> On the first 200 flights of seed 7, the fine-tune <span class="mono">sa_tf_big_ftpen10_s0</span> (big token model + 1 M steps, lr 1e-4, −10 per event, no CaT) has 148 clean flights (74.0 %). The CaT model at 4 M has 143 (71.5 %). The big token model has 112 (56.0 %).</li>
+    <li><b>Cause of the low MA intrusion count.</b> The data does not separate the two differences between SA and MA: the other aircraft are agents and not scripted intruders, and the start conditions differ.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Limits</h2>
+  <ul>
+    <li>One training seed per model. The spread over training seeds is not known.</li>
+    <li>The tables give means over flights with no standard deviation. The standard deviations are in the result files.</li>
+    <li>tok3 against the CaT model: not matched. They have no result on the same seed.</li>
+    <li>The fine-tune comparison uses 200 flights only, and its model file is not on this machine.</li>
+    <li>The SA and MA values come from different environments. A direct comparison of the clean share (68.2 % against 90.35 %) is not matched.</li>
+    <li>Status EXPLORATORY: these results come from evaluations, not from a planned experiment.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Next step</h2>
+  <p>Fine-tune <span class="mono">sa_v2m_s0_c2</span> in the MA environment and measure it on the same seed-7 episodes. Before the run, choose the safety signal for MA: event penalties, or CaT per aircraft with a code change. For a clean test of CaT in SA, train the big token model to 4 M steps with no CaT and compare it with the CaT model on seed 7.</p>
+</section>
+
+<footer>
+  <span>Sources (read 2026-11-20):</span>
+  <code>results/sa_tf_tok3_s0_summary.json · results/sa_tf_info_ff_cls_big_s0_summary.json · results/sa_v2m_s0_summary.json · results/sa_v2m_s0_c2_summary.json · results/sa_tf_big_ftpen10_s0_summary.json · results/sa_tf_tok3_s0_competition_sa.json · results/sa_tf_info_ff_cls_big_s0_competition_sa.json · results/s7k_sa_tf_info_ff_cls_big_s0_competition_sa.json · results/s7k_sa_v2m_s0_competition_sa.json · results/s7k_sa_v2m_s0_c2_competition_sa.json · results/s7_ftpen10_competition_sa.json · results/s7ma_sa_v2m_s0_c2_competition_ma.json · results/s42ma_sa_v2m_s0_c2_competition_ma.json · results/competition_straight_sa_1000_seed{7,42}.json · results/scenario_floor_ma_seed42.json · rl_tf/envs.py · README.md · bluesky_gym/envs/competition_env.py</code>
+  <span>Related pages: <a href="https://claude.ai/artifact/VsCpM2C3KQK5VFCDLBdTua">SA→MA Zero-Shot Transfer</a> · <a href="https://claude.ai/artifact/7V68C2aAz4rcFtWLyyQnTi">Lidar Token Policy</a> (big token model, 2026-11-13)</span>
+</footer>
+</div>

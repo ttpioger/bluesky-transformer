@@ -302,20 +302,31 @@ class Lidar:
         goal = np.asarray(g["goal"], dtype=np.float64).reshape(2)
         gd = float(np.linalg.norm(goal))
         rows = []
-        for poly in g["zones"]:
-            v = np.asarray(poly, dtype=np.float64).reshape(-1, 2)
-            p, q = v, np.roll(v, -1, axis=0)
-            d = q - p
-            s = np.clip(-(p * d).sum(1) / np.maximum((d * d).sum(1), 1e-12), 0.0, 1.0)
-            c = p + s[:, None] * d                                         # nearest point of each edge
-            dist = np.linalg.norm(c, axis=1)
+        # Speed (2026-11-20): the edge geometry and the two ray tests run once for all areas (one array of all
+        # edges); only the bearings and the per-area choices stay in the loop. The element-wise operations are the
+        # same as before, so the output is bit-identical (scripts.check_fast_path). Transcendental functions
+        # (arctan2, cos, sin) and the 1-D norms keep their old per-area calls.
+        vs = [np.asarray(poly, dtype=np.float64).reshape(-1, 2) for poly in g["zones"]]
+        if vs:
+            P = np.concatenate(vs)
+            Q = np.concatenate([np.roll(v, -1, axis=0) for v in vs])
+            D = Q - P
+            S = np.clip(-(P * D).sum(1) / np.maximum((D * D).sum(1), 1e-12), 0.0, 1.0)
+            C = P + S[:, None] * D                                         # nearest point of each edge
+            DIST = np.linalg.norm(C, axis=1)
+            NOSE = np.isfinite(ray_segments(np.array([[1.0, 0.0]]), P, Q)[0])
+            GOAL = (ray_segments((goal / gd)[None], P, Q)[0] <= gd) if gd > 1e-9 else None
+            ends = np.cumsum([len(v) for v in vs])
+        for k, v in enumerate(vs):
+            a, b = (int(ends[k - 1]) if k else 0), int(ends[k])
+            c, dist = C[a:b], DIST[a:b]
             j = int(dist.argmin())
-            inside = int(np.isfinite(ray_segments(np.array([[1.0, 0.0]]), p, q)).sum()) % 2 == 1
+            inside = int(NOSE[a:b].sum()) % 2 == 1
             cen = v.mean(axis=0)
             ang = np.arctan2(v[:, 1], v[:, 0])                             # positive = starboard
             rel = (ang - np.arctan2(cen[1], cen[0]) + np.pi) % (2.0 * np.pi) - np.pi
             il, ir = int(rel.argmin()), int(rel.argmax())
-            blocks = inside or (gd > 1e-9 and bool((ray_segments((goal / gd)[None], p, q)[0] <= gd).any()))
+            blocks = inside or (GOAL is not None and bool(GOAL[a:b].any()))
             n = DIST_NORM_KM
             rows.append((dist[j], [c[j, 0] / n, c[j, 1] / n, dist[j] / n,
                                    np.cos(ang[il]), np.sin(ang[il]), np.linalg.norm(v[il]) / n,
