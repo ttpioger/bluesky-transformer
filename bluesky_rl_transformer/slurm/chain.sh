@@ -5,6 +5,7 @@
 #
 # Run from bluesky_rl_transformer/:
 #   slurm/chain.sh <n_jobs> <run_name> [train arguments ...]
+# Another job file (e.g. DelftBlue): SBATCH_SCRIPT=slurm/delftblue.sbatch.
 # Extra sbatch options (e.g. a seed array, more CPUs, a time limit) go in SBATCH_OPTS:
 #   SBATCH_OPTS="--array=0-2 --time=24:00:00" slurm/chain.sh 6 sa_v2L --steps 50000000 ...
 set -euo pipefail
@@ -19,7 +20,7 @@ for i in $(seq 1 "$N"); do
     DEP=()
     [ -n "$PREV" ] && DEP=(--dependency=afterany:"$PREV")
     # shellcheck disable=SC2086
-    PREV=$(sbatch --parsable ${SBATCH_OPTS:-} ${DEP[@]+"${DEP[@]}"} slurm/train.sbatch "$@")
+    PREV=$(sbatch --parsable ${SBATCH_OPTS:-} ${DEP[@]+"${DEP[@]}"} "${SBATCH_SCRIPT:-slurm/train.sbatch}" "$@")
     PREV="${PREV%%;*}"
     echo "job $i/$N: $PREV"
 done
