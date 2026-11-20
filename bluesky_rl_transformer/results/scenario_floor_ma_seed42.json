@@ -1,0 +1,87 @@
+{
+ "status": "EXPLORATORY",
+ "seed": 42,
+ "episodes": 1000,
+ "n_flights": 10000,
+ "start_in_area": 27,
+ "goal_in_area": 29,
+ "goal_in_area_deep": 23,
+ "unavoidable_flights": 44,
+ "max_clean": 9956,
+ "max_clean_pct": 99.56,
+ "fallback_placement": 81,
+ "straight_crosses_area": 5334,
+ "start_area_lt_5nm": 37,
+ "goal_area_lt_5nm": 33,
+ "first_los_lt_s": {
+  "30": 0,
+  "60": 86,
+  "120": 517,
+  "300": 2060
+ },
+ "note": "unavoidable = start inside an area (event at reset) or goal >= 5 km inside an area; straight-line LoS: all agents fly straight to the goal at constant speed",
+ "eval": {
+  "file": "results/s42ma_sa_v2m_s0_c2_competition_ma.json",
+  "model": "models/sa_v2m_s0_c2.pt",
+  "rows_matched": 10000,
+  "rows_missing": 0,
+  "check_start_in_area_without_area_event": 0,
+  "check_ok": true,
+  "clean": 9035,
+  "clean_pct": 90.35,
+  "avoidable_failures": 921,
+  "failures_by_class_and_tag": {
+   "A": {
+    "straight_crosses_area": 580,
+    "goal_in_area_deep": 9,
+    "start_in_area": 21,
+    "none": 9
+   },
+   "I": {
+    "straight_crosses_area": 80,
+    "none": 17
+   },
+   "IA": {
+    "straight_crosses_area": 85,
+    "none": 2,
+    "start_in_area": 5
+   },
+   "GA": {
+    "goal_in_area_deep": 8,
+    "straight_crosses_area": 56,
+    "start_in_area": 1,
+    "none": 1
+   },
+   "G": {
+    "straight_crosses_area": 32
+   },
+   "S": {
+    "straight_crosses_area": 21
+   },
+   "IS": {
+    "straight_crosses_area": 9
+   },
+   "AS": {
+    "straight_crosses_area": 9
+   },
+   "GS": {
+    "straight_crosses_area": 8
+   },
+   "GIA": {
+    "straight_crosses_area": 5
+   },
+   "IAS": {
+    "straight_crosses_area": 4
+   },
+   "GIS": {
+    "straight_crosses_area": 1
+   },
+   "GI": {
+    "straight_crosses_area": 1
+   },
+   "GAS": {
+    "straight_crosses_area": 1
+   }
+  }
+ }
+}
