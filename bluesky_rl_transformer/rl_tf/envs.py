@@ -119,8 +119,15 @@ def check_reward(rw):
 #   d_cpa = closest distance on straight lines within cpa_horizon_s. Margin = cpa_margin_nm (5 NM = separation).
 # zone_margin_penalty: per second, times (1 - d_zone / zone_buffer_km) (0 when d_zone >= buffer; 1 inside a zone).
 # Both margin weights are <= 0 (the reward has only negative terms).
+# timeout_penalty (2026-11-20): <= 0, added once when a flight ends at the time limit with the goal not reached
+#   (a clean flight needs the goal; before, the time limit had no cost of its own). 0 = off.
+# skip_start_events (2026-11-20, single agent): 1 = the event penalties leave out what exists at the reset sample and
+#   cannot be avoided: intrusions with aircraft already within 5 NM (until that aircraft goes out of 5 NM) and a
+#   start inside a restricted area or outside the sector. The per-second penalties stay (the policy can shorten that
+#   time). The scored metrics do not change. 0 = as before.
 V2_DEFAULTS = dict(action_map="rel", goal_offset_deg=90.0, cpa_margin_penalty=0.0, cpa_margin_nm=7.5,
-                   cpa_horizon_s=120.0, zone_margin_penalty=0.0, zone_buffer_km=10.0)
+                   cpa_horizon_s=120.0, zone_margin_penalty=0.0, zone_buffer_km=10.0, timeout_penalty=0.0,
+                   skip_start_events=0)
 
 
 def cat_prob_at(env_steps, start, end, ramp_steps):
@@ -139,6 +146,8 @@ def v2_kwargs(c):
         raise ValueError(f"action_map must be rel or goal, got {out['action_map']}")
     if out["cpa_margin_penalty"] > 0.0 or out["zone_margin_penalty"] > 0.0:
         raise ValueError("the margin penalties must be <= 0 (the reward has only negative terms)")
+    if out["timeout_penalty"] > 0.0:
+        raise ValueError("timeout_penalty must be <= 0 (the reward has only negative terms)")
     return out
 
 
@@ -201,6 +210,8 @@ class FlightEnv:
             raise ValueError(f"env_kw: only {sorted(allowed)} may change, got {sorted(env_kw)}")
         kw.update(env_kw or {})
         self.v2 = v2_kwargs(v2 or {})
+        if self.v2["skip_start_events"] and setting != "single":
+            raise ValueError("skip_start_events: single agent only (the multi-agent environment has no start tracker)")
         if cat_penalty > 0.0:
             raise ValueError("cat_penalty must be <= 0 (the reward has only negative terms)")
         if cat_penalty < 0.0 and setting != "single":
@@ -236,6 +247,8 @@ class FlightEnv:
             obs, _ = self.env.reset(seed=seed)
         self.agents = list(obs)
         self._prev = {a: dict(t=0.0, zone=0.0, exit=0.0, turn=0.0, intr=0.0) for a in self.agents}
+        if self.v2["skip_start_events"]:               # events that exist at the reset sample get no event penalty
+            self._prev["own"].update(zone=self._cat_prev["zone"], exit=self._cat_prev["exit"])
         self._geom = {}
         self._add_geometry(obs)
         return obs
@@ -287,7 +300,8 @@ class FlightEnv:
         for a in obs:
             i, p = infos[a], self._prev[a]
             t, zone, ext = float(i["flight_time"]), float(i["restricted_area_events"]), float(i["sector_exit_events"])
-            turn, intr = float(actions[a][0]), float(i["intrusion_events"])
+            turn = float(actions[a][0])
+            intr = float(i["intrusion_events_no_start"] if v2["skip_start_events"] else i["intrusion_events"])
             gx, gy = obs[a][GEOM_KEY]["goal"]                          # own frame: origin = own aircraft, x = nose
             goal_km = float(np.hypot(gx, gy))
             cos_psi = float(gx) / goal_km if goal_km > 1e-9 else 1.0
@@ -306,6 +320,8 @@ class FlightEnv:
                     obs[a][GEOM_KEY], v2["zone_buffer_km"])
             if self.cat_penalty < 0.0 and infos[a].get("cat_end"):
                 out_rew[a] += self.cat_penalty
+            if v2["timeout_penalty"] < 0.0 and trunc[a] and not term[a] and float(i["waypoint_reached"]) < 1.0:
+                out_rew[a] += v2["timeout_penalty"]
             p.update(t=t, zone=zone, exit=ext, turn=turn, intr=intr)
         return obs, out_rew, {a: bool(term[a]) for a in obs}, {a: bool(trunc[a]) for a in obs}, infos
 
@@ -517,8 +533,13 @@ def turn_stats(turns):
 
 # ------------------------------------------------------------------ pool of environment processes
 def _episode_seed(cfg, worker, episode):
+    """Scenario seed of a new training flight. narrow (default, as before): 10 000 seeds per worker; a long run
+    (more than 10 000 flights per worker) then flies the seeds of the next worker again. wide (2026-11-20, long
+    runs): 1 000 000 seeds per worker and 100 000 000 per run seed (run seed <= 20, workers <= 100)."""
     if cfg["reset_seed"] is not None:
         return cfg["reset_seed"]
+    if cfg.get("seed_layout", "narrow") == "wide":
+        return 1000 + cfg["seed"] * 100_000_000 + worker * 1_000_000 + episode
     return 1000 + cfg["seed"] * 1_000_000 + worker * 10_000 + episode
 
 
@@ -570,6 +591,11 @@ def _worker(conn, cfg, worker):
         rrng = np.random.default_rng(cfg["seed"] * 1000 + worker + 7)
         pool = {}                                   # seed -> replays so far (insertion order = age)
         st.update(seed=None, replay=False)
+    ws = (cfg.get("worker_state") or {}).get(worker)    # resume (2026-11-20): seed counter and replay pool
+    if ws:
+        st["episode"] = int(ws["episode"])
+        if replay_frac > 0.0 and ws.get("pool"):
+            pool.update({int(k): int(v) for k, v in ws["pool"].items()})
 
     def do_reset():
         if replay_frac > 0.0 and pool and rrng.random() < replay_frac:
@@ -652,6 +678,8 @@ def _worker(conn, cfg, worker):
             elif cmd == "density":                # curriculum: effective from the next reset
                 env.set_density(*data)
                 conn.send(True)
+            elif cmd == "snapshot":               # resume state of this worker (2026-11-20)
+                conn.send({"episode": st["episode"], "pool": dict(pool) if replay_frac > 0.0 else None})
             elif cmd == "close":
                 env.close()
                 conn.close()
@@ -713,6 +741,13 @@ class VecEnv:
             c.send(("density", (n_intruders, n_obstacles)))
         for c in self.conns:
             c.recv()
+
+    def snapshot(self):
+        """Resume state of the workers {worker: {"episode", "pool"}} (2026-11-20). The random generators of the
+        workers are not saved, so a resumed run is not bit-identical to a run without a stop."""
+        for c in self.conns:
+            c.send(("snapshot", None))
+        return {w: c.recv() for w, c in enumerate(self.conns)}
 
     def close(self):
         for c in self.conns:

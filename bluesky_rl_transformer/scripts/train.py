@@ -8,6 +8,8 @@ This script is a training run: start it through ~/bin/notify_run.sh.
 """
 from __future__ import annotations
 import argparse
+import os
+import sys
 import time
 from pathlib import Path
 import numpy as np
@@ -18,7 +20,7 @@ from rl_tf.lidar import Lidar
 from rl_tf.networks import build_policy, save_checkpoint, n_params, load_encoder, AttentionCritic
 from rl_tf.common import (setup_torch, compute_gae, pass_criterion, window_stats, write_json, policy_fn_from, wandb_upload,
                           wandb_init, add_wandb_args, parse_curriculum, curriculum_stage, parse_lagrangian,
-                          lagrange_step, lagrangian_advantage)
+                          lagrange_step, lagrangian_advantage, WINDOW)
 
 EVAL_SEED0 = 900_000_000   # held-out scenario seeds for the final flights without noise
 
@@ -116,6 +118,11 @@ def build_parser():
     p.add_argument("--zone-margin-penalty", type=float, default=V2_DEFAULTS["zone_margin_penalty"],
                    help="Per second, times max(0, 1 - d_zone / buffer). <= 0.")
     p.add_argument("--zone-buffer-km", type=float, default=V2_DEFAULTS["zone_buffer_km"])
+    p.add_argument("--timeout-penalty", type=float, default=V2_DEFAULTS["timeout_penalty"],
+                   help="<= 0: added once when a flight ends at the time limit with the goal not reached. 0 = off.")
+    p.add_argument("--skip-start-events", type=int, choices=[0, 1], default=V2_DEFAULTS["skip_start_events"],
+                   help="Single agent. 1: no event penalty for what exists at the reset sample (an aircraft already "
+                        "within 5 NM, a start inside a restricted area). The per-second penalties stay. 0 = as before.")
     p.add_argument("--cat-penalty", type=float, default=0.0,
                    help="Training only, single agent: < 0 ends the flight at the first avoidable violation "
                         "(intrusion without the start intrusions, area entry, sector exit) with this reward. 0 = off.")
@@ -147,12 +154,62 @@ def build_parser():
     p.add_argument("--reset-seed", type=int, default=-1, help="Scenario seed used at every reset. -1 = random scenarios.")
     p.add_argument("--eval-episodes", type=int, default=10, help="Final flights without noise (random scenarios: held-out seeds).")
     p.add_argument("--save-every", type=int, default=20, help="Save the model every N updates.")
+    # long runs (2026-11-20): save points, validation on other seeds, best model, resume over several jobs.
+    # All off by default: the training is then that of before.
+    p.add_argument("--ckpt-every", type=int, default=0,
+                   help="Env steps between save points: the weights go to models/NAME_ckpt/step_N.pt and the full "
+                        "training state (optimizer, counters, curve, worker seed counters) to models/NAME_state.pt. "
+                        "0 = off.")
+    p.add_argument("--val-every", type=int, default=0,
+                   help="Env steps between validations: a weight snapshot (models/NAME_ckpt/step_N.pt) flies the "
+                        "competition protocol on --val-seeds in background processes. The best snapshot (leaderboard "
+                        "rule: clean %%, then goal %%, then events) goes to models/NAME_best.pt, all records to "
+                        "results/NAME_val.json (rl_tf/validate.py). 0 = off.")
+    p.add_argument("--val-seeds", default="7", help="Validation seeds, comma list. Never 42 (the leaderboard test seed).")
+    p.add_argument("--val-episodes", type=int, default=100, help="Validation episodes per seed.")
+    p.add_argument("--val-workers", type=int, default=2, help="Validation processes (one thread each).")
+    p.add_argument("--resume", action="store_true",
+                   help="Continue from models/NAME_state.pt if the file exists (else start new). --steps may be "
+                        "larger than before. Not bit-identical to a run without a stop: the random generators of "
+                        "the environment workers start again (their seed counters and replay pools continue).")
+    p.add_argument("--max-wall-hours", type=float, default=0.0,
+                   help="Save the state and stop with exit code 3 after this many hours of this process, so that a "
+                        "SLURM job ends before its time limit. The next job continues with --resume. 0 = off.")
+    p.add_argument("--keep-episodes", type=int, default=0,
+                   help="Keep only the first 20 and the last K training flights in memory, in the state file and in "
+                        "the summary (the counts stay exact). 0 = all (as before).")
+    p.add_argument("--seed-layout", choices=["narrow", "wide"], default="narrow",
+                   help="Training scenario seeds. narrow: 10 000 per worker (as before). wide: 1 000 000 per worker; "
+                        "use it when a worker flies more than 10 000 flights (about 1.5 M steps per worker).")
     p.add_argument("--device", default="cpu")
     p.add_argument("--learner-threads", type=int, default=6, help="Torch threads in the update phase (workers are idle then).")
     p.add_argument("--inference-threads", type=int, default=1,
                    help="Torch threads for policy.act in the rollout (workers wait then). 1 = as before (2026-11-19).")
     p.add_argument("--out-dir", default=".", help="Base folder for models/ and results/.")
     return p
+
+
+# arguments that may change between the jobs of one run (--resume); others give a warning, the rest an error
+RESUME_FREE = {"steps", "resume", "max_wall_hours", "ckpt_every", "val_every", "val_seeds", "val_episodes",
+               "val_workers", "wandb", "wandb_project", "device", "learner_threads", "inference_threads", "out_dir",
+               "eval_episodes", "save_every", "keep_episodes", "init_policy", "init_encoder"}
+RESUME_HARD = {"setting", "n_agents", "workers", "seed", "seed_layout", "reset_seed"}
+
+
+def check_resume(old, new):
+    diff = sorted(k for k in set(old) | set(new) if k not in RESUME_FREE and old.get(k) != new.get(k))
+    hard = [k for k in diff if k in RESUME_HARD]
+    if hard:
+        raise ValueError(f"--resume: these settings differ from the saved run: "
+                         f"{ {k: (old.get(k), new.get(k)) for k in hard} }")
+    if diff:
+        print(f"WARNING --resume: settings differ from the saved run: { {k: (old.get(k), new.get(k)) for k in diff} }",
+              flush=True)
+
+
+def next_mark(total, every):
+    """First multiple of `every` above `total` (0 = off: never)."""
+    return (total // every + 1) * every if every > 0 else float("inf")
 
 
 def main(argv=None):
@@ -176,8 +233,8 @@ def main(argv=None):
     if any(k not in allowed for k in cost_keys):
         raise ValueError(f"--lagrangian: metrics must be from {allowed}")
     v2 = v2_kwargs(vars(args))
-    if args.setting != "single" and (args.cat_penalty < 0.0 or args.replay_frac > 0.0):
-        raise ValueError("--cat-penalty and --replay-frac: single agent only")
+    if args.setting != "single" and (args.cat_penalty < 0.0 or args.replay_frac > 0.0 or args.skip_start_events):
+        raise ValueError("--cat-penalty, --replay-frac and --skip-start-events: single agent only")
     if args.cat_penalty > 0.0:
         raise ValueError("--cat-penalty must be <= 0 (the reward has only negative terms)")
     if not (0.0 < args.cat_prob_start <= 1.0 and 0.0 < args.cat_prob_end <= 1.0):
@@ -187,6 +244,23 @@ def main(argv=None):
         raise ValueError("--cat-prob-start/--cat-prob-end < 1 need --cat-penalty < 0")
     if not 0.0 <= args.replay_frac < 1.0:
         raise ValueError("--replay-frac must be in [0, 1)")
+    if args.seed_layout == "wide" and not (0 <= args.seed <= 20 and args.workers <= 100):
+        raise ValueError("--seed-layout wide: --seed must be in [0, 20] and --workers <= 100")
+    if min(args.ckpt_every, args.val_every, args.keep_episodes) < 0:
+        raise ValueError("--ckpt-every, --val-every and --keep-episodes must be >= 0")
+    state_path = out / "models" / f"{args.name}_state.pt"
+    ckpt_dir = out / "models" / f"{args.name}_ckpt"
+    rs = None
+    if args.resume and state_path.exists():
+        rs = torch.load(state_path, map_location="cpu", weights_only=False)
+        check_resume(rs["args"], vars(args))
+        if rs.get("finished") and rs["total"] >= args.steps:
+            print(f"{args.name}: already finished at env_steps={rs['total']} (>= --steps {args.steps}); nothing to do.",
+                  flush=True)
+            return 4
+        print(f"Resume {args.name} from {state_path} at env_steps={rs['total']} (updates {rs['updates']})", flush=True)
+    elif args.resume:
+        print(f"--resume: {state_path} does not exist; new run.", flush=True)
     rw0 = reward_kwargs(args)
     if args.cat_penalty < 0.0 and abs(args.cat_penalty) <= abs(rw0["time_penalty"]) * 3000.0:
         print(f"WARNING --cat-penalty {args.cat_penalty}: not below the time cost of a full flight "
@@ -194,17 +268,18 @@ def main(argv=None):
     cfg = dict(setting=args.setting, n_agents=args.n_agents, reward=rw0, lidar=lidar_cfg,
                history=args.history, shaping=args.shaping == "potential", shaping_speed=args.shaping_speed,
                seed=args.seed, reset_seed=reset_seed, v2=v2, cat_penalty=args.cat_penalty,
-               replay_frac=args.replay_frac, replay_cap=args.replay_cap, replay_max=args.replay_max)
+               replay_frac=args.replay_frac, replay_cap=args.replay_cap, replay_max=args.replay_max,
+               seed_layout=args.seed_layout, worker_state=rs["worker_state"] if rs else None)
     dims = obs_dims(lidar_cfg, args.history)
     policy = build_policy(dims, vars(args)).to(dev)
-    if args.init_encoder:
+    if args.init_encoder and rs is None:
         load_encoder(policy, args.init_encoder, dims, vars(args))
         print(f"Encoder start weights from {args.init_encoder}", flush=True)
-    if args.init_policy:
+    if args.init_policy and rs is None:
         from rl_tf.networks import load_actor
         load_actor(policy, args.init_policy, dims, vars(args))
         print(f"Encoder, actor and log_std start weights from {args.init_policy} (critic new)", flush=True)
-    frozen = args.freeze_encoder_steps > 0
+    frozen = args.freeze_encoder_steps > 0 and (rs is None or rs["total"] < args.freeze_encoder_steps)
     if frozen:                                         # Adam skips a weight without gradient
         policy.encoder.requires_grad_(False)
     opt = torch.optim.Adam(policy.parameters(), lr=args.lr)
@@ -222,6 +297,17 @@ def main(argv=None):
     def lag_extra():
         return {"lagrangian": {"constraints": cons, "lambda": lam.tolist(), "cost_critics": ccrit.state_dict()}} if C else None
     model_path = out / "models" / f"{args.name}.pt"
+    if rs is not None:                                 # weights, optimizer and random state of the saved run
+        policy.load_state_dict(rs["policy"])
+        opt.load_state_dict(rs["opt"])
+        if C:
+            ccrit.load_state_dict(rs["ccrit"])
+            copt.load_state_dict(rs["copt"])
+            lam = np.asarray(rs["lam"], dtype=np.float64)
+        torch.set_rng_state(rs["torch_rng"])
+        np.random.set_state(rs["np_rng"])
+        if str(dev).startswith("cuda") and rs.get("cuda_rng") is not None:
+            torch.cuda.set_rng_state_all(rs["cuda_rng"])
     wb = wandb_init(args.wandb, args.wandb_project, args.name, {**vars(args), "n_params": n_par})
 
     vec = VecEnv(cfg, args.workers)
@@ -230,9 +316,48 @@ def main(argv=None):
     episodes, curve = [], []
     total, updates, n_cut_total, t_start = 0, 0, 0, time.time()
     n_nonfinite = 0
+    episodes_first, n_eps_total, wall_before, n_resumes = None, 0, 0.0, 0
+    if rs is not None:
+        total, updates, n_cut_total, n_nonfinite = rs["total"], rs["updates"], rs["n_cut_total"], rs["n_nonfinite"]
+        episodes, curve, episodes_first, n_eps_total = rs["episodes"], rs["curve"], rs["episodes_first"], rs["n_eps_total"]
+        wall_before, n_resumes = rs["wall"], rs.get("n_resumes", 0) + 1
+    next_ckpt, next_val = next_mark(total, args.ckpt_every), next_mark(total, args.val_every)
+    val = None
+    if args.val_every > 0:
+        from rl_tf.validate import Validator, parse_seeds
+        val = Validator(args.setting, parse_seeds(args.val_seeds), args.val_episodes, args.val_workers,
+                        out / "results" / f"{args.name}_val.json", out / "models" / f"{args.name}_best.pt", wb)
+        if ckpt_dir.exists():                          # snapshots whose validation was lost in a stopped job
+            for f in sorted(ckpt_dir.glob("step_*.pt")):
+                st_ = int(f.stem.split("_")[1])
+                if st_ <= total and st_ not in val.done_steps():
+                    val.submit(st_, f)
+
+    def snapshot(step):
+        """Weights at this step (same format as models/NAME.pt; scripts.competition_eval can load it)."""
+        ckpt_dir.mkdir(parents=True, exist_ok=True)
+        path = ckpt_dir / f"step_{step:010d}.pt"
+        save_checkpoint(path, policy, vars(args), dims, {**(lag_extra() or {}), "env_steps": step})
+        return path
+
+    def save_state(finished=False):
+        st_ = {"policy": policy.state_dict(), "opt": opt.state_dict(), "args": vars(args), "dims": dims,
+               "total": total, "updates": updates, "n_cut_total": n_cut_total, "n_nonfinite": n_nonfinite,
+               "n_eps_total": n_eps_total, "episodes_first": episodes_first, "episodes": episodes, "curve": curve,
+               "timing": timing, "wall": wall_before + time.time() - t_start, "n_resumes": n_resumes,
+               "finished": finished, "torch_rng": torch.get_rng_state(), "np_rng": np.random.get_state(),
+               "cuda_rng": torch.cuda.get_rng_state_all() if str(dev).startswith("cuda") else None,
+               "worker_state": None if finished else vec.snapshot()}
+        if C:
+            st_.update(ccrit=ccrit.state_dict(), copt=copt.state_dict(), lam=lam.tolist())
+        tmp = state_path.with_suffix(".tmp")
+        torch.save(st_, tmp)
+        os.replace(tmp, state_path)
     tt = lambda x: torch.as_tensor(x, device=dev)
     # wall-clock timers (seconds): environment (reset + step), inference (policy.act), update (GAE + PPO epochs)
     timing = {"env": 0.0, "inference": 0.0, "update": 0.0}
+    if rs is not None:
+        timing = dict(rs["timing"])
     sync = (lambda: torch.cuda.synchronize()) if str(dev).startswith("cuda") else (lambda: None)
 
     density = None
@@ -295,6 +420,7 @@ def main(argv=None):
                 B_cost[t] = res["cost"] * args.reward_scale
             for e in res["episodes"]:
                 episodes.append({"env_steps": total, **e})
+            n_eps_total += len(res["episodes"])
             state, lidar, _ = res["cur"]
         t0 = time.perf_counter()
         if C:
@@ -389,8 +515,37 @@ def main(argv=None):
         if updates % args.save_every == 0:
             save_checkpoint(model_path, policy, vars(args), dims, lag_extra())
             wandb_upload(wb, model_path)
+        if args.keep_episodes > 0 and len(episodes) > args.keep_episodes + WINDOW:
+            if episodes_first is None:
+                episodes_first = episodes[:WINDOW]
+            episodes = episodes[-args.keep_episodes:]
+        snap = None
+        if val is not None and total >= next_val:
+            snap = snapshot(total)
+            val.submit(total, snap)
+            next_val = next_mark(total, args.val_every)
+        if total >= next_ckpt:
+            if snap is None:
+                snapshot(total)
+            save_state()
+            next_ckpt = next_mark(total, args.ckpt_every)
+            print(f"save point at env_steps={total}: {state_path}", flush=True)
+        if val is not None:
+            val.poll()
+        if args.max_wall_hours > 0 and total < args.steps and time.time() - t_start > args.max_wall_hours * 3600:
+            save_state()
+            vec.close()
+            print(f"wall limit {args.max_wall_hours} h: state saved at env_steps={total}; continue with --resume.",
+                  flush=True)
+            if val is not None:
+                val.poll(block=True)
+                val.close()
+            if wb is not None:
+                wb.finish()
+            return 3
 
-    wall = time.time() - t_start
+    wall = wall_before + time.time() - t_start
+    timing.pop("other", None)
     timing["other"] = wall - sum(timing.values())
     timing_share = {k: v / max(wall, 1e-9) for k, v in timing.items()}
     print("timing (s, share of wall): " + ", ".join(f"{k} {v:.1f} ({timing_share[k]:.0%})" for k, v in timing.items()))
@@ -398,6 +553,14 @@ def main(argv=None):
     save_checkpoint(model_path, policy, vars(args), dims, lag_extra())
     print(f"Saved {model_path}")
     wandb_upload(wb, model_path)
+    if val is not None:                                # the final weights are validated too; wait for all jobs
+        if total not in val.done_steps():
+            val.submit(total, snapshot(total))
+        val.poll(block=True)
+        val.close()
+        if val.best is not None:
+            print(f"best snapshot: env_steps={val.best['env_steps']}, clean {100 * val.best['mean']['clean']:.1f} % "
+                  f"on seeds {val.seeds} -> {val.best_path}", flush=True)
 
     # final flights without noise (this process has no BlueSky environment until here)
     torch.set_num_threads(1)
@@ -413,25 +576,30 @@ def main(argv=None):
     if wb is not None:
         gm = window_stats(greedy_rows) or {}
         wb.summary.update({f"final_no_noise/{k}": v for k, v in gm.items()})
-        wb.summary.update({"wall_seconds": wall, "n_agent_episodes": len(episodes)})
+        wb.summary.update({"wall_seconds": wall, "n_agent_episodes": n_eps_total})
     summary_path = out / "results" / f"{args.name}_summary.json"
     write_json(summary_path, {
         "status": "EXPLORATORY",
         "task": "overfit on one fixed scenario" if reset_seed is not None else "random scenarios",
         "name": args.name, "setting": args.setting, "encoder": "lidar ray-token Transformer", "n_aircraft": N,
         "seed": args.seed, "reset_seed": reset_seed, "n_params": n_par, "env_steps": total,
-        "n_agent_episodes": len(episodes), "n_cut_agent_episodes": n_cut_total,
-        "n_nonfinite_actions": n_nonfinite, **pass_criterion(episodes),
+        "n_agent_episodes": n_eps_total, "n_cut_agent_episodes": n_cut_total,
+        "n_nonfinite_actions": n_nonfinite, **pass_criterion((episodes_first or []) + episodes),
         "greedy_eval": {"seeds": seeds, "mean": window_stats(greedy_rows), "rows": greedy_rows},
         "wall_seconds": wall, "seconds_per_step": wall / max(total, 1),
         "timing_seconds": timing, "timing_share": timing_share,
         "lagrangian": {"constraints": cons, "lambda_final": lam.tolist(), "lambda_lr": args.lambda_lr,
                        "lambda_init": args.lambda_init, "lambda_max": args.lambda_max} if C else None,
-        "args": vars(args), "curve": curve, "episodes": episodes})
+        "validation": val.summary() if val is not None else None, "n_resumes": n_resumes,
+        "episodes_kept": "all" if args.keep_episodes == 0 else f"first {WINDOW} and last {args.keep_episodes}",
+        "args": vars(args), "curve": curve, "episodes": (episodes_first or []) + episodes})
+    if args.ckpt_every > 0 or args.resume:
+        save_state(finished=True)
     if wb is not None:
         wandb_upload(wb, summary_path)
         wb.finish()
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
