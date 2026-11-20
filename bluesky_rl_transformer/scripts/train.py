@@ -322,16 +322,16 @@ def main(argv=None):
         episodes, curve, episodes_first, n_eps_total = rs["episodes"], rs["curve"], rs["episodes_first"], rs["n_eps_total"]
         wall_before, n_resumes = rs["wall"], rs.get("n_resumes", 0) + 1
     next_ckpt, next_val = next_mark(total, args.ckpt_every), next_mark(total, args.val_every)
-    val = None
+    validator = None
     if args.val_every > 0:
         from rl_tf.validate import Validator, parse_seeds
-        val = Validator(args.setting, parse_seeds(args.val_seeds), args.val_episodes, args.val_workers,
+        validator = Validator(args.setting, parse_seeds(args.val_seeds), args.val_episodes, args.val_workers,
                         out / "results" / f"{args.name}_val.json", out / "models" / f"{args.name}_best.pt", wb)
         if ckpt_dir.exists():                          # snapshots whose validation was lost in a stopped job
             for f in sorted(ckpt_dir.glob("step_*.pt")):
                 st_ = int(f.stem.split("_")[1])
-                if st_ <= total and st_ not in val.done_steps():
-                    val.submit(st_, f)
+                if st_ <= total and st_ not in validator.done_steps():
+                    validator.submit(st_, f)
 
     def snapshot(step):
         """Weights at this step (same format as models/NAME.pt; scripts.competition_eval can load it)."""
@@ -520,9 +520,9 @@ def main(argv=None):
                 episodes_first = episodes[:WINDOW]
             episodes = episodes[-args.keep_episodes:]
         snap = None
-        if val is not None and total >= next_val:
+        if validator is not None and total >= next_val:
             snap = snapshot(total)
-            val.submit(total, snap)
+            validator.submit(total, snap)
             next_val = next_mark(total, args.val_every)
         if total >= next_ckpt:
             if snap is None:
@@ -530,16 +530,16 @@ def main(argv=None):
             save_state()
             next_ckpt = next_mark(total, args.ckpt_every)
             print(f"save point at env_steps={total}: {state_path}", flush=True)
-        if val is not None:
-            val.poll()
+        if validator is not None:
+            validator.poll()
         if args.max_wall_hours > 0 and total < args.steps and time.time() - t_start > args.max_wall_hours * 3600:
             save_state()
             vec.close()
             print(f"wall limit {args.max_wall_hours} h: state saved at env_steps={total}; continue with --resume.",
                   flush=True)
-            if val is not None:
-                val.poll(block=True)
-                val.close()
+            if validator is not None:
+                validator.poll(block=True)
+                validator.close()
             if wb is not None:
                 wb.finish()
             return 3
@@ -553,14 +553,14 @@ def main(argv=None):
     save_checkpoint(model_path, policy, vars(args), dims, lag_extra())
     print(f"Saved {model_path}")
     wandb_upload(wb, model_path)
-    if val is not None:                                # the final weights are validated too; wait for all jobs
-        if total not in val.done_steps():
-            val.submit(total, snapshot(total))
-        val.poll(block=True)
-        val.close()
-        if val.best is not None:
-            print(f"best snapshot: env_steps={val.best['env_steps']}, clean {100 * val.best['mean']['clean']:.1f} % "
-                  f"on seeds {val.seeds} -> {val.best_path}", flush=True)
+    if validator is not None:                                # the final weights are validated too; wait for all jobs
+        if total not in validator.done_steps():
+            validator.submit(total, snapshot(total))
+        validator.poll(block=True)
+        validator.close()
+        if validator.best is not None:
+            print(f"best snapshot: env_steps={validator.best['env_steps']}, clean {100 * validator.best['mean']['clean']:.1f} % "
+                  f"on seeds {validator.seeds} -> {validator.best_path}", flush=True)
 
     # final flights without noise (this process has no BlueSky environment until here)
     torch.set_num_threads(1)
@@ -590,7 +590,7 @@ def main(argv=None):
         "timing_seconds": timing, "timing_share": timing_share,
         "lagrangian": {"constraints": cons, "lambda_final": lam.tolist(), "lambda_lr": args.lambda_lr,
                        "lambda_init": args.lambda_init, "lambda_max": args.lambda_max} if C else None,
-        "validation": val.summary() if val is not None else None, "n_resumes": n_resumes,
+        "validation": validator.summary() if validator is not None else None, "n_resumes": n_resumes,
         "episodes_kept": "all" if args.keep_episodes == 0 else f"first {WINDOW} and last {args.keep_episodes}",
         "args": vars(args), "curve": curve, "episodes": (episodes_first or []) + episodes})
     if args.ckpt_every > 0 or args.resume:
