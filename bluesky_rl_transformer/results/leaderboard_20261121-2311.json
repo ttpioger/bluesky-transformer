@@ -1,0 +1,141 @@
+{
+ "source": "https://yojul-bluesky-gym-leaderboard-unofficial.hf.space/gradio_api/call/refresh",
+ "read_at": "20261121-2311",
+ "status": "UNOFFICIAL, self-reported",
+ "tables": {
+  "sa": [
+   {
+    "team": "TEAM ROBIN",
+    "clean": 89.2,
+    "goal": 100.0,
+    "intr": 0.116,
+    "area": 0.003,
+    "sector": 0.0,
+    "ftime": 912.561,
+    "submitted": "2026-11-06"
+   },
+   {
+    "team": "somnathab3",
+    "clean": 89.2,
+    "goal": 100.0,
+    "intr": 0.116,
+    "area": 0.003,
+    "sector": 0.0,
+    "ftime": 997.176,
+    "submitted": "2026-11-02"
+   },
+   {
+    "team": "Smart",
+    "clean": 89.2,
+    "goal": 100.0,
+    "intr": 0.123,
+    "area": 0.003,
+    "sector": 0.0,
+    "ftime": 1094.295,
+    "submitted": "2026-11-21"
+   },
+   {
+    "team": "Natasumushi",
+    "clean": 89.1,
+    "goal": 99.8,
+    "intr": 0.128,
+    "area": 0.002,
+    "sector": 0.0,
+    "ftime": 1018.635,
+    "submitted": "2026-11-20"
+   },
+   {
+    "team": "IASL",
+    "clean": 88.9,
+    "goal": 99.9,
+    "intr": 0.127,
+    "area": 0.003,
+    "sector": 0.0,
+    "ftime": 1025.707,
+    "submitted": "2026-10-24"
+   },
+   {
+    "team": "Moin!",
+    "clean": 88.1,
+    "goal": 99.9,
+    "intr": 0.135,
+    "area": 0.002,
+    "sector": 0.001,
+    "ftime": 1014.95,
+    "submitted": "2026-10-22"
+   },
+   {
+    "team": "solomon",
+    "clean": 79.3,
+    "goal": 96.1,
+    "intr": 0.211,
+    "area": 0.044,
+    "sector": 0.0,
+    "ftime": 1265.441,
+    "submitted": "2026-11-12"
+   },
+   {
+    "team": "yojul",
+    "clean": 48.4,
+    "goal": 89.8,
+    "intr": 0.551,
+    "area": 0.134,
+    "sector": 0.043,
+    "ftime": 1762.158,
+    "submitted": "2026-10-19"
+   }
+  ],
+  "ma": [
+   {
+    "team": "TEAM ROBIN",
+    "clean": 99.55,
+    "goal": 100.0,
+    "intr": 0.0,
+    "area": 0.0056,
+    "sector": 0.0,
+    "ftime": 887.9314,
+    "submitted": "2026-11-06"
+   },
+   {
+    "team": "somnathab3",
+    "clean": 99.55,
+    "goal": 100.0,
+    "intr": 0.0,
+    "area": 0.0065,
+    "sector": 0.0,
+    "ftime": 945.9145,
+    "submitted": "2026-11-05"
+   },
+   {
+    "team": "IASL",
+    "clean": 99.34,
+    "goal": 99.68,
+    "intr": 0.0008,
+    "area": 0.0039,
+    "sector": 0.0,
+    "ftime": 980.3556,
+    "submitted": "2026-10-24"
+   },
+   {
+    "team": "Smart",
+    "clean": 98.11,
+    "goal": 98.86,
+    "intr": 0.006,
+    "area": 0.0051,
+    "sector": 0.0001,
+    "ftime": 1107.2891,
+    "submitted": "2026-10-17"
+   },
+   {
+    "team": "solomon",
+    "clean": 93.67,
+    "goal": 98.04,
+    "intr": 0.0178,
+    "area": 0.0527,
+    "sector": 0.0001,
+    "ftime": 1024.614,
+    "submitted": "2026-11-12"
+   }
+  ]
+ }
+}
