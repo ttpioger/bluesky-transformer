@@ -42,6 +42,13 @@ METRIC_KEYS = [
 
 
 # ==================== EDIT THESE TWO FOR YOUR SUBMISSION ======================
+# Our submission (2026-11-21): --model bluesky_rl_transformer/models/NAME.pt loads the lidar ray-token Transformer.
+# make_env then wraps the base env (bluesky_rl_transformer/rl_tf/submission.py): model inputs, action mapping of
+# the training and the heading mask (settings from the checkpoint; BLUESKY_TF_HEADING_MASK=0|1 overrides).
+# The infos, the scoring and the fixed parameters are those of the base env. Without --model: as before.
+_TF_MODEL = None                                      # set by load_policy, read by make_env
+
+
 def make_env(kind, n_agents=N_AGENTS_MA):
     """Return the environment to evaluate.
 
@@ -50,6 +57,9 @@ def make_env(kind, n_agents=N_AGENTS_MA):
     Do NOT change the fixed scoring params (intrusion_distance, episode_time_limit,
     distance_margin, n_intruders/n_agents, n_obstacles, ...).
     """
+    if _TF_MODEL is not None:
+        from rl_tf.submission import SubmissionEnv
+        return SubmissionEnv(kind, _TF_MODEL, n_agents)
     if kind == "sa":
         import gymnasium as gym
         import bluesky_gym
@@ -69,8 +79,14 @@ def load_policy(kind, model_path=None):
         model = PPO.load(model_path)
         return lambda obs: model.predict(obs, deterministic=True)[0]
     """
+    global _TF_MODEL
     if model_path is not None:
-        raise NotImplementedError("load your trained policy in load_policy()")
+        import sys
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                                        "bluesky_rl_transformer"))
+        from rl_tf.submission import load_member, make_act
+        _TF_MODEL = load_member(model_path)
+        return make_act(_TF_MODEL)
     return lambda obs: np.zeros(2, dtype=np.float32)
 # =============================================================================
 
