@@ -156,6 +156,8 @@ def v2_kwargs(c):
         raise ValueError("mask_step_deg must be > 0; mask_dist_km and mask_margin_km must be >= 0")
     if out["mask_mode"] not in ("ray", "arc"):
         raise ValueError(f"mask_mode must be ray or arc, got {out['mask_mode']}")
+    if out["heading_mask"] and out["mask_intruders"] and out["mask_mode"] != "arc":
+        raise ValueError("mask_intruders needs mask_mode arc")
     return out
 
 
@@ -248,6 +250,8 @@ class FlightEnv:
         self._prev = {}
         self.last_exec = None                          # heading mask: executed policy actions of the last step
         self._mask_stats = {}
+        self.extra_info = False                        # evaluation (2026-11-21): start geometry in the infos
+        self._start_info = {}
 
     def reset(self, seed=None):
         if self.setting == "single":
@@ -265,6 +269,14 @@ class FlightEnv:
         self._geom = {}
         self._add_geometry(obs)
         self.last_exec = None
+        if self.extra_info:                            # start geometry: distance to the nearest real area (0 = inside)
+            self._start_info = {}                      # and to the nearest other aircraft (not scored)
+            for a in obs:
+                zones = self._geom[a]["zones"] if self.zone_margin_km <= 0.0 else self._true_zones(a)
+                d = zone_distance(zones)
+                ac = np.asarray(self._geom[a]["aircraft"], dtype=np.float64).reshape(-1, 2)
+                sep = float(np.hypot(ac[:, 0], ac[:, 1]).min()) / NM2KM if len(ac) else 999.0
+                self._start_info[a] = {"start_area_km": float(min(d, 999.0)), "start_min_sep_nm": float(min(sep, 999.0))}
         if self.v2["heading_mask"]:                    # per flight: decisions, projected, sum of |angle|, fallbacks
             self._mask_stats = {a: dict(dec=0, proj=0, angle=0.0, fb=0) for a in self.ids}
         return obs
@@ -315,8 +327,14 @@ class FlightEnv:
             bank = phi if phi > 1e-12 else float(bs.traf.ap.bankdef[idx])
             rate = float(np.degrees(9.80665 * np.tan(bank) / tas))
             geo = mask_polys(zones, g["sector"], v2["mask_margin_km"], bool(v2["mask_sector"]))
+            intr = None
+            if v2.get("mask_intruders", 0):            # other aircraft: absolute velocity = relative + own (own frame)
+                gs = float(bs.traf.gs[idx])
+                vel = np.asarray(g["aircraft_vel"], dtype=np.float64).reshape(-1, 2) + np.array([gs, 0.0])
+                intr = dict(pos=g["aircraft"], vel=vel, sep_km=float(v2["mask_intr_nm"]) * NM2KM,
+                            horizon_s=float(v2["mask_intr_horizon_s"]))
             off, proj, fb = choose_offset_arc(geo, goal_rel, req, cur_off, G, v2["mask_dist_km"],
-                                              v2["mask_step_deg"], tas, rate, goal_km)
+                                              v2["mask_step_deg"], tas, rate, goal_km, intr)
         else:
             edges = mask_geometry(zones, g["sector"], v2["mask_margin_km"], bool(v2["mask_sector"]))
             off, proj, fb = choose_offset(edges, goal_rel, req, cur_off, G, v2["mask_dist_km"], v2["mask_step_deg"],
@@ -389,6 +407,9 @@ class FlightEnv:
             if v2["timeout_penalty"] < 0.0 and trunc[a] and not term[a] and float(i["waypoint_reached"]) < 1.0:
                 out_rew[a] += v2["timeout_penalty"]
             p.update(t=t, zone=zone, exit=ext, turn=turn, intr=intr)
+        if self.extra_info:
+            for a in obs:
+                infos[a] = {**infos[a], **self._start_info.get(a, {})}
         if self.v2["heading_mask"]:                    # mask statistics of the flight so far (not scored)
             for a in obs:
                 st = self._mask_stats.get(a, dict(dec=0, proj=0, angle=0.0, fb=0))
@@ -554,6 +575,9 @@ def metrics_row(info, ep_return):
     row = {k: float(info.get(k, 0.0)) for k in METRIC_KEYS}
     row.update({k: float(info[k]) for k in START_KEYS if k in info})     # single agent only
     row["ep_return"] = float(ep_return)
+    for k in ("start_area_km", "start_min_sep_nm"):     # evaluation start geometry (2026-11-21), not scored
+        if k in info:
+            row[k] = float(info[k])
     if "mask_decisions" in info:                       # heading mask on (2026-11-21), not scored
         dec, proj = float(info["mask_decisions"]), float(info["mask_projected"])
         row.update(mask_decisions=dec, mask_projected=proj, mask_fallbacks=float(info["mask_fallbacks"]),

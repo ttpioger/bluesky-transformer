@@ -37,6 +37,9 @@ def build_parser():
     p.add_argument("--epochs", type=int, default=2, help="Reference: 2.")
     p.add_argument("--batch-size", type=int, default=128, help="Aircraft rows per minibatch (reference: 128).")
     p.add_argument("--lr", type=float, default=5e-4, help="Reference: 5e-4.")
+    p.add_argument("--lr-final", type=float, default=None,
+                   help="2026-11-21: the learning rate goes linearly from --lr to this value over --steps (env steps). "
+                        "Default: constant --lr (as before).")
     p.add_argument("--gamma", type=float, default=0.99, help="Reference: 0.9; 0.99 gives a horizon of about 100 steps (1000 s).")
     p.add_argument("--gae-lambda", type=float, default=0.95)
     p.add_argument("--clip", type=float, default=0.2)
@@ -84,6 +87,9 @@ def build_parser():
     p.add_argument("--cls-token", type=int, choices=[0, 1], default=0,
                    help="1: a learned read-out token collects the result; the own-state token then only carries the state.")
     p.add_argument("--log-std-init", type=float, default=0.0, help="Start exploration noise (reference: 0.0).")
+    p.add_argument("--log-std-set", type=float, default=None,
+                   help="2026-11-21: set log_std to this value after --init-policy (the start model brings its own "
+                        "log_std). Default: keep it.")
     # JEPA pretraining and curriculum (2026-11-13); the defaults give the training of before
     p.add_argument("--init-encoder", default="",
                    help="File of a pretrained encoder (scripts.pretrain_jepa) or of a policy; its encoder weights are the "
@@ -289,6 +295,10 @@ def main(argv=None):
         from rl_tf.networks import load_actor
         load_actor(policy, args.init_policy, dims, vars(args))
         print(f"Encoder, actor and log_std start weights from {args.init_policy} (critic new)", flush=True)
+        if args.log_std_set is not None:
+            with torch.no_grad():
+                policy.log_std.fill_(args.log_std_set)
+            print(f"log_std set to {args.log_std_set}", flush=True)
     frozen = args.freeze_encoder_steps > 0 and (rs is None or rs["total"] < args.freeze_encoder_steps)
     if frozen:                                         # Adam skips a weight without gradient
         policy.encoder.requires_grad_(False)
@@ -373,6 +383,10 @@ def main(argv=None):
     density = None
     cat_prob = None
     while total < args.steps:
+        if args.lr_final is not None:                  # linear decay of the learning rate over the run (by env steps)
+            lr_now = args.lr + (args.lr_final - args.lr) * min(1.0, total / float(args.steps))
+            for g_ in opt.param_groups:
+                g_["lr"] = lr_now
         if random_cat:                                 # random CaT schedule, set at the start of each rollout
             p_now = cat_prob_at(total, args.cat_prob_start, args.cat_prob_end, args.cat_prob_steps)
             if p_now != cat_prob:
@@ -500,6 +514,8 @@ def main(argv=None):
         new_eps = episodes[n_before:]
         row = {"env_steps": total, "policy_loss": policy_loss.item(), "value_loss": value_loss.item(),
                "log_std": policy.log_std.mean().item(), "n_episodes": len(new_eps), "n_cut_episodes": n_cut}
+        if args.lr_final is not None:
+            row["lr"] = lr_now
         if stages:
             row["n_intruders"], row["n_obstacles"] = density
         if C:                                          # dual step on the flights that ended in this rollout

@@ -805,6 +805,20 @@ def test_heading_mask_arc_mode():
     assert choose_offset_arc(geo, 0.0, 70.0, 0.0, speed_ms=200.0, turn_rate_dps=30.0, **kw) == (70.0, False, False)
 
 
+def test_heading_mask_intruders():
+    """Arc mode with intruders: head-on aircraft 30 km ahead at 200 m/s; own 200 m/s, fast turn."""
+    from rl_tf.heading_mask import mask_polys, choose_offset_arc, min_separation
+    geo = mask_polys([], None)
+    intr = dict(pos=np.array([[30.0, 0.0]]), vel=np.array([[-200.0, 0.0]]), sep_km=5.5 * NM2KM, horizon_s=120.0)
+    kw = dict(goal_offset_deg=90.0, dist_km=9.6, step_deg=10.0, speed_ms=200.0, turn_rate_dps=30.0)
+    assert min_separation(0.0, 200.0, 30.0, intr)[0] < 1.0               # straight on: collision course
+    o, proj, fb = choose_offset_arc(geo, 0.0, 0.0, 5.0, intr=intr, **kw)
+    assert proj and not fb and o >= 30.0, (o, proj, fb)
+    assert min_separation(o, 200.0, 30.0, intr)[0] >= intr["sep_km"]
+    near = dict(intr, pos=np.array([[5.0, 0.0]]))                         # already within 5.5 NM: left out
+    assert choose_offset_arc(geo, 0.0, 0.0, 0.0, intr=near, **kw) == (0.0, False, False)
+
+
 def main():
     t0, failed = time.time(), 0
     tests = sorted(k for k in globals() if k.startswith("test_"))

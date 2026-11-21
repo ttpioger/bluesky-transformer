@@ -17,9 +17,14 @@ from __future__ import annotations
 import numpy as np
 from .lidar import ray_segments, polygon_edges, points_in_polygon, inflate_polygon
 
-MASK_KEYS = ["heading_mask", "mask_dist_km", "mask_step_deg", "mask_margin_km", "mask_sector", "mask_mode"]
+MASK_KEYS = ["heading_mask", "mask_dist_km", "mask_step_deg", "mask_margin_km", "mask_sector", "mask_mode",
+             "mask_intruders", "mask_intr_nm", "mask_intr_horizon_s"]
 MASK_DEFAULTS = dict(heading_mask=0, mask_dist_km=9.6, mask_step_deg=10.0, mask_margin_km=0.0, mask_sector=1,
-                     mask_mode="ray")
+                     mask_mode="ray", mask_intruders=0, mask_intr_nm=5.5, mask_intr_horizon_s=120.0)
+# mask_intruders (2026-11-21, arc mode only): a candidate is also blocked if its predicted path comes nearer than
+# mask_intr_nm to the constant-velocity track of another aircraft within mask_intr_horizon_s. Aircraft already
+# nearer than mask_intr_nm at the decision do not block (that conflict exists already). If no candidate is free of
+# both: the statically free candidate with the largest separation, else the longest static free path (fallback).
 # mask_mode (2026-11-21): "ray" = the straight line along the target heading (first version).
 # "arc" = the predicted flight path: start on the current heading, turn at the BlueSky turn rate
 # (g * tan(bank) / TAS) toward the target heading, then straight. A candidate is blocked if this path enters a mask
@@ -105,6 +110,12 @@ def add_mask_args(p, from_checkpoint=False):
                    help="The mask sees each area grown by this margin (default 0 = the real polygons)." + src)
     p.add_argument("--mask-sector", type=int, choices=[0, 1], default=d("mask_sector"),
                    help="1: the sector edge also blocks a heading (default 1)." + src)
+    p.add_argument("--mask-intruders", type=int, choices=[0, 1], default=d("mask_intruders"),
+                   help="Arc mode: 1 = other aircraft (constant velocity) also block a heading." + src)
+    p.add_argument("--mask-intr-nm", type=float, default=d("mask_intr_nm"),
+                   help=f"Least predicted separation (default {MASK_DEFAULTS['mask_intr_nm']} NM)." + src)
+    p.add_argument("--mask-intr-horizon-s", type=float, default=d("mask_intr_horizon_s"),
+                   help=f"Prediction horizon (default {MASK_DEFAULTS['mask_intr_horizon_s']:g} s)." + src)
     p.add_argument("--mask-mode", choices=["ray", "arc"], default=d("mask_mode"),
                    help="ray: straight line along the target heading (default). arc: predicted flight path with "
                         "the BlueSky turn rate from the current heading." + src)
@@ -160,20 +171,51 @@ def free_path(geo, target_rel_deg, speed_ms, turn_rate_dps, length_km):
     return np.where(first >= 0, s[np.maximum(first, 0)], np.inf)
 
 
+def min_separation(target_rel_deg, speed_ms, turn_rate_dps, intr):
+    """Least distance (km) over the horizon between the predicted own path (per target) and the constant-velocity
+    tracks of the other aircraft. intr: dict(pos [M, 2] km, vel [M, 2] m/s, own frame, absolute velocity;
+    sep_km; horizon_s). Aircraft already nearer than sep_km are left out. inf = no aircraft."""
+    pos = np.asarray(intr["pos"], dtype=np.float64).reshape(-1, 2)
+    vel = np.asarray(intr["vel"], dtype=np.float64).reshape(-1, 2)
+    keep = np.hypot(pos[:, 0], pos[:, 1]) >= intr["sep_km"]
+    pos, vel = pos[keep], vel[keep]
+    n_t = len(np.atleast_1d(target_rel_deg))
+    if len(pos) == 0:
+        return np.full(n_t, np.inf)
+    pts, _ = arc_paths(target_rel_deg, speed_ms, turn_rate_dps, speed_ms * intr["horizon_s"] / 1000.0)
+    t = ARC_DT_S * np.arange(1, pts.shape[1] + 1)                     # time of each path point (s)
+    other = pos[None, :, :] + vel[None, :, :] * t[:, None, None] / 1000.0   # [P, M, 2]
+    d = np.linalg.norm(pts[:, :, None, :] - other[None], axis=-1)          # [C, P, M]
+    return d.min(axis=(1, 2))
+
+
 def choose_offset_arc(geo, goal_rel_deg, req_off, cur_off, goal_offset_deg, dist_km, step_deg, speed_ms,
-                      turn_rate_dps, goal_km=np.inf):
-    """Arc mode of choose_offset (same rules; the free distance is along the predicted path)."""
-    if geo is None:
+                      turn_rate_dps, goal_km=np.inf, intr=None):
+    """Arc mode of choose_offset (same rules; the free distance is along the predicted path). intr: see
+    min_separation (None = static geometry only)."""
+    if geo is None and intr is None:
         return float(req_off), False, False
+    if geo is None:                                    # inside an area: only the intruder part
+        geo = ([], None)
     dist_km = min(float(dist_km), float(goal_km))
-    if free_path(geo, goal_rel_deg + req_off, speed_ms, turn_rate_dps, dist_km)[0] >= dist_km:
+    req_ok = free_path(geo, goal_rel_deg + req_off, speed_ms, turn_rate_dps, dist_km)[0] >= dist_km
+    if req_ok and intr is not None:
+        req_ok = min_separation(goal_rel_deg + req_off, speed_ms, turn_rate_dps, intr)[0] >= intr["sep_km"]
+    if req_ok:
         return float(req_off), False, False
     G = float(goal_offset_deg)
     n = int(round(2.0 * G / float(step_deg)))
     cand = np.linspace(-G, G, n + 1)
     d = free_path(geo, goal_rel_deg + cand, speed_ms, turn_rate_dps, ARC_FALLBACK_FACTOR * dist_km)
-    ok = d >= dist_km
+    ok_s = d >= dist_km
+    ok = ok_s
+    if intr is not None:
+        sep = min_separation(goal_rel_deg + cand, speed_ms, turn_rate_dps, intr)
+        ok = ok_s & (sep >= intr["sep_km"])
     if not ok.any():
+        if intr is not None and ok_s.any():
+            k = np.flatnonzero(ok_s)[int(sep[ok_s].argmax())]
+            return float(cand[k]), True, True
         return float(cand[int(d.argmax())]), True, True
     gap = np.abs(cand - req_off)
     best = gap[ok].min()

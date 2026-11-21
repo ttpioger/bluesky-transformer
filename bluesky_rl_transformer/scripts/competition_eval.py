@@ -82,6 +82,7 @@ def _job(job):
     with contextlib.redirect_stdout(io.StringIO()):
         env = FlightEnv("single" if kind == "sa" else "multi", N_AGENTS_MA, env_kw=env_kw,
                         zone_margin_km=opts.get("zone_margin_km", 0.0), v2=v2, **rew)
+        env.extra_info = True                                # start geometry in the rows (2026-11-21), not scored
         for i in range(a):                                   # move the random stream to episode a, no flight
             env.env.reset(seed=seed if i == 0 else None)
         rows = []
@@ -257,7 +258,10 @@ def main(argv=None):
         f"_ms{mo['mask_step_deg']:g}" if "mask_step_deg" in mo else "",
         f"_mm{mo['mask_margin_km']:g}" if "mask_margin_km" in mo else "",
         f"_msec{mo['mask_sector']}" if "mask_sector" in mo else "",
-        f"_m{mo['mask_mode']}" if "mask_mode" in mo else ""])
+        f"_m{mo['mask_mode']}" if "mask_mode" in mo else "",
+        f"_mi{mo['mask_intruders']}" if "mask_intruders" in mo else "",
+        f"_min{mo['mask_intr_nm']:g}" if "mask_intr_nm" in mo else "",
+        f"_mih{mo['mask_intr_horizon_s']:g}" if "mask_intr_horizon_s" in mo else ""])
     if not tags:
         opts = None                                      # no option: the same jobs as before 2026-11-19
     import torch
