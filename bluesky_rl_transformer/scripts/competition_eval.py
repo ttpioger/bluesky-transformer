@@ -256,7 +256,8 @@ def main(argv=None):
         f"_md{mo['mask_dist_km']:g}" if "mask_dist_km" in mo else "",
         f"_ms{mo['mask_step_deg']:g}" if "mask_step_deg" in mo else "",
         f"_mm{mo['mask_margin_km']:g}" if "mask_margin_km" in mo else "",
-        f"_msec{mo['mask_sector']}" if "mask_sector" in mo else ""])
+        f"_msec{mo['mask_sector']}" if "mask_sector" in mo else "",
+        f"_m{mo['mask_mode']}" if "mask_mode" in mo else ""])
     if not tags:
         opts = None                                      # no option: the same jobs as before 2026-11-19
     import torch

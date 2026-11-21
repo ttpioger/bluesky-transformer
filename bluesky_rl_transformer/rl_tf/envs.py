@@ -11,7 +11,7 @@ import multiprocessing as mp
 import numpy as np
 from .lidar import (Lidar, own_state, state_dim, extra_dim, N_CHANNELS, ACT_FEATURES, DIST_NORM_KM, GEOM_KEY, NM2KM,
                     to_own_frame, inflate_polygon, zone_distance)
-from .heading_mask import MASK_DEFAULTS, mask_geometry, choose_offset
+from .heading_mask import MASK_DEFAULTS, mask_geometry, choose_offset, mask_polys, choose_offset_arc
 
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")   # no window for rgb_array rendering
 
@@ -154,6 +154,8 @@ def v2_kwargs(c):
         raise ValueError("heading_mask needs action_map goal")
     if out["heading_mask"] and (out["mask_step_deg"] <= 0.0 or out["mask_dist_km"] < 0.0 or out["mask_margin_km"] < 0.0):
         raise ValueError("mask_step_deg must be > 0; mask_dist_km and mask_margin_km must be >= 0")
+    if out["mask_mode"] not in ("ray", "arc"):
+        raise ValueError(f"mask_mode must be ray or arc, got {out['mask_mode']}")
     return out
 
 
@@ -286,7 +288,7 @@ class FlightEnv:
                 goal = (inner.goal_lat, inner.goal_lon) if self.setting == "single" else inner._goal[a]
                 qdr, dist_nm = kwikqdrdist(bs.traf.lat[idx], bs.traf.lon[idx], goal[0], goal[1])
                 if mask:                               # heading mask (2026-11-21), rl_tf/heading_mask.py
-                    ex[0] = self._mask_turn(a, float(qdr), float(dist_nm) * NM2KM, float(bs.traf.hdg[idx]), ex[0])
+                    ex[0] = self._mask_turn(a, float(qdr), float(dist_nm) * NM2KM, float(bs.traf.hdg[idx]), ex[0], idx)
                     target = float(qdr) + float(ex[0]) * self.v2["goal_offset_deg"]
                 else:
                     target = float(qdr) + float(np.clip(act[0], -1.0, 1.0)) * self.v2["goal_offset_deg"]
@@ -297,18 +299,28 @@ class FlightEnv:
                 self.last_exec[a] = ex.astype(np.float32)
         return out
 
-    def _mask_turn(self, a, qdr, goal_km, hdg, turn):
+    def _mask_turn(self, a, qdr, goal_km, hdg, turn, idx=None):
         """Heading mask for one aircraft: policy turn action (clipped) -> executed turn action. Static geometry of
         the last observation (areas and sector, own frame). Counts the decision in the flight statistics."""
         v2, g = self.v2, self._geom[a]
         G = float(v2["goal_offset_deg"])
         zones = g["zones"] if self.zone_margin_km <= 0.0 else self._true_zones(a)
-        edges = mask_geometry(zones, g["sector"], v2["mask_margin_km"], bool(v2["mask_sector"]))
         goal_rel = (qdr - hdg + 180.0) % 360.0 - 180.0
         cur_off = (hdg - qdr + 180.0) % 360.0 - 180.0
         req = float(turn) * G
-        off, proj, fb = choose_offset(edges, goal_rel, req, cur_off, G, v2["mask_dist_km"], v2["mask_step_deg"],
-                                      goal_km)
+        if v2.get("mask_mode", "ray") == "arc":        # predicted path with the BlueSky turn model (traffic.py)
+            import bluesky as bs
+            tas = max(float(bs.traf.tas[idx]), 1.0)
+            phi = float(bs.traf.ap.turnphi[idx])
+            bank = phi if phi > 1e-12 else float(bs.traf.ap.bankdef[idx])
+            rate = float(np.degrees(9.80665 * np.tan(bank) / tas))
+            geo = mask_polys(zones, g["sector"], v2["mask_margin_km"], bool(v2["mask_sector"]))
+            off, proj, fb = choose_offset_arc(geo, goal_rel, req, cur_off, G, v2["mask_dist_km"],
+                                              v2["mask_step_deg"], tas, rate, goal_km)
+        else:
+            edges = mask_geometry(zones, g["sector"], v2["mask_margin_km"], bool(v2["mask_sector"]))
+            off, proj, fb = choose_offset(edges, goal_rel, req, cur_off, G, v2["mask_dist_km"], v2["mask_step_deg"],
+                                          goal_km)
         st = self._mask_stats.setdefault(a, dict(dec=0, proj=0, angle=0.0, fb=0))
         st["dec"] += 1
         if proj:

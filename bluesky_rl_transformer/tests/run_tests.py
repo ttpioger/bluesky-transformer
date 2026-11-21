@@ -787,6 +787,24 @@ def test_heading_mask_inside_area_all_blocked_and_goal_cap():
     assert choose_offset(edges, 0.0, 0.0, 0.0, goal_km=3.0, **kw) == (0.0, False, False)
 
 
+def test_heading_mask_arc_mode():
+    """Arc mode: the predicted path turns from the current heading at the BlueSky turn rate."""
+    from rl_tf.heading_mask import mask_polys, free_path, choose_offset_arc, arc_paths
+    pts, s = arc_paths([0.0, 90.0], 200.0, 3.0, 10.0)           # straight ahead; 90 deg right at 3 deg/s
+    assert abs(pts[0, -1, 0] - s[-1]) < 1e-9 and abs(pts[0, -1, 1]) < 1e-9
+    assert pts[1, -1, 1] > 0.0                                   # positive = starboard
+    geo = mask_polys([square(10.0, 0.0, 5.0)], None)
+    kw = dict(goal_offset_deg=90.0, dist_km=9.6, step_deg=10.0)
+    o, proj, fb = choose_offset_arc(geo, 0.0, 0.0, 5.0, speed_ms=200.0, turn_rate_dps=30.0, **kw)   # radius 0.4 km
+    assert proj and not fb and abs(o) >= 50.0 and o > 0, (o, proj, fb)
+    o, proj, fb = choose_offset_arc(geo, 0.0, 0.0, 5.0, speed_ms=200.0, turn_rate_dps=1.0, **kw)    # radius 11.5 km
+    assert proj and fb, (o, proj, fb)                            # cannot turn away in time: fallback
+    d = free_path(geo, np.arange(-90.0, 91.0, 10.0), 200.0, 1.0, 30.0)
+    assert abs(free_path(geo, o, 200.0, 1.0, 30.0)[0] - d.max()) < 1e-9
+    assert mask_polys([square(0.0, 0.0, 5.0)], None) is None    # inside an area: no mask
+    assert choose_offset_arc(geo, 0.0, 70.0, 0.0, speed_ms=200.0, turn_rate_dps=30.0, **kw) == (70.0, False, False)
+
+
 def main():
     t0, failed = time.time(), 0
     tests = sorted(k for k in globals() if k.startswith("test_"))

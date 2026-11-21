@@ -17,8 +17,15 @@ from __future__ import annotations
 import numpy as np
 from .lidar import ray_segments, polygon_edges, points_in_polygon, inflate_polygon
 
-MASK_KEYS = ["heading_mask", "mask_dist_km", "mask_step_deg", "mask_margin_km", "mask_sector"]
-MASK_DEFAULTS = dict(heading_mask=0, mask_dist_km=9.6, mask_step_deg=10.0, mask_margin_km=0.0, mask_sector=1)
+MASK_KEYS = ["heading_mask", "mask_dist_km", "mask_step_deg", "mask_margin_km", "mask_sector", "mask_mode"]
+MASK_DEFAULTS = dict(heading_mask=0, mask_dist_km=9.6, mask_step_deg=10.0, mask_margin_km=0.0, mask_sector=1,
+                     mask_mode="ray")
+# mask_mode (2026-11-21): "ray" = the straight line along the target heading (first version).
+# "arc" = the predicted flight path: start on the current heading, turn at the BlueSky turn rate
+# (g * tan(bank) / TAS) toward the target heading, then straight. A candidate is blocked if this path enters a mask
+# area or leaves the sector within the block distance. Fallback: the longest free path. Sampling: ARC_DT_S seconds.
+ARC_DT_S = 2.0
+ARC_FALLBACK_FACTOR = 3.0                              # fallback ranks the free path up to this times the distance
 
 
 def _wrap(deg):
@@ -98,8 +105,78 @@ def add_mask_args(p, from_checkpoint=False):
                    help="The mask sees each area grown by this margin (default 0 = the real polygons)." + src)
     p.add_argument("--mask-sector", type=int, choices=[0, 1], default=d("mask_sector"),
                    help="1: the sector edge also blocks a heading (default 1)." + src)
+    p.add_argument("--mask-mode", choices=["ray", "arc"], default=d("mask_mode"),
+                   help="ray: straight line along the target heading (default). arc: predicted flight path with "
+                        "the BlueSky turn rate from the current heading." + src)
 
 
 def mask_overrides(args):
     """Mask flags given on the command line (evaluation): {key: value}, without the None values."""
     return {k: getattr(args, k) for k in MASK_KEYS if getattr(args, k, None) is not None}
+
+
+def mask_polys(zones, sector, margin_km=0.0, use_sector=True):
+    """Arc mode: (areas, sector or None) from the polygons of one observation, or None if the own aircraft is inside
+    a mask area (no mask). The sector is None when it does not block (off, or the own aircraft is outside it)."""
+    polys = [np.asarray(z, dtype=np.float64).reshape(-1, 2) for z in zones]
+    polys = [inflate_polygon(v, margin_km) if margin_km > 0.0 else v for v in polys if len(v) >= 3]
+    origin = np.zeros((1, 2))
+    if any(points_in_polygon(origin, v)[0] for v in polys):
+        return None
+    sec = None
+    if use_sector and sector is not None:
+        s = np.asarray(sector, dtype=np.float64).reshape(-1, 2)
+        if len(s) >= 3 and points_in_polygon(origin, s)[0]:
+            sec = s
+    return polys, sec
+
+
+def arc_paths(target_rel_deg, speed_ms, turn_rate_dps, length_km, dt=ARC_DT_S):
+    """Predicted positions (own frame, km) for each target heading [C]: turn from heading 0 (the nose) toward the
+    target at turn_rate_dps (shortest way), then straight. Returns points [C, P, 2] at the path lengths [P] (km)."""
+    tgt = _wrap(np.atleast_1d(np.asarray(target_rel_deg, dtype=np.float64)))
+    step_km = speed_ms * dt / 1000.0
+    n = max(1, int(np.ceil(length_km / max(step_km, 1e-6))))
+    t = dt * np.arange(n)                              # heading during each sample interval (start of the interval)
+    h = np.sign(tgt)[:, None] * np.minimum(turn_rate_dps * t[None, :], np.abs(tgt)[:, None])
+    a = np.deg2rad(h)
+    pts = np.cumsum(np.stack([np.cos(a), np.sin(a)], axis=-1) * step_km, axis=1)
+    return pts, step_km * np.arange(1, n + 1)
+
+
+def free_path(geo, target_rel_deg, speed_ms, turn_rate_dps, length_km):
+    """Path length (km) to the first point inside a mask area or outside the sector, per target; inf = none."""
+    pts, s = arc_paths(target_rel_deg, speed_ms, turn_rate_dps, length_km)
+    C, P = pts.shape[:2]
+    flat = pts.reshape(-1, 2)
+    bad = np.zeros(C * P, dtype=bool)
+    areas, sec = geo
+    for v in areas:
+        bad |= points_in_polygon(flat, v)
+    if sec is not None:
+        bad |= ~points_in_polygon(flat, sec)
+    bad = bad.reshape(C, P)
+    first = np.where(bad.any(axis=1), bad.argmax(axis=1), -1)
+    return np.where(first >= 0, s[np.maximum(first, 0)], np.inf)
+
+
+def choose_offset_arc(geo, goal_rel_deg, req_off, cur_off, goal_offset_deg, dist_km, step_deg, speed_ms,
+                      turn_rate_dps, goal_km=np.inf):
+    """Arc mode of choose_offset (same rules; the free distance is along the predicted path)."""
+    if geo is None:
+        return float(req_off), False, False
+    dist_km = min(float(dist_km), float(goal_km))
+    if free_path(geo, goal_rel_deg + req_off, speed_ms, turn_rate_dps, dist_km)[0] >= dist_km:
+        return float(req_off), False, False
+    G = float(goal_offset_deg)
+    n = int(round(2.0 * G / float(step_deg)))
+    cand = np.linspace(-G, G, n + 1)
+    d = free_path(geo, goal_rel_deg + cand, speed_ms, turn_rate_dps, ARC_FALLBACK_FACTOR * dist_km)
+    ok = d >= dist_km
+    if not ok.any():
+        return float(cand[int(d.argmax())]), True, True
+    gap = np.abs(cand - req_off)
+    best = gap[ok].min()
+    tied = np.flatnonzero(ok & (np.abs(gap - best) <= 1e-9))
+    k = tied[int(np.abs(cand[tied] - cur_off).argmin())]
+    return float(cand[k]), True, False
