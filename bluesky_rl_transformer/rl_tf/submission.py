@@ -7,7 +7,9 @@ SubmissionEnv wraps the base competition environment with FlightEnv: the lidar g
 history (ObsBuilder), the action mapping of the training (action_map "goal") and the heading mask (settings from
 the checkpoint; environment variable BLUESKY_TF_HEADING_MASK=0|1 overrides heading_mask). The infos are those of
 the base environment, so the harness scores the same metrics; the scoring code, the scenarios and the fixed
-parameters are not changed. Each observation gets the model input under the key INPUT_KEY; act() reads only that.
+parameters are not changed. The env runs the policy once for all live aircraft together (the same joint pass as
+scripts.competition_eval, so the same floats) and puts each action into the observation under ACTION_KEY;
+act() returns that action.
 """
 from __future__ import annotations
 import contextlib
@@ -20,13 +22,13 @@ from .lidar import Lidar, token_cfg
 from .networks import load_policy as _load
 from .common import policy_fn_from
 
-INPUT_KEY = "tf_input"
+ACTION_KEY = "tf_action"
 
 
 def load_member(path, device="cpu"):
     """(policy, deterministic policy_fn, reward weights, Lidar, history, v2 settings) of a checkpoint."""
-    policy, ck = _load(path, device)
-    policy.eval()
+    policy, ck = _load(path, device)                     # no policy.eval(): the same module mode as competition_eval
+                                                         # (eval mode switches torch to another Transformer kernel)
     c = ck["args"]
     rew = {**REWARD_DEFAULTS, "goal_distance_penalty": 0.0, **{k: c[k] for k in REWARD_DEFAULTS if k in c}}
     lidar = Lidar(n_rays=c["n_rays"], fov_deg=c["fov_deg"], max_range_km=c["max_range_km"],
@@ -37,11 +39,9 @@ def load_member(path, device="cpu"):
 
 
 def make_act(member):
-    """act(obs) -> action for one aircraft; obs must carry INPUT_KEY (SubmissionEnv)."""
-    fn = member[1]
-
+    """act(obs) -> action for one aircraft; the action is in the observation (SubmissionEnv)."""
     def act(obs):
-        return fn({"x": obs}, {"x": obs[INPUT_KEY]})["x"]
+        return obs[ACTION_KEY]
     return act
 
 
@@ -50,7 +50,7 @@ class SubmissionEnv:
 
     def __init__(self, kind, member, n_agents=10):
         self.kind = kind
-        _, _, rew, self.lidar, self.history, v2 = member
+        _, self.fn, rew, self.lidar, self.history, v2 = member
         torch.set_num_threads(1)
         with contextlib.redirect_stdout(io.StringIO()):
             self.fe = FlightEnv("single" if kind == "sa" else "multi", n_agents, v2=v2, **rew)
@@ -61,8 +61,11 @@ class SubmissionEnv:
         return list(self.fe.agents)
 
     def _with_input(self, obs, ids):
-        for a in ids:
-            obs[a][INPUT_KEY] = self.builders[a].get()
+        live = [a for a in self.fe.agents if a in obs]    # aircraft that act next (joint pass, as rollout_episode)
+        if live:
+            acts = self.fn({a: obs[a] for a in live}, {a: self.builders[a].get() for a in live})
+            for a in live:
+                obs[a][ACTION_KEY] = acts[a]
         return obs
 
     def reset(self, seed=None, options=None):
