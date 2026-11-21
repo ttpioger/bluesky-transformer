@@ -530,6 +530,7 @@ def main(argv=None):
         if validator is not None and total >= next_val:
             snap = snapshot(total)
             validator.submit(total, snap)
+            wandb_upload(wb, snap)                     # W&B Files: NAME_ckpt/step_*.pt, for checks on another machine
             next_val = next_mark(total, args.val_every)
         if total >= next_ckpt:
             if snap is None:
