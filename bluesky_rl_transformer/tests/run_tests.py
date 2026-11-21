@@ -750,6 +750,43 @@ def test_random_cat_schedule():
     assert cat_prob_at(5000, 0.1, 1.0, 1000) == 1.0                    # after the ramp: the end value
 
 
+def test_heading_mask_square_ahead():
+    """Heading mask (2026-11-21): square area with its near edge 5 km ahead (goal straight ahead, far away)."""
+    from rl_tf.heading_mask import mask_geometry, free_distance, choose_offset
+    edges = mask_geometry([square(10.0, 0.0, 5.0)], None)
+    off = np.arange(-90.0, 91.0, 10.0)
+    d = free_distance(edges, off)
+    assert (d[np.abs(off) <= 40.0] < 9.6).all()                      # near-0 offsets blocked (edge within 7.1 km)
+    assert np.isinf(d[np.abs(off) >= 60.0]).all()                    # >= 60 deg: free
+    kw = dict(goal_offset_deg=90.0, dist_km=9.6, step_deg=10.0)
+    o, proj, fb = choose_offset(edges, 0.0, 0.0, 5.0, **kw)           # request 0: nearest allowed, tie -> current side
+    assert (o, proj, fb) == (50.0, True, False), (o, proj, fb)
+    o, proj, fb = choose_offset(edges, 0.0, 0.0, -5.0, **kw)
+    assert (o, proj, fb) == (-50.0, True, False), (o, proj, fb)
+    o, proj, fb = choose_offset(edges, 0.0, -32.0, 5.0, **kw)         # no tie: nearest allowed offset wins
+    assert (o, proj) == (-50.0, True), (o, proj)
+    o, proj, fb = choose_offset(edges, 0.0, 70.0, 0.0, **kw)          # free request: no change
+    assert (o, proj, fb) == (70.0, False, False)
+
+
+def test_heading_mask_inside_area_all_blocked_and_goal_cap():
+    from rl_tf.heading_mask import mask_geometry, free_distance, choose_offset
+    kw = dict(goal_offset_deg=90.0, dist_km=9.6, step_deg=10.0)
+    assert mask_geometry([square(0.0, 0.0, 5.0)], None) is None      # own aircraft inside an area: no mask
+    assert choose_offset(None, 0.0, 12.0, 0.0, **kw) == (12.0, False, False)
+    # all blocked: a small sector (edges 3 to 6 km away), the largest free distance wins
+    sector = np.array([[6.0, 3.0], [6.0, -4.0], [-3.0, -4.0], [-3.0, 3.0]])
+    edges = mask_geometry([], sector)
+    o, proj, fb = choose_offset(edges, 0.0, 0.0, 0.0, **kw)
+    grid = np.arange(-90.0, 91.0, 10.0)
+    assert proj and fb and abs(free_distance(edges, o)[0] - free_distance(edges, grid).max()) < 1e-9, o
+    # outside the sector: the sector edge does not block
+    assert len(mask_geometry([], sector + np.array([20.0, 0.0]))[0]) == 0
+    # goal 3 km ahead, area 5 km ahead (behind the goal): the direct path is not blocked
+    edges = mask_geometry([square(10.0, 0.0, 5.0)], None)
+    assert choose_offset(edges, 0.0, 0.0, 0.0, goal_km=3.0, **kw) == (0.0, False, False)
+
+
 def main():
     t0, failed = time.time(), 0
     tests = sorted(k for k in globals() if k.startswith("test_"))
