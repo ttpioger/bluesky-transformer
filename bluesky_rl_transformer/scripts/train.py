@@ -423,7 +423,7 @@ def main(argv=None):
             t0 = time.perf_counter()
             res = vec.step(np.clip(raw, -1.0, 1.0))
             timing["env"] += time.perf_counter() - t0
-            if masked and res["proj"].any():           # heading mask: store the executed turn and its log-prob
+            if masked and "proj" in res and res["proj"].any():           # heading mask: store the executed turn and its log-prob
                 proj = res["proj"]
                 done_raw = raw.copy()
                 done_raw[..., 0] = np.where(proj, res["exec"][..., 0], raw[..., 0])

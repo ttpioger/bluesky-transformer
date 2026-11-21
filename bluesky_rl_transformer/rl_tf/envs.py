@@ -708,7 +708,8 @@ def _worker(conn, cfg, worker):
                 live = list(env.agents)
                 acts = {a: np.asarray(data[ids.index(a)], dtype=np.float32) for a in live}
                 nobs, rew, te, tr, infos = env.step(acts)
-                if env.last_exec is not None:     # heading mask on: history and learner get the executed actions
+                has_exec = env.last_exec is not None    # heading mask on (env.reset below clears last_exec)
+                if has_exec:                      # history and learner get the executed actions
                     ex_all = np.asarray(data, dtype=np.float32).copy()
                     proj = np.zeros(N, dtype=bool)
                     for a in live:
@@ -743,7 +744,7 @@ def _worker(conn, cfg, worker):
                 else:
                     cur = pack(live)          # terminal observation of an aircraft that finished at this step
                 msg = dict(cur=cur, rew=r, phi=p, phi_next=pn, done=np.full(N, done), episodes=episodes)
-                if env.last_exec is not None:
+                if has_exec:
                     msg["exec"], msg["proj"] = ex_all, proj
                 if C:
                     msg["cost"] = cost
