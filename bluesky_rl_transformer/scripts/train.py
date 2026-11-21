@@ -17,6 +17,7 @@ import torch
 from rl_tf.envs import (VecEnv, FlightEnv, add_reward_args, reward_kwargs, obs_dims, rollout_episode, turn_stats,
                         lidar_cfg_from_args, METRIC_KEYS, START_KEYS, V2_DEFAULTS, v2_kwargs, cat_prob_at)
 from rl_tf.lidar import Lidar
+from rl_tf.heading_mask import add_mask_args
 from rl_tf.networks import build_policy, save_checkpoint, n_params, load_encoder, AttentionCritic
 from rl_tf.common import (setup_torch, compute_gae, pass_criterion, window_stats, write_json, policy_fn_from, wandb_upload,
                           wandb_init, add_wandb_args, parse_curriculum, curriculum_stage, parse_lagrangian,
@@ -123,6 +124,7 @@ def build_parser():
     p.add_argument("--skip-start-events", type=int, choices=[0, 1], default=V2_DEFAULTS["skip_start_events"],
                    help="Single agent. 1: no event penalty for what exists at the reset sample (an aircraft already "
                         "within 5 NM, a start inside a restricted area). The per-second penalties stay. 0 = as before.")
+    add_mask_args(p)                                   # heading mask (2026-11-21), rl_tf/heading_mask.py
     p.add_argument("--cat-penalty", type=float, default=0.0,
                    help="Training only, single agent: < 0 ends the flight at the first avoidable violation "
                         "(intrusion without the start intrusions, area entry, sector exit) with this reward. 0 = off.")
@@ -237,6 +239,7 @@ def main(argv=None):
     if any(k not in allowed for k in cost_keys):
         raise ValueError(f"--lagrangian: metrics must be from {allowed}")
     v2 = v2_kwargs(vars(args))
+    masked = bool(v2["heading_mask"])                  # heading mask: PPO stores the executed (projected) actions
     if args.setting != "single" and (args.cat_penalty < 0.0 or args.replay_frac > 0.0 or args.skip_start_events):
         raise ValueError("--cat-penalty, --replay-frac and --skip-start-events: single agent only")
     if args.fast_metrics and args.setting == "single":
@@ -401,11 +404,11 @@ def main(argv=None):
         for t in range(T):
             t0 = time.perf_counter()
             if C:
-                raw, logp, val, feats = policy.act(tt(state), tt(lidar), return_feats=True)
+                raw, logp, val, feats, *dist = policy.act(tt(state), tt(lidar), return_feats=True, return_dist=masked)
                 with torch.no_grad():
                     B_cval[t] = torch.stack([c(feats) for c in ccrit], -1)[:, None].expand(-1, N, -1).cpu().numpy()
             else:
-                raw, logp, val = policy.act(tt(state), tt(lidar))
+                raw, logp, val, *dist = policy.act(tt(state), tt(lidar), return_dist=masked)
             raw = raw.cpu().numpy()                          # .cpu() waits for the GPU, so the timer is exact
             timing["inference"] += time.perf_counter() - t0
             bad = ~np.isfinite(raw).all(-1)                  # diagnostic: a NaN action gives a BlueSky HDG error
@@ -420,6 +423,14 @@ def main(argv=None):
             t0 = time.perf_counter()
             res = vec.step(np.clip(raw, -1.0, 1.0))
             timing["env"] += time.perf_counter() - t0
+            if masked and res["proj"].any():           # heading mask: store the executed turn and its log-prob
+                proj = res["proj"]
+                done_raw = raw.copy()
+                done_raw[..., 0] = np.where(proj, res["exec"][..., 0], raw[..., 0])
+                with torch.no_grad():
+                    lp = dist[0].log_prob(tt(done_raw)).sum(-1).cpu().numpy()
+                B_raw[t] = done_raw
+                B_logp[t] = np.where(proj, lp, B_logp[t])
             total += E
             B_rew[t] = (res["rew"] + args.gamma * res["phi_next"] - res["phi"]) * args.reward_scale
             B_done[t] = res["done"]
@@ -503,13 +514,14 @@ def main(argv=None):
             for k in ["ep_return", "waypoint_reached", "intrusion_events", "restricted_area_events",
                       "sector_exit_events", "flight_time"]:
                 row[k] = float(np.mean([e[k] for e in new_eps]))
-            for k in ["cat_end", "replay"]:
+            for k in ["cat_end", "replay", "mask_proj_share", "mask_mean_angle_deg", "mask_fallbacks"]:
                 if k in new_eps[0]:
                     row[k] = float(np.mean([e.get(k, 0.0) for e in new_eps]))
             txt = (f" | eps={len(new_eps)} ep_return={row['ep_return']:.1f} waypoint={row['waypoint_reached']:.2f} "
                    f"intrusions={row['intrusion_events']:.2f} zones={row['restricted_area_events']:.2f} "
                    f"sector_exit={row['sector_exit_events']:.2f} flight_time={row['flight_time']:.0f}")
-            txt += "".join(f" {k}={row[k]:.2f}" for k in ["cat_end", "replay"] if k in row)
+            txt += "".join(f" {k}={row[k]:.2f}" for k in ["cat_end", "replay", "mask_proj_share",
+                                                          "mask_mean_angle_deg", "mask_fallbacks"] if k in row)
         curve.append(row)
         if wb is not None:
             extra = {k: float(np.mean([e[k] for e in new_eps])) for k in

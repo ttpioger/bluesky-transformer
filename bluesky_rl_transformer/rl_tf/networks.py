@@ -233,13 +233,15 @@ class Policy(nn.Module):
         return Normal(mean, std), self.critic(f), f
 
     @torch.no_grad()
-    def act(self, state, lidar, deterministic=False, return_feats=False):
+    def act(self, state, lidar, deterministic=False, return_feats=False, return_dist=False):
         """Returns raw action [B, N, A], log-prob [B, N], value [B, N] (the environment value, repeated per aircraft);
-        with return_feats also the encoder features [B, N, F]."""
+        with return_feats also the encoder features [B, N, F]; with return_dist (heading mask) also the action
+        distribution, at the end."""
         d, v, f = self.forward_feats(state, lidar)
         raw = d.mean if deterministic else d.sample()
         out = (raw, d.log_prob(raw).sum(-1), v[:, None].expand(-1, state.shape[1]))
-        return out + (f,) if return_feats else out
+        out = out + (f,) if return_feats else out
+        return out + (d,) if return_dist else out
 
 
 def n_params(module):

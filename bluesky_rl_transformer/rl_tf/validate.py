@@ -5,6 +5,9 @@ Protocol per validation seed: reset(seed=S) for episode 0, then reset() with no 
 `episodes` episodes. Single agent: one process per seed (as in scripts.competition_eval). Multi agent: the episodes
 of a seed are split over the processes.
 
+Heading mask (2026-11-21): a snapshot flies with the mask settings saved in it (the flags of scripts.train);
+the records then also give the projected share, the mean projection angle and the fallbacks per flight.
+
 Rank of two snapshots = the leaderboard rule: clean flights % (desc), goal % (desc), then intrusion events,
 restricted-area events, sector exits, flight time (asc). Clean flight = goal reached and no intrusion, no
 restricted-area entry, no sector exit (official metrics, start intrusions included).
@@ -35,6 +38,11 @@ def val_metrics(rows):
     m.update({k: float(np.mean([r[k] for r in rows])) for k in RANK_KEYS})
     if rows and all("intrusion_events_no_start" in r for r in rows):      # single agent, not official
         m["clean_start_left_out"] = float(np.mean([is_clean(r, True) for r in rows]))
+    if rows and all("mask_decisions" in r for r in rows):                # heading mask of the snapshot (2026-11-21)
+        dec, proj = sum(r["mask_decisions"] for r in rows), sum(r["mask_projected"] for r in rows)
+        m["mask_proj_share"] = float(proj / max(dec, 1.0))
+        m["mask_mean_angle_deg"] = float(sum(r["mask_mean_angle_deg"] * r["mask_projected"] for r in rows) / max(proj, 1.0))
+        m["mask_fallbacks"] = float(np.mean([r["mask_fallbacks"] for r in rows]))
     return m
 
 

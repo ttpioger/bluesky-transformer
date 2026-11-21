@@ -11,6 +11,7 @@ import multiprocessing as mp
 import numpy as np
 from .lidar import (Lidar, own_state, state_dim, extra_dim, N_CHANNELS, ACT_FEATURES, DIST_NORM_KM, GEOM_KEY, NM2KM,
                     to_own_frame, inflate_polygon, zone_distance)
+from .heading_mask import MASK_DEFAULTS, mask_geometry, choose_offset
 
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")   # no window for rgb_array rendering
 
@@ -125,9 +126,10 @@ def check_reward(rw):
 #   cannot be avoided: intrusions with aircraft already within 5 NM (until that aircraft goes out of 5 NM) and a
 #   start inside a restricted area or outside the sector. The per-second penalties stay (the policy can shorten that
 #   time). The scored metrics do not change. 0 = as before.
+# heading_mask (2026-11-21, action_map "goal" only): see rl_tf/heading_mask.py. 0 = off (behaviour as before).
 V2_DEFAULTS = dict(action_map="rel", goal_offset_deg=90.0, cpa_margin_penalty=0.0, cpa_margin_nm=7.5,
                    cpa_horizon_s=120.0, zone_margin_penalty=0.0, zone_buffer_km=10.0, timeout_penalty=0.0,
-                   skip_start_events=0)
+                   skip_start_events=0, **MASK_DEFAULTS)
 
 
 def cat_prob_at(env_steps, start, end, ramp_steps):
@@ -148,6 +150,10 @@ def v2_kwargs(c):
         raise ValueError("the margin penalties must be <= 0 (the reward has only negative terms)")
     if out["timeout_penalty"] > 0.0:
         raise ValueError("timeout_penalty must be <= 0 (the reward has only negative terms)")
+    if out["heading_mask"] and out["action_map"] != "goal":
+        raise ValueError("heading_mask needs action_map goal")
+    if out["heading_mask"] and (out["mask_step_deg"] <= 0.0 or out["mask_dist_km"] < 0.0 or out["mask_margin_km"] < 0.0):
+        raise ValueError("mask_step_deg must be > 0; mask_dist_km and mask_margin_km must be >= 0")
     return out
 
 
@@ -238,6 +244,8 @@ class FlightEnv:
             raise ValueError("setting must be single or multi")
         self.agents = []
         self._prev = {}
+        self.last_exec = None                          # heading mask: executed policy actions of the last step
+        self._mask_stats = {}
 
     def reset(self, seed=None):
         if self.setting == "single":
@@ -254,6 +262,9 @@ class FlightEnv:
             self._prev["own"].update(zone=self._cat_prev["zone"], exit=self._cat_prev["exit"])
         self._geom = {}
         self._add_geometry(obs)
+        self.last_exec = None
+        if self.v2["heading_mask"]:                    # per flight: decisions, projected, sum of |angle|, fallbacks
+            self._mask_stats = {a: dict(dec=0, proj=0, angle=0.0, fb=0) for a in self.ids}
         return obs
 
     def env_action(self, actions):
@@ -263,17 +274,56 @@ class FlightEnv:
         import bluesky as bs
         from core.tools import kwikqdrdist
         inner, out = self.env.unwrapped, {}
+        mask = bool(self.v2["heading_mask"])
+        if mask:
+            self.last_exec = {}
         for a, act in actions.items():
             act = np.asarray(act, dtype=np.float64).copy()
             idx = bs.traf.id2idx(self._ac_id(a))
+            if mask:
+                ex = np.clip(act, -1.0, 1.0)
             if idx >= 0:
                 goal = (inner.goal_lat, inner.goal_lon) if self.setting == "single" else inner._goal[a]
-                qdr, _ = kwikqdrdist(bs.traf.lat[idx], bs.traf.lon[idx], goal[0], goal[1])
-                target = float(qdr) + float(np.clip(act[0], -1.0, 1.0)) * self.v2["goal_offset_deg"]
+                qdr, dist_nm = kwikqdrdist(bs.traf.lat[idx], bs.traf.lon[idx], goal[0], goal[1])
+                if mask:                               # heading mask (2026-11-21), rl_tf/heading_mask.py
+                    ex[0] = self._mask_turn(a, float(qdr), float(dist_nm) * NM2KM, float(bs.traf.hdg[idx]), ex[0])
+                    target = float(qdr) + float(ex[0]) * self.v2["goal_offset_deg"]
+                else:
+                    target = float(qdr) + float(np.clip(act[0], -1.0, 1.0)) * self.v2["goal_offset_deg"]
                 delta = (target - float(bs.traf.hdg[idx]) + 180.0) % 360.0 - 180.0
                 act[0] = float(np.clip(delta / float(inner.d_heading), -1.0, 1.0))
             out[a] = act
+            if mask:
+                self.last_exec[a] = ex.astype(np.float32)
         return out
+
+    def _mask_turn(self, a, qdr, goal_km, hdg, turn):
+        """Heading mask for one aircraft: policy turn action (clipped) -> executed turn action. Static geometry of
+        the last observation (areas and sector, own frame). Counts the decision in the flight statistics."""
+        v2, g = self.v2, self._geom[a]
+        G = float(v2["goal_offset_deg"])
+        zones = g["zones"] if self.zone_margin_km <= 0.0 else self._true_zones(a)
+        edges = mask_geometry(zones, g["sector"], v2["mask_margin_km"], bool(v2["mask_sector"]))
+        goal_rel = (qdr - hdg + 180.0) % 360.0 - 180.0
+        cur_off = (hdg - qdr + 180.0) % 360.0 - 180.0
+        req = float(turn) * G
+        off, proj, fb = choose_offset(edges, goal_rel, req, cur_off, G, v2["mask_dist_km"], v2["mask_step_deg"],
+                                      goal_km)
+        st = self._mask_stats.setdefault(a, dict(dec=0, proj=0, angle=0.0, fb=0))
+        st["dec"] += 1
+        if proj:
+            st["proj"] += 1
+            st["angle"] += abs(off - req)
+            st["fb"] += int(fb)
+        return off / G if proj else float(turn)
+
+    def _true_zones(self, a):
+        """The real restricted areas in the own frame (the observation may show them grown by zone_margin_km)."""
+        import bluesky as bs
+        idx = bs.traf.id2idx(self._ac_id(a))
+        lat0, lon0, hdg = float(bs.traf.lat[idx]), float(bs.traf.lon[idx]), float(bs.traf.hdg[idx])
+        return [to_own_frame(np.asarray(z.vertices)[:, 0], np.asarray(z.vertices)[:, 1], lat0, lon0, hdg)
+                for z in self.env.unwrapped.scenario.obstacles]
 
     def step(self, actions):
         env_acts = self.env_action(actions)
@@ -303,7 +353,8 @@ class FlightEnv:
         for a in obs:
             i, p = infos[a], self._prev[a]
             t, zone, ext = float(i["flight_time"]), float(i["restricted_area_events"]), float(i["sector_exit_events"])
-            turn = float(actions[a][0])
+            ex = self.last_exec                       # heading mask on: the executed turn action
+            turn = float(ex[a][0]) if ex and a in ex else float(actions[a][0])
             intr = float(i["intrusion_events_no_start"] if v2["skip_start_events"] else i["intrusion_events"])
             gx, gy = obs[a][GEOM_KEY]["goal"]                          # own frame: origin = own aircraft, x = nose
             goal_km = float(np.hypot(gx, gy))
@@ -326,6 +377,11 @@ class FlightEnv:
             if v2["timeout_penalty"] < 0.0 and trunc[a] and not term[a] and float(i["waypoint_reached"]) < 1.0:
                 out_rew[a] += v2["timeout_penalty"]
             p.update(t=t, zone=zone, exit=ext, turn=turn, intr=intr)
+        if self.v2["heading_mask"]:                    # mask statistics of the flight so far (not scored)
+            for a in obs:
+                st = self._mask_stats.get(a, dict(dec=0, proj=0, angle=0.0, fb=0))
+                infos[a] = {**infos[a], "mask_decisions": float(st["dec"]), "mask_projected": float(st["proj"]),
+                            "mask_angle_sum_deg": float(st["angle"]), "mask_fallbacks": float(st["fb"])}
         return obs, out_rew, {a: bool(term[a]) for a in obs}, {a: bool(trunc[a]) for a in obs}, infos
 
     def set_cat_prob(self, p):
@@ -486,6 +542,11 @@ def metrics_row(info, ep_return):
     row = {k: float(info.get(k, 0.0)) for k in METRIC_KEYS}
     row.update({k: float(info[k]) for k in START_KEYS if k in info})     # single agent only
     row["ep_return"] = float(ep_return)
+    if "mask_decisions" in info:                       # heading mask on (2026-11-21), not scored
+        dec, proj = float(info["mask_decisions"]), float(info["mask_projected"])
+        row.update(mask_decisions=dec, mask_projected=proj, mask_fallbacks=float(info["mask_fallbacks"]),
+                   mask_proj_share=proj / max(dec, 1.0),
+                   mask_mean_angle_deg=float(info["mask_angle_sum_deg"]) / max(proj, 1.0))
     return row
 
 
@@ -517,10 +578,11 @@ def rollout_episode(env, policy_fn, seed, lidar, history, render=False, max_step
             frames.append(grab(obs))
         if on_step is not None:
             on_step()
+        done_acts = getattr(env, "last_exec", None) or acts     # heading mask on: the executed actions
         for a in live:
             ret[a] += rew[a]
-            turns[a].append(float(acts[a][0]))
-            builders[a].push(obs[a], acts[a])
+            turns[a].append(float(done_acts[a][0]))
+            builders[a].push(obs[a], done_acts[a])
             if term[a] or trunc[a]:
                 rows[a] = metrics_row(infos[a], ret[a])
     return rows, frames, turns
@@ -646,6 +708,14 @@ def _worker(conn, cfg, worker):
                 live = list(env.agents)
                 acts = {a: np.asarray(data[ids.index(a)], dtype=np.float32) for a in live}
                 nobs, rew, te, tr, infos = env.step(acts)
+                if env.last_exec is not None:     # heading mask on: history and learner get the executed actions
+                    ex_all = np.asarray(data, dtype=np.float32).copy()
+                    proj = np.zeros(N, dtype=bool)
+                    for a in live:
+                        i = ids.index(a)
+                        proj[i] = float(env.last_exec[a][0]) != float(acts[a][0])
+                        ex_all[i] = env.last_exec[a]
+                        acts[a] = env.last_exec[a]
                 r, p, pn = np.zeros(N, np.float32), np.zeros(N, np.float32), np.zeros(N, np.float32)
                 episodes = []
                 cost = np.zeros((N, C), np.float32)
@@ -673,6 +743,8 @@ def _worker(conn, cfg, worker):
                 else:
                     cur = pack(live)          # terminal observation of an aircraft that finished at this step
                 msg = dict(cur=cur, rew=r, phi=p, phi_next=pn, done=np.full(N, done), episodes=episodes)
+                if env.last_exec is not None:
+                    msg["exec"], msg["proj"] = ex_all, proj
                 if C:
                     msg["cost"] = cost
                 conn.send(msg)
@@ -730,6 +802,8 @@ class VecEnv:
         out["episodes"] = [e for r in res for e in r["episodes"]]
         if "cost" in res[0]:                           # Lagrangian: [E, N, C] cost of this step
             out["cost"] = np.stack([r["cost"] for r in res])
+        if "exec" in res[0]:                           # heading mask: executed actions [E, N, 2], projected [E, N]
+            out["exec"], out["proj"] = np.stack([r["exec"] for r in res]), np.stack([r["proj"] for r in res])
         return out
 
     def set_cat_prob(self, p):

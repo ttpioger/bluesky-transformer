@@ -37,6 +37,7 @@ import numpy as np
 from rl_tf.envs import FlightEnv, REWARD_DEFAULTS, METRIC_KEYS, START_KEYS, rollout_episode, v2_kwargs
 from rl_tf.lidar import Lidar, token_cfg
 from rl_tf.common import setup_torch, write_json, wandb_init, add_wandb_args, summary_table, SUMMARY_ROWS
+from rl_tf.heading_mask import add_mask_args, mask_overrides, mask_settings
 
 SEED, N_EPISODES, N_AGENTS_MA = 42, 1000, 10             # official values
 
@@ -55,7 +56,8 @@ def _job(job):
     else:
         policy, policy_fn, rew, lidar, history, c = _load_member(model, device)
         fn = policy_fn
-        v2 = v2_kwargs(c)                                    # action mapping of the training (2026-11-19)
+        v2 = v2_kwargs({**c, **(opts.get("mask") or {})})    # action mapping of the training (2026-11-19); heading
+                                                             # mask: checkpoint values, flags override (2026-11-21)
         if opts.get("ensemble"):
             from rl_tf.ensemble import EnsembleFn
             second = _load_member(opts["ensemble"], device)
@@ -125,6 +127,18 @@ def run(model, kind, episodes, seed, workers, device="cpu", plan=None, opts=None
 def stats(rows):
     keys = METRIC_KEYS + [k for k in START_KEYS if rows and all(k in r for r in rows)] + ["ep_return"]
     return ({k: float(np.mean([r[k] for r in rows])) for k in keys}, {k: float(np.std([r[k] for r in rows])) for k in keys})
+
+
+def mask_stats(rows):
+    """Heading mask over all flights (rows with the mask keys): decisions, projected share, mean angle, fallbacks."""
+    rows = [r for r in rows if "mask_decisions" in r]
+    if not rows:
+        return None
+    dec, proj = sum(r["mask_decisions"] for r in rows), sum(r["mask_projected"] for r in rows)
+    ang = sum(r["mask_mean_angle_deg"] * r["mask_projected"] for r in rows)
+    return {"decisions": int(dec), "projected": int(proj), "projected_share": proj / max(dec, 1),
+            "mean_projection_deg": ang / max(proj, 1), "fallbacks": int(sum(r["mask_fallbacks"] for r in rows)),
+            "fallbacks_per_flight": float(np.mean([r["mask_fallbacks"] for r in rows]))}
 
 
 def plan_stats(rows):
@@ -208,6 +222,7 @@ def main(argv=None):
                    help="mean: mean action of the two models; zone: the second model near a restricted area.")
     p.add_argument("--switch-km", type=float, default=20.0,
                    help="Mode zone: the second model flies when an area edge is within this distance (km).")
+    add_mask_args(p, from_checkpoint=True)               # heading mask (2026-11-21)
     add_wandb_args(p)
     args = p.parse_args(argv)
     if args.self_check:
@@ -225,9 +240,10 @@ def main(argv=None):
                 "seed": args.plan_seed, "order": args.plan_order}
     env_kw = {k: v for k, v in [("action_frequency", args.action_frequency), ("d_heading", args.d_heading),
                                 ("d_speed", args.d_speed)] if v is not None}
+    mo = mask_overrides(args)
     opts = {"env_kw": env_kw, "zone_margin_km": args.zone_margin_km, "ensemble": args.ensemble,
-            "ensemble_mode": args.ensemble_mode, "switch_km": args.switch_km}
-    if plan and (env_kw or args.zone_margin_km > 0 or args.ensemble):
+            "ensemble_mode": args.ensemble_mode, "switch_km": args.switch_km, "mask": mo}
+    if plan and (env_kw or args.zone_margin_km > 0 or args.ensemble or mo):
         p.error("the planner does not combine with the test-time options")
     tags = "".join(t for t in [
         f"_af{args.action_frequency}" if args.action_frequency is not None else "",
@@ -235,7 +251,12 @@ def main(argv=None):
         f"_ds{args.d_speed:g}" if args.d_speed is not None else "",
         f"_zm{args.zone_margin_km:g}" if args.zone_margin_km > 0 else "",
         f"_ens{args.ensemble_mode}_{Path(args.ensemble).stem}" if args.ensemble else "",
-        f"{args.switch_km:g}" if args.ensemble and args.ensemble_mode == "zone" else ""])
+        f"{args.switch_km:g}" if args.ensemble and args.ensemble_mode == "zone" else "",
+        f"_mask{mo['heading_mask']}" if "heading_mask" in mo else "",
+        f"_md{mo['mask_dist_km']:g}" if "mask_dist_km" in mo else "",
+        f"_ms{mo['mask_step_deg']:g}" if "mask_step_deg" in mo else "",
+        f"_mm{mo['mask_margin_km']:g}" if "mask_margin_km" in mo else "",
+        f"_msec{mo['mask_sector']}" if "mask_sector" in mo else ""])
     if not tags:
         opts = None                                      # no option: the same jobs as before 2026-11-19
     import torch
@@ -288,6 +309,12 @@ def main(argv=None):
     if args.ensemble and args.ensemble_mode == "zone":
         n2, nd = sum(r.get("ens_second_model", 0) for r in rows), sum(r.get("ens_decisions", 0) for r in rows)
         print(f"ensemble zone: second model in {n2} of {nd} decisions ({100 * n2 / max(nd, 1):.1f} %)")
+    hm = mask_settings(v2_kwargs({**c["args"], **mo}))
+    ms = mask_stats(rows)
+    if ms:
+        print(f"heading mask {hm}: projected {ms['projected']} of {ms['decisions']} decisions "
+              f"({100 * ms['projected_share']:.1f} %), mean projection {ms['mean_projection_deg']:.1f} deg, "
+              f"all-blocked fallbacks {ms['fallbacks']}")
     if plan:
         ps = plan_stats(rows)
         print(f"planner level {plan['level']}: searched in {ps['searched']} of {ps['decisions']} decisions "
@@ -299,7 +326,7 @@ def main(argv=None):
         "fly_straight": {k: straight[k] for k in ["mean", "std", "n_flights", "n_flights_start_in_intrusion"]
                          if k in straight}, "table": {"columns": cols, "rows": table},
         "start_intrusion": start, "wall_seconds": wall, "plan": plan, "test_time": opts,
-        "plan_stats": plan_stats(rows) if plan else None, "rows": rows})
+        "plan_stats": plan_stats(rows) if plan else None, "heading_mask": hm, "mask_stats": ms, "rows": rows})
     if wb is not None:
         wb.summary.update({f"competition/{k}_{s}": v for s, d in [("mean", mean), ("std", std)] for k, v in d.items()})
         wb.summary.update({"competition/episodes": args.episodes, "competition/seed": args.seed})
