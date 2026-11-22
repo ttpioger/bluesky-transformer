@@ -1,0 +1,441 @@
+{
+ "status": "EXPLORATORY",
+ "kind": "ma",
+ "seeds": [
+  7,
+  11
+ ],
+ "episodes_per_seed": 100,
+ "rank_rule": "clean desc, goal desc, then intrusion_events, restricted_area_events, sector_exit_events, flight_time asc",
+ "best": {
+  "env_steps": 5001216,
+  "snapshot": "models/ma_v2m_ft_ckpt/step_0005001216.pt",
+  "seeds": [
+   7,
+   11
+  ],
+  "episodes_per_seed": 100,
+  "mean": {
+   "n_flights": 2000,
+   "clean": 0.894,
+   "goal": 0.992,
+   "intrusion_events": 0.029,
+   "restricted_area_events": 0.121,
+   "sector_exit_events": 0.005,
+   "flight_time": 1082.7395
+  },
+  "per_seed": {
+   "7": {
+    "n_flights": 1000,
+    "clean": 0.884,
+    "goal": 0.99,
+    "intrusion_events": 0.038,
+    "restricted_area_events": 0.134,
+    "sector_exit_events": 0.004,
+    "flight_time": 1071.908
+   },
+   "11": {
+    "n_flights": 1000,
+    "clean": 0.904,
+    "goal": 0.994,
+    "intrusion_events": 0.02,
+    "restricted_area_events": 0.108,
+    "sector_exit_events": 0.006,
+    "flight_time": 1093.571
+   }
+  },
+  "new_best": true
+ },
+ "history": [
+  {
+   "env_steps": 1007616,
+   "snapshot": "models/ma_v2m_ft_ckpt/step_0001007616.pt",
+   "seeds": [
+    7,
+    11
+   ],
+   "episodes_per_seed": 100,
+   "mean": {
+    "n_flights": 2000,
+    "clean": 0.858,
+    "goal": 0.9965,
+    "intrusion_events": 0.061,
+    "restricted_area_events": 0.125,
+    "sector_exit_events": 0.0015,
+    "flight_time": 952.4
+   },
+   "per_seed": {
+    "7": {
+     "n_flights": 1000,
+     "clean": 0.866,
+     "goal": 0.997,
+     "intrusion_events": 0.06,
+     "restricted_area_events": 0.115,
+     "sector_exit_events": 0.003,
+     "flight_time": 942.973
+    },
+    "11": {
+     "n_flights": 1000,
+     "clean": 0.85,
+     "goal": 0.996,
+     "intrusion_events": 0.062,
+     "restricted_area_events": 0.135,
+     "sector_exit_events": 0.0,
+     "flight_time": 961.827
+    }
+   },
+   "new_best": true
+  },
+  {
+   "env_steps": 2002944,
+   "snapshot": "models/ma_v2m_ft_ckpt/step_0002002944.pt",
+   "seeds": [
+    7,
+    11
+   ],
+   "episodes_per_seed": 100,
+   "mean": {
+    "n_flights": 2000,
+    "clean": 0.8755,
+    "goal": 0.9945,
+    "intrusion_events": 0.05,
+    "restricted_area_events": 0.1225,
+    "sector_exit_events": 0.0025,
+    "flight_time": 946.678
+   },
+   "per_seed": {
+    "7": {
+     "n_flights": 1000,
+     "clean": 0.874,
+     "goal": 0.995,
+     "intrusion_events": 0.056,
+     "restricted_area_events": 0.121,
+     "sector_exit_events": 0.002,
+     "flight_time": 937.182
+    },
+    "11": {
+     "n_flights": 1000,
+     "clean": 0.877,
+     "goal": 0.994,
+     "intrusion_events": 0.044,
+     "restricted_area_events": 0.124,
+     "sector_exit_events": 0.003,
+     "flight_time": 956.174
+    }
+   },
+   "new_best": true
+  },
+  {
+   "env_steps": 3010560,
+   "snapshot": "models/ma_v2m_ft_ckpt/step_0003010560.pt",
+   "seeds": [
+    7,
+    11
+   ],
+   "episodes_per_seed": 100,
+   "mean": {
+    "n_flights": 2000,
+    "clean": 0.884,
+    "goal": 0.992,
+    "intrusion_events": 0.026,
+    "restricted_area_events": 0.1245,
+    "sector_exit_events": 0.002,
+    "flight_time": 983.355
+   },
+   "per_seed": {
+    "7": {
+     "n_flights": 1000,
+     "clean": 0.875,
+     "goal": 0.993,
+     "intrusion_events": 0.036,
+     "restricted_area_events": 0.118,
+     "sector_exit_events": 0.002,
+     "flight_time": 967.985
+    },
+    "11": {
+     "n_flights": 1000,
+     "clean": 0.893,
+     "goal": 0.991,
+     "intrusion_events": 0.016,
+     "restricted_area_events": 0.131,
+     "sector_exit_events": 0.002,
+     "flight_time": 998.725
+    }
+   },
+   "new_best": true
+  },
+  {
+   "env_steps": 4005888,
+   "snapshot": "models/ma_v2m_ft_ckpt/step_0004005888.pt",
+   "seeds": [
+    7,
+    11
+   ],
+   "episodes_per_seed": 100,
+   "mean": {
+    "n_flights": 2000,
+    "clean": 0.885,
+    "goal": 0.99,
+    "intrusion_events": 0.021,
+    "restricted_area_events": 0.124,
+    "sector_exit_events": 0.003,
+    "flight_time": 1034.198
+   },
+   "per_seed": {
+    "7": {
+     "n_flights": 1000,
+     "clean": 0.888,
+     "goal": 0.99,
+     "intrusion_events": 0.016,
+     "restricted_area_events": 0.119,
+     "sector_exit_events": 0.002,
+     "flight_time": 1020.036
+    },
+    "11": {
+     "n_flights": 1000,
+     "clean": 0.882,
+     "goal": 0.99,
+     "intrusion_events": 0.026,
+     "restricted_area_events": 0.129,
+     "sector_exit_events": 0.004,
+     "flight_time": 1048.36
+    }
+   },
+   "new_best": true
+  },
+  {
+   "env_steps": 5001216,
+   "snapshot": "models/ma_v2m_ft_ckpt/step_0005001216.pt",
+   "seeds": [
+    7,
+    11
+   ],
+   "episodes_per_seed": 100,
+   "mean": {
+    "n_flights": 2000,
+    "clean": 0.894,
+    "goal": 0.992,
+    "intrusion_events": 0.029,
+    "restricted_area_events": 0.121,
+    "sector_exit_events": 0.005,
+    "flight_time": 1082.7395
+   },
+   "per_seed": {
+    "7": {
+     "n_flights": 1000,
+     "clean": 0.884,
+     "goal": 0.99,
+     "intrusion_events": 0.038,
+     "restricted_area_events": 0.134,
+     "sector_exit_events": 0.004,
+     "flight_time": 1071.908
+    },
+    "11": {
+     "n_flights": 1000,
+     "clean": 0.904,
+     "goal": 0.994,
+     "intrusion_events": 0.02,
+     "restricted_area_events": 0.108,
+     "sector_exit_events": 0.006,
+     "flight_time": 1093.571
+    }
+   },
+   "new_best": true
+  },
+  {
+   "env_steps": 6008832,
+   "snapshot": "models/ma_v2m_ft_ckpt/step_0006008832.pt",
+   "seeds": [
+    7,
+    11
+   ],
+   "episodes_per_seed": 100,
+   "mean": {
+    "n_flights": 2000,
+    "clean": 0.883,
+    "goal": 0.9785,
+    "intrusion_events": 0.027,
+    "restricted_area_events": 0.119,
+    "sector_exit_events": 0.007,
+    "flight_time": 1159.062
+   },
+   "per_seed": {
+    "7": {
+     "n_flights": 1000,
+     "clean": 0.89,
+     "goal": 0.984,
+     "intrusion_events": 0.028,
+     "restricted_area_events": 0.11,
+     "sector_exit_events": 0.006,
+     "flight_time": 1137.362
+    },
+    "11": {
+     "n_flights": 1000,
+     "clean": 0.876,
+     "goal": 0.973,
+     "intrusion_events": 0.026,
+     "restricted_area_events": 0.128,
+     "sector_exit_events": 0.008,
+     "flight_time": 1180.762
+    }
+   },
+   "new_best": false
+  },
+  {
+   "env_steps": 7004160,
+   "snapshot": "models/ma_v2m_ft_ckpt/step_0007004160.pt",
+   "seeds": [
+    7,
+    11
+   ],
+   "episodes_per_seed": 100,
+   "mean": {
+    "n_flights": 2000,
+    "clean": 0.8865,
+    "goal": 0.9805,
+    "intrusion_events": 0.022,
+    "restricted_area_events": 0.1395,
+    "sector_exit_events": 0.0055,
+    "flight_time": 1095.722
+   },
+   "per_seed": {
+    "7": {
+     "n_flights": 1000,
+     "clean": 0.889,
+     "goal": 0.983,
+     "intrusion_events": 0.026,
+     "restricted_area_events": 0.124,
+     "sector_exit_events": 0.005,
+     "flight_time": 1079.551
+    },
+    "11": {
+     "n_flights": 1000,
+     "clean": 0.884,
+     "goal": 0.978,
+     "intrusion_events": 0.018,
+     "restricted_area_events": 0.155,
+     "sector_exit_events": 0.006,
+     "flight_time": 1111.893
+    }
+   },
+   "new_best": false
+  },
+  {
+   "env_steps": 8011776,
+   "snapshot": "models/ma_v2m_ft_ckpt/step_0008011776.pt",
+   "seeds": [
+    7,
+    11
+   ],
+   "episodes_per_seed": 100,
+   "mean": {
+    "n_flights": 2000,
+    "clean": 0.8925,
+    "goal": 0.9945,
+    "intrusion_events": 0.02,
+    "restricted_area_events": 0.129,
+    "sector_exit_events": 0.0045,
+    "flight_time": 1040.758
+   },
+   "per_seed": {
+    "7": {
+     "n_flights": 1000,
+     "clean": 0.899,
+     "goal": 0.994,
+     "intrusion_events": 0.016,
+     "restricted_area_events": 0.122,
+     "sector_exit_events": 0.003,
+     "flight_time": 1031.834
+    },
+    "11": {
+     "n_flights": 1000,
+     "clean": 0.886,
+     "goal": 0.995,
+     "intrusion_events": 0.024,
+     "restricted_area_events": 0.136,
+     "sector_exit_events": 0.006,
+     "flight_time": 1049.682
+    }
+   },
+   "new_best": false
+  },
+  {
+   "env_steps": 9007104,
+   "snapshot": "models/ma_v2m_ft_ckpt/step_0009007104.pt",
+   "seeds": [
+    7,
+    11
+   ],
+   "episodes_per_seed": 100,
+   "mean": {
+    "n_flights": 2000,
+    "clean": 0.873,
+    "goal": 0.9835,
+    "intrusion_events": 0.028,
+    "restricted_area_events": 0.126,
+    "sector_exit_events": 0.0115,
+    "flight_time": 1069.2435
+   },
+   "per_seed": {
+    "7": {
+     "n_flights": 1000,
+     "clean": 0.883,
+     "goal": 0.987,
+     "intrusion_events": 0.022,
+     "restricted_area_events": 0.118,
+     "sector_exit_events": 0.01,
+     "flight_time": 1056.409
+    },
+    "11": {
+     "n_flights": 1000,
+     "clean": 0.863,
+     "goal": 0.98,
+     "intrusion_events": 0.034,
+     "restricted_area_events": 0.134,
+     "sector_exit_events": 0.013,
+     "flight_time": 1082.078
+    }
+   },
+   "new_best": false
+  },
+  {
+   "env_steps": 10002432,
+   "snapshot": "models/ma_v2m_ft_ckpt/step_0010002432.pt",
+   "seeds": [
+    7,
+    11
+   ],
+   "episodes_per_seed": 100,
+   "mean": {
+    "n_flights": 2000,
+    "clean": 0.8725,
+    "goal": 0.971,
+    "intrusion_events": 0.033,
+    "restricted_area_events": 0.1475,
+    "sector_exit_events": 0.014,
+    "flight_time": 1127.523
+   },
+   "per_seed": {
+    "7": {
+     "n_flights": 1000,
+     "clean": 0.882,
+     "goal": 0.972,
+     "intrusion_events": 0.036,
+     "restricted_area_events": 0.139,
+     "sector_exit_events": 0.01,
+     "flight_time": 1110.929
+    },
+    "11": {
+     "n_flights": 1000,
+     "clean": 0.863,
+     "goal": 0.97,
+     "intrusion_events": 0.03,
+     "restricted_area_events": 0.156,
+     "sector_exit_events": 0.018,
+     "flight_time": 1144.117
+    }
+   },
+   "new_best": false
+  }
+ ]
+}
