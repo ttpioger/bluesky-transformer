@@ -37,6 +37,13 @@ def segments_free(a, b, p, q):
     return ~hit.any(axis=1)
 
 
+def _direct_free(polys_check, goal):
+    """True if the segment origin -> goal crosses none of the polygons."""
+    p = np.concatenate(polys_check)
+    q = np.concatenate([np.roll(c, -1, axis=0) for c in polys_check])
+    return bool(segments_free(np.zeros((1, 2)), np.asarray(goal, dtype=np.float64).reshape(1, 2), p, q)[0])
+
+
 def _graph_route(polys_node, polys_check, goal, sector):
     """Shortest path origin -> goal. Returns the reference point [2] (goal if the line is free) or None (no path)."""
     origin = np.zeros(2)
@@ -119,6 +126,8 @@ def route_point(zones, goal, margin_km, sector=None):
         check = [inflate_polygon(v, CHECK_FRAC * m) for v in real]
         if any(points_in_polygon(origin, c)[0] or points_in_polygon(goal[None, :], c)[0] for c in check):
             continue                                   # too near an area for this margin: try a smaller one
+        if _direct_free(check, goal):                  # quick test: the straight line to the goal is free
+            return goal
         node = [inflate_polygon(v, m) for v in real]
         nxt = _graph_route(node, check, goal, sec)
         if nxt is not None:

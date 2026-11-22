@@ -46,7 +46,7 @@ class LidarTransformerEncoder(nn.Module):
 
     def __init__(self, state_dim, lidar_ch, n_rays, patch=4, d_model=64, n_heads=4, n_layers=2,
                  state_hidden=128, features_dim=256, ac_tokens=0, zone_tokens=0, act_tokens=0,
-                 edge_tokens=0, ac_cpa=0, fourier=0, cls_token=0, map_px=0, map_patch=8):
+                 edge_tokens=0, ac_cpa=0, fourier=0, cls_token=0, map_px=0, map_patch=8, route_token=0):
         super().__init__()
         from .lidar import (AC_FEATURES, ZONE_FEATURES, GOAL_FEATURES, ACT_FEATURES, EDGE_FEATURES, CPA_FEATURES,
                             MAP_CHANNELS, extra_dim, map_len)
@@ -55,7 +55,8 @@ class LidarTransformerEncoder(nn.Module):
         self.z, self.zone_f, self.goal_f = int(zone_tokens), ZONE_FEATURES, GOAL_FEATURES
         self.h, self.act_f = int(act_tokens), ACT_FEATURES
         self.mp, self.map_len = int(map_px), map_len(map_px)
-        self.extra = extra_dim(self.k, self.z, self.h, self.e, ac_cpa, self.mp)
+        self.r = int(bool(route_token)) if self.z else 0                # route token after the goal token (2026-11-22)
+        self.extra = extra_dim(self.k, self.z, self.h, self.e, ac_cpa, self.mp, route_token)
         w = 1 + 2 * self.four                                           # input values per row value
         state_dim = state_dim - self.extra                              # size of the own state alone
         if n_rays % patch:
@@ -106,7 +107,10 @@ class LidarTransformerEncoder(nn.Module):
             self.map_embed = nn.Linear(MAP_CHANNELS * self.map_patch ** 2, d_model)
             self.map_pos = nn.Parameter(torch.zeros(1, self.n_map, d_model))    # place of each patch in the image
             nn.init.trunc_normal_(self.map_pos, std=0.02)
-        self.n_tokens = (self.cls + 1 + self.n_tok + self.k + (self.z + 1 if self.z else 0) + self.h + self.e
+        if self.r:                                     # made last: the other weights start as before; the route row
+            self.route_type = nn.Parameter(torch.zeros(1, 1, d_model))     # uses the goal embedding + its own type
+            nn.init.trunc_normal_(self.route_type, std=0.02)
+        self.n_tokens = (self.cls + 1 + self.n_tok + self.k + (self.z + 1 + self.r if self.z else 0) + self.h + self.e
                          + self.n_map)
         self.lidar_start, self.map_start = self.cls + 1, self.n_tokens - self.n_map     # place of the first token
 
@@ -173,6 +177,10 @@ class LidarTransformerEncoder(nn.Module):
                      self.goal_embed(self.ff(state[:, o:o + self.goal_f])).unsqueeze(1) + self.goal_type]
             pads += [empty, torch.zeros(b, 1, dtype=torch.bool, device=state.device)]
             o += self.goal_f
+            if self.r:
+                toks.append(self.goal_embed(self.ff(state[:, o:o + self.goal_f])).unsqueeze(1) + self.route_type)
+                pads.append(torch.zeros(b, 1, dtype=torch.bool, device=state.device))
+                o += self.goal_f
         if self.h:
             act, empty, o = rows(o, self.h, self.act_f)
             toks.append(self.act_embed(act) + self.act_pos)
@@ -207,13 +215,14 @@ class AttentionCritic(nn.Module):
 class Policy(nn.Module):
     def __init__(self, state_dim, lidar_ch, n_rays, action_dim=2, patch=4, d_model=64, n_heads=4, n_layers=2,
                  features_dim=256, hidden=64, log_std_init=0.0, ac_tokens=0, zone_tokens=0, act_tokens=0,
-                 edge_tokens=0, ac_cpa=0, fourier=0, cls_token=0, map_px=0, map_patch=8):
+                 edge_tokens=0, ac_cpa=0, fourier=0, cls_token=0, map_px=0, map_patch=8, route_token=0):
         super().__init__()
         self.encoder = LidarTransformerEncoder(state_dim, lidar_ch, n_rays, patch, d_model, n_heads, n_layers,
                                                features_dim=features_dim, ac_tokens=ac_tokens,
                                                zone_tokens=zone_tokens, act_tokens=act_tokens,
                                                edge_tokens=edge_tokens, ac_cpa=ac_cpa, fourier=fourier,
-                                               cls_token=cls_token, map_px=map_px, map_patch=map_patch)
+                                               cls_token=cls_token, map_px=map_px, map_patch=map_patch,
+                                               route_token=route_token)
         self.actor = nn.Sequential(nn.Linear(features_dim, hidden), nn.Tanh(), nn.Linear(hidden, hidden), nn.Tanh(),
                                    nn.Linear(hidden, action_dim), nn.Tanh())
         self.log_std = nn.Parameter(torch.full((action_dim,), float(log_std_init)))
@@ -257,7 +266,7 @@ def build_policy(dims, args):
                   edge_tokens=dims.get("edge_tokens", 0), ac_cpa=dims.get("ac_cpa", 0),
                   fourier=args.get("fourier", 0), cls_token=args.get("cls_token", 0),
                   map_px=dims.get("map_px", 0), map_patch=args.get("map_patch", 8),
-                  **{k: args[k] for k in NET_KEYS})
+                  route_token=dims.get("route_token", 0), **{k: args[k] for k in NET_KEYS})
 
 
 def save_checkpoint(path, policy, args, dims, extra=None):
@@ -308,10 +317,18 @@ def load_actor(policy, path, dims, args):
     if "policy" not in ck:
         raise ValueError(f"{path}: not a policy checkpoint (an encoder file needs --init-encoder)")
     bad = encoder_mismatch(ck["args"], ck["dims"], args, dims)
+    new_route = dims.get("route_token", 0) and not ck["dims"].get("route_token", 0)
+    if new_route:                                      # start a route-token run from a run without it (2026-11-22):
+        from .lidar import GOAL_FEATURES               # the state has one more row; route_type starts new
+        bad = [k for k in bad if k not in ("route_token", "state_dim")]
+        if ck["dims"]["state_dim"] + GOAL_FEATURES != dims["state_dim"]:
+            bad.append("state_dim")
     if bad:
         raise ValueError(f"{path}: encoder settings differ from this run: {bad}")
     state = {k: v for k, v in ck["policy"].items() if k.startswith(("encoder.", "actor.")) or k == "log_std"}
     missing, unexpected = policy.load_state_dict(state, strict=False)
+    if new_route:
+        missing = [k for k in missing if k != "encoder.route_type"]
     if unexpected or any(not k.startswith("critic.") for k in missing):
         raise ValueError(f"{path}: weights do not fit: missing {missing}, unexpected {unexpected}")
     return ck

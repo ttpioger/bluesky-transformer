@@ -600,12 +600,13 @@ def lidar_cfg_from_args(args):
     return dict(n_rays=args.n_rays, fov_deg=args.fov_deg, max_range_km=args.max_range_km,
                 zone_flag=bool(args.zone_flag), speed=bool(args.lidar_speed), ac_tokens=args.ac_tokens,
                 zone_tokens=args.zone_tokens, act_tokens=args.act_tokens,
-                edge_tokens=args.edge_tokens, ac_cpa=args.ac_cpa, map_px=args.map_px, map_range_km=args.map_range_km)
+                edge_tokens=args.edge_tokens, ac_cpa=args.ac_cpa, map_px=args.map_px, map_range_km=args.map_range_km,
+                route_token=getattr(args, "route_token", 0))
 
 
 def obs_dims(lidar_cfg, history):
     tok = {k: int(lidar_cfg.get(k, 0)) for k in ["ac_tokens", "zone_tokens", "act_tokens", "edge_tokens", "ac_cpa",
-                                                 "map_px"]}   # values at the end of the state
+                                                 "map_px", "route_token"]}   # values at the end of the state
     return dict(state_dim=state_dim(lidar_cfg.get("zone_flag", True)) * history + extra_dim(**tok), **tok,
                 lidar_ch=(N_CHANNELS + int(bool(lidar_cfg.get("speed", False)))) * history, n_rays=lidar_cfg["n_rays"])
 

@@ -51,12 +51,13 @@ def map_len(map_px=0):
     return 1 + MAP_CHANNELS * p * p if p else 0
 
 
-def extra_dim(ac_tokens=0, zone_tokens=0, act_tokens=0, edge_tokens=0, ac_cpa=0, map_px=0):
+def extra_dim(ac_tokens=0, zone_tokens=0, act_tokens=0, edge_tokens=0, ac_cpa=0, map_px=0, route_token=0):
     """Size of the token values at the end of the state array. Order: K aircraft rows and K flags; Z restricted-area
     rows, Z flags and one goal row; H action rows and H flags; E sector-edge rows and E flags; the map block.
     ac_cpa = 1: each aircraft row has CPA_FEATURES more values."""
     k, z, h, e = int(ac_tokens), int(zone_tokens), int(act_tokens), int(edge_tokens)
-    return (k * (AC_FEATURES + CPA_FEATURES * int(bool(ac_cpa)) + 1) + (z * (ZONE_FEATURES + 1) + GOAL_FEATURES if z else 0)
+    return (k * (AC_FEATURES + CPA_FEATURES * int(bool(ac_cpa)) + 1)
+            + (z * (ZONE_FEATURES + 1) + GOAL_FEATURES * (1 + int(bool(route_token))) if z else 0)
             + h * (ACT_FEATURES + 1) + e * (EDGE_FEATURES + 1) + map_len(map_px))
 
 
@@ -64,7 +65,7 @@ def token_cfg(a):
     """Token options from the arguments of a checkpoint. A key that is not there is 0 (checkpoint from before the flag)."""
     return dict(ac_tokens=int(a.get("ac_tokens", 0)), zone_tokens=int(a.get("zone_tokens", 0)),
                 act_tokens=int(a.get("act_tokens", 0)), edge_tokens=int(a.get("edge_tokens", 0)),
-                ac_cpa=int(a.get("ac_cpa", 0)), map_px=int(a.get("map_px", 0)),
+                ac_cpa=int(a.get("ac_cpa", 0)), map_px=int(a.get("map_px", 0)), route_token=int(a.get("route_token", 0)),
                 map_range_km=float(a.get("map_range_km", 150.0)))
 
 
@@ -158,7 +159,8 @@ def to_own_frame(lat, lon, lat0, lon0, hdg_deg):
 class Lidar:
     def __init__(self, n_rays=120, fov_deg=360.0, max_range_km=100.0, ac_radius_km=5.0 * NM2KM, zone_flag=True,
                  speed=False, ac_tokens=0, zone_tokens=0, act_tokens=0, edge_tokens=0, ac_cpa=0, map_px=0,
-                 map_range_km=150.0):
+                 map_range_km=150.0, route_token=0):
+        self.route_token = int(route_token)            # > 0 (2026-11-22): one route row after the goal row, margin km
         self.n_rays, self.fov_deg, self.max_range, self.ac_radius = n_rays, fov_deg, max_range_km, ac_radius_km
         self.zone_flag = bool(zone_flag)               # the own state has the inside-zone flag
         self.speed = bool(speed)                       # 4th channel: closing speed of the aircraft that the ray hits
@@ -338,6 +340,15 @@ class Lidar:
         bearing = goal / gd if gd > 1e-9 else np.array([1.0, 0.0])
         goal_row = np.array([goal[0] / DIST_NORM_KM, goal[1] / DIST_NORM_KM, gd / DIST_NORM_KM, bearing[0], bearing[1],
                              float(g.get("time_left", 1.0))], dtype=np.float32)
+        if self.route_token:                           # route token (2026-11-22, rl_tf/route.py): the point 10 km ahead
+            from .route import route_point             # on the shortest path around the areas grown by route_token km
+            r = route_point(g["zones"], goal, float(self.route_token), g.get("sector"))
+            rd = float(np.linalg.norm(r))
+            rb = r / rd if rd > 1e-9 else np.array([1.0, 0.0])
+            via = float(np.linalg.norm(r - goal) > 1e-6)   # 1 = the route leaves the straight line to the goal
+            route_row = np.array([r[0] / DIST_NORM_KM, r[1] / DIST_NORM_KM, rd / DIST_NORM_KM, rb[0], rb[1], via],
+                                 dtype=np.float32)
+            return np.concatenate([feat.reshape(-1), flag, goal_row, route_row])
         return np.concatenate([feat.reshape(-1), flag, goal_row])
 
     def edge_tokens_vec(self, obs):
