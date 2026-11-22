@@ -151,6 +151,8 @@ def v2_kwargs(c):
         raise ValueError(f"action_map must be rel or goal, got {out['action_map']}")
     if out["cpa_margin_penalty"] > 0.0 or out["zone_margin_penalty"] > 0.0:
         raise ValueError("the margin penalties must be <= 0 (the reward has only negative terms)")
+    if out.get("mask_proj_penalty", 0.0) > 0.0:
+        raise ValueError("mask_proj_penalty must be <= 0")
     if out["timeout_penalty"] > 0.0:
         raise ValueError("timeout_penalty must be <= 0 (the reward has only negative terms)")
     if out["heading_mask"] and out["action_map"] != "goal":
@@ -298,6 +300,7 @@ class FlightEnv:
         mask = bool(self.v2["heading_mask"])
         if mask:
             self.last_exec = {}
+            self._proj_cost = {}
         zero = os.environ.get("BLUESKY_TF_ZERO_POLICY", "0") == "1"   # ablation (2026-11-22): policy action 0
         for a, act in actions.items():
             act = np.asarray(act, dtype=np.float64).copy()
@@ -373,6 +376,7 @@ class FlightEnv:
             edges = mask_geometry(zones, g["sector"], v2["mask_margin_km"], bool(v2["mask_sector"]))
             off, proj, fb = choose_offset(edges, goal_rel, req, cur_off, G, v2["mask_dist_km"], v2["mask_step_deg"],
                                           goal_km)
+        self._proj_cost[a] = abs(off - req) / G if proj else 0.0     # shield distillation cost of this decision
         st = self._mask_stats.setdefault(a, dict(dec=0, proj=0, angle=0.0, fb=0))
         st["dec"] += 1
         if proj:
@@ -440,6 +444,8 @@ class FlightEnv:
                 out_rew[a] += self.cat_penalty
             if v2["timeout_penalty"] < 0.0 and trunc[a] and not term[a] and float(i["waypoint_reached"]) < 1.0:
                 out_rew[a] += v2["timeout_penalty"]
+            if v2.get("mask_proj_penalty", 0.0) < 0.0:     # shield distillation (2026-11-22)
+                out_rew[a] += v2["mask_proj_penalty"] * getattr(self, "_proj_cost", {}).get(a, 0.0)
             p.update(t=t, zone=zone, exit=ext, turn=turn, intr=intr)
         if self.extra_info:
             for a in obs:

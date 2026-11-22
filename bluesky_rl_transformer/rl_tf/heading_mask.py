@@ -18,10 +18,14 @@ import numpy as np
 from .lidar import ray_segments, polygon_edges, points_in_polygon, inflate_polygon
 
 MASK_KEYS = ["heading_mask", "mask_dist_km", "mask_step_deg", "mask_margin_km", "mask_sector", "mask_mode",
-             "mask_intruders", "mask_intr_nm", "mask_intr_horizon_s", "mask_route", "mask_route_km"]
+             "mask_intruders", "mask_intr_nm", "mask_intr_horizon_s", "mask_route", "mask_route_km",
+             "mask_proj_penalty"]
 MASK_DEFAULTS = dict(heading_mask=0, mask_dist_km=9.6, mask_step_deg=10.0, mask_margin_km=0.0, mask_sector=1,
                      mask_mode="ray", mask_intruders=0, mask_intr_nm=5.5, mask_intr_horizon_s=120.0,
-                     mask_route=0, mask_route_km=5.0)
+                     mask_route=0, mask_route_km=5.0, mask_proj_penalty=0.0)
+# mask_proj_penalty (2026-11-22, shield distillation, training): <= 0, reward per decision that the mask corrects,
+# times |executed - requested offset| / goal_offset_deg (a 90 degree correction costs the full value). With
+# --mask-learn policy the policy learns to request safe headings itself, so that the mask is needed less.
 # mask_route (2026-11-22, test time, rl_tf/route.py): the reference bearing of action_map "goal" is the bearing to
 # the next point of the shortest path around the areas grown by mask_route_km (not the goal bearing). Works with or
 # without heading_mask; with the mask, the mask uses the same reference.
@@ -125,6 +129,9 @@ def add_mask_args(p, from_checkpoint=False):
                         "area-free path (rl_tf/route.py; action_map goal)." + src)
     p.add_argument("--mask-route-km", type=float, default=d("mask_route_km"),
                    help=f"Margin of the route around each area (default {MASK_DEFAULTS['mask_route_km']:g} km)." + src)
+    p.add_argument("--mask-proj-penalty", type=float, default=d("mask_proj_penalty"),
+                   help="<= 0 (training, shield distillation): reward per mask correction, times the corrected angle / "
+                        "goal_offset_deg. 0 = off." + src)
     p.add_argument("--mask-mode", choices=["ray", "arc"], default=d("mask_mode"),
                    help="ray: straight line along the target heading (default). arc: predicted flight path with "
                         "the BlueSky turn rate from the current heading." + src)
