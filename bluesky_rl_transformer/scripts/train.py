@@ -131,6 +131,10 @@ def build_parser():
                    help="Single agent. 1: no event penalty for what exists at the reset sample (an aircraft already "
                         "within 5 NM, a start inside a restricted area). The per-second penalties stay. 0 = as before.")
     add_mask_args(p)                                   # heading mask (2026-11-21), rl_tf/heading_mask.py
+    p.add_argument("--mask-learn", choices=["exec", "policy"], default="exec",
+                   help="2026-11-22, heading mask on: exec = PPO stores the executed (projected) turn and its log-prob "
+                        "(before); policy = PPO stores the policy's own action, the mask is part of the environment "
+                        "(no far-off actions at small noise: ma_v2m_c2_mask got NaN weights with exec).")
     p.add_argument("--cat-penalty", type=float, default=0.0,
                    help="Training only, single agent: < 0 ends the flight at the first avoidable violation "
                         "(intrusion without the start intrusions, area entry, sector exit) with this reward. 0 = off.")
@@ -245,7 +249,7 @@ def main(argv=None):
     if any(k not in allowed for k in cost_keys):
         raise ValueError(f"--lagrangian: metrics must be from {allowed}")
     v2 = v2_kwargs(vars(args))
-    masked = bool(v2["heading_mask"])                  # heading mask: PPO stores the executed (projected) actions
+    masked = bool(v2["heading_mask"]) and args.mask_learn == "exec"   # heading mask: PPO stores the executed actions
     if args.setting != "single" and (args.cat_penalty < 0.0 or args.replay_frac > 0.0 or args.skip_start_events):
         raise ValueError("--cat-penalty, --replay-frac and --skip-start-events: single agent only")
     if args.fast_metrics and args.setting == "single":
@@ -336,11 +340,13 @@ def main(argv=None):
     episodes, curve = [], []
     total, updates, n_cut_total, t_start = 0, 0, 0, time.time()
     n_nonfinite = 0
+    n_skipped = 0                                      # minibatch steps skipped: non-finite loss or gradient
     episodes_first, n_eps_total, wall_before, n_resumes = None, 0, 0.0, 0
     if rs is not None:
         total, updates, n_cut_total, n_nonfinite = rs["total"], rs["updates"], rs["n_cut_total"], rs["n_nonfinite"]
         episodes, curve, episodes_first, n_eps_total = rs["episodes"], rs["curve"], rs["episodes_first"], rs["n_eps_total"]
         wall_before, n_resumes = rs["wall"], rs.get("n_resumes", 0) + 1
+        n_skipped = rs.get("n_skipped", 0)
     next_ckpt, next_val = next_mark(total, args.ckpt_every), next_mark(total, args.val_every)
     validator = None
     if args.val_every > 0:
@@ -362,7 +368,7 @@ def main(argv=None):
 
     def save_state(finished=False):
         st_ = {"policy": policy.state_dict(), "opt": opt.state_dict(), "args": vars(args), "dims": dims,
-               "total": total, "updates": updates, "n_cut_total": n_cut_total, "n_nonfinite": n_nonfinite,
+               "total": total, "updates": updates, "n_cut_total": n_cut_total, "n_nonfinite": n_nonfinite, "n_skipped": n_skipped,
                "n_eps_total": n_eps_total, "episodes_first": episodes_first, "episodes": episodes, "curve": curve,
                "timing": timing, "wall": wall_before + time.time() - t_start, "n_resumes": n_resumes,
                "finished": finished, "torch_rng": torch.get_rng_state(), "np_rng": np.random.get_state(),
@@ -490,7 +496,7 @@ def main(argv=None):
                 else:
                     d_all, v = policy(f_state[te], f_lidar[te])
                 d = torch.distributions.Normal(d_all.mean[torch.arange(len(b)), ag], d_all.stddev[torch.arange(len(b)), ag])
-                ratio = torch.exp(d.log_prob(f_raw[b]).sum(-1) - f_logp[b])
+                ratio = torch.exp((d.log_prob(f_raw[b]).sum(-1) - f_logp[b]).clamp(max=20.0))   # guard: no inf ratio
                 a = f_adv[b]
                 policy_loss = -torch.min(ratio * a, ratio.clamp(1 - args.clip, 1 + args.clip) * a).mean()
                 value_loss = (v - f_ret[b]).pow(2).mean()
@@ -498,7 +504,11 @@ def main(argv=None):
                 loss = policy_loss + args.vf_coef * value_loss - args.entropy_coef * entropy
                 opt.zero_grad(set_to_none=True)
                 loss.backward()
-                torch.nn.utils.clip_grad_norm_(policy.parameters(), args.max_grad_norm)
+                gn = torch.nn.utils.clip_grad_norm_(policy.parameters(), args.max_grad_norm)
+                if not (torch.isfinite(loss) and torch.isfinite(gn)):   # guard: a NaN step would break the weights
+                    n_skipped += 1
+                    opt.zero_grad(set_to_none=True)
+                    continue
                 opt.step()
                 if C:                                  # cost critics read the features, no gradient into the encoder
                     vc = torch.stack([c(feats.detach()) for c in ccrit], -1)
@@ -516,6 +526,7 @@ def main(argv=None):
                "log_std": policy.log_std.mean().item(), "n_episodes": len(new_eps), "n_cut_episodes": n_cut}
         if args.lr_final is not None:
             row["lr"] = lr_now
+        row["n_skipped_steps"] = n_skipped
         if stages:
             row["n_intruders"], row["n_obstacles"] = density
         if C:                                          # dual step on the flights that ended in this rollout
@@ -620,7 +631,7 @@ def main(argv=None):
         "name": args.name, "setting": args.setting, "encoder": "lidar ray-token Transformer", "n_aircraft": N,
         "seed": args.seed, "reset_seed": reset_seed, "n_params": n_par, "env_steps": total,
         "n_agent_episodes": n_eps_total, "n_cut_agent_episodes": n_cut_total,
-        "n_nonfinite_actions": n_nonfinite, **pass_criterion((episodes_first or []) + episodes),
+        "n_nonfinite_actions": n_nonfinite, "n_skipped_steps": n_skipped, **pass_criterion((episodes_first or []) + episodes),
         "greedy_eval": {"seeds": seeds, "mean": window_stats(greedy_rows), "rows": greedy_rows},
         "wall_seconds": wall, "seconds_per_step": wall / max(total, 1),
         "timing_seconds": timing, "timing_share": timing_share,
