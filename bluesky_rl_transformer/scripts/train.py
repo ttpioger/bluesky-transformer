@@ -54,6 +54,10 @@ def build_parser():
                    help="Lidar radius around the aircraft, km. A ray sees nothing beyond it (100 before 2026-11-12).")
     p.add_argument("--ac-tokens", type=int, default=0,
                    help="K > 0: K more Transformer tokens, one per aircraft that the lidar can see (the K nearest). 0: baseline.")
+    p.add_argument("--route-token", type=int, default=0,
+                   help="K > 0 (2026-11-22, needs --zone-tokens): one more token after the goal token: the point 10 km "
+                        "ahead on the shortest path around the restricted areas grown by K km (rl_tf/route.py). The "
+                        "policy learns how to use it; the action reference stays the goal bearing. 0 = off.")
     p.add_argument("--zone-tokens", type=int, default=0,
                    help="Restricted-area tokens: the Z nearest areas (edge point, the two ends, blocks-the-goal flag) "
                         "plus one goal token with the time left. A scenario has 5 areas. 0 = off.")
