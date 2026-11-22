@@ -18,9 +18,13 @@ import numpy as np
 from .lidar import ray_segments, polygon_edges, points_in_polygon, inflate_polygon
 
 MASK_KEYS = ["heading_mask", "mask_dist_km", "mask_step_deg", "mask_margin_km", "mask_sector", "mask_mode",
-             "mask_intruders", "mask_intr_nm", "mask_intr_horizon_s"]
+             "mask_intruders", "mask_intr_nm", "mask_intr_horizon_s", "mask_route", "mask_route_km"]
 MASK_DEFAULTS = dict(heading_mask=0, mask_dist_km=9.6, mask_step_deg=10.0, mask_margin_km=0.0, mask_sector=1,
-                     mask_mode="ray", mask_intruders=0, mask_intr_nm=5.5, mask_intr_horizon_s=120.0)
+                     mask_mode="ray", mask_intruders=0, mask_intr_nm=5.5, mask_intr_horizon_s=120.0,
+                     mask_route=0, mask_route_km=5.0)
+# mask_route (2026-11-22, test time, rl_tf/route.py): the reference bearing of action_map "goal" is the bearing to
+# the next point of the shortest path around the areas grown by mask_route_km (not the goal bearing). Works with or
+# without heading_mask; with the mask, the mask uses the same reference.
 # mask_intruders (2026-11-21, arc mode only): a candidate is also blocked if its predicted path comes nearer than
 # mask_intr_nm to the constant-velocity track of another aircraft within mask_intr_horizon_s. Aircraft already
 # nearer than mask_intr_nm at the decision do not block (that conflict exists already). If no candidate is free of
@@ -116,6 +120,11 @@ def add_mask_args(p, from_checkpoint=False):
                    help=f"Least predicted separation (default {MASK_DEFAULTS['mask_intr_nm']} NM)." + src)
     p.add_argument("--mask-intr-horizon-s", type=float, default=d("mask_intr_horizon_s"),
                    help=f"Prediction horizon (default {MASK_DEFAULTS['mask_intr_horizon_s']:g} s)." + src)
+    p.add_argument("--mask-route", type=int, choices=[0, 1], default=d("mask_route"),
+                   help="1: fly around the restricted areas: reference bearing = next point of the shortest "
+                        "area-free path (rl_tf/route.py; action_map goal)." + src)
+    p.add_argument("--mask-route-km", type=float, default=d("mask_route_km"),
+                   help=f"Margin of the route around each area (default {MASK_DEFAULTS['mask_route_km']:g} km)." + src)
     p.add_argument("--mask-mode", choices=["ray", "arc"], default=d("mask_mode"),
                    help="ray: straight line along the target heading (default). arc: predicted flight path with "
                         "the BlueSky turn rate from the current heading." + src)

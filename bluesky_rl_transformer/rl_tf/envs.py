@@ -12,6 +12,9 @@ import numpy as np
 from .lidar import (Lidar, own_state, state_dim, extra_dim, N_CHANNELS, ACT_FEATURES, DIST_NORM_KM, GEOM_KEY, NM2KM,
                     to_own_frame, inflate_polygon, zone_distance)
 from .heading_mask import MASK_DEFAULTS, mask_geometry, choose_offset, mask_polys, choose_offset_arc
+from .route import route_point
+ROUTE_WINDOW = 60            # decisions (10 s each) of the route progress guard (30 switched off 25 % of the flights)
+ROUTE_MIN_PROGRESS_NM = 3.0  # least fall of the goal distance over that window, else the route goes off
 
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")   # no window for rgb_array rendering
 
@@ -152,6 +155,8 @@ def v2_kwargs(c):
         raise ValueError("timeout_penalty must be <= 0 (the reward has only negative terms)")
     if out["heading_mask"] and out["action_map"] != "goal":
         raise ValueError("heading_mask needs action_map goal")
+    if out["mask_route"] and out["action_map"] != "goal":
+        raise ValueError("mask_route needs action_map goal")
     if out["heading_mask"] and (out["mask_step_deg"] <= 0.0 or out["mask_dist_km"] < 0.0 or out["mask_margin_km"] < 0.0):
         raise ValueError("mask_step_deg must be > 0; mask_dist_km and mask_margin_km must be >= 0")
     if out["mask_mode"] not in ("ray", "arc"):
@@ -250,6 +255,7 @@ class FlightEnv:
         self._prev = {}
         self.last_exec = None                          # heading mask: executed policy actions of the last step
         self._mask_stats = {}
+        self._route_stats = {}                         # route around the areas: decisions with a route point
         self.extra_info = False                        # evaluation (2026-11-21): start geometry in the infos
         self._start_info = {}
 
@@ -279,6 +285,7 @@ class FlightEnv:
                 self._start_info[a] = {"start_area_km": float(min(d, 999.0)), "start_min_sep_nm": float(min(sep, 999.0))}
         if self.v2["heading_mask"]:                    # per flight: decisions, projected, sum of |angle|, fallbacks
             self._mask_stats = {a: dict(dec=0, proj=0, angle=0.0, fb=0) for a in self.ids}
+        self._route_stats = {a: dict(dec=0, via=0, off=0, hist=[]) for a in self.ids}
         return obs
 
     def env_action(self, actions):
@@ -291,14 +298,19 @@ class FlightEnv:
         mask = bool(self.v2["heading_mask"])
         if mask:
             self.last_exec = {}
+        zero = os.environ.get("BLUESKY_TF_ZERO_POLICY", "0") == "1"   # ablation (2026-11-22): policy action 0
         for a, act in actions.items():
             act = np.asarray(act, dtype=np.float64).copy()
+            if zero:
+                act[:] = 0.0
             idx = bs.traf.id2idx(self._ac_id(a))
             if mask:
                 ex = np.clip(act, -1.0, 1.0)
             if idx >= 0:
                 goal = (inner.goal_lat, inner.goal_lon) if self.setting == "single" else inner._goal[a]
                 qdr, dist_nm = kwikqdrdist(bs.traf.lat[idx], bs.traf.lon[idx], goal[0], goal[1])
+                if self.v2.get("mask_route", 0):        # route around the areas (2026-11-22, rl_tf/route.py)
+                    qdr, dist_nm = self._route_ref(a, float(qdr), float(dist_nm), float(bs.traf.hdg[idx]))
                 if mask:                               # heading mask (2026-11-21), rl_tf/heading_mask.py
                     ex[0] = self._mask_turn(a, float(qdr), float(dist_nm) * NM2KM, float(bs.traf.hdg[idx]), ex[0], idx)
                     target = float(qdr) + float(ex[0]) * self.v2["goal_offset_deg"]
@@ -310,6 +322,28 @@ class FlightEnv:
             if mask:
                 self.last_exec[a] = ex.astype(np.float32)
         return out
+
+    def _route_ref(self, a, qdr, dist_nm, hdg):
+        """Reference bearing and distance (NM) for action_map goal: the route point ahead on the area-free route, or
+        the goal. Progress guard: if the goal distance did not fall by ROUTE_MIN_PROGRESS_NM over the last
+        ROUTE_WINDOW decisions, the route stays off for this aircraft for the rest of the flight (smoke run of
+        2026-11-22: a few flights circled until the time limit)."""
+        st = self._route_stats.setdefault(a, dict(dec=0, via=0, off=0, hist=[]))
+        st["dec"] += 1
+        h = st["hist"]
+        h.append(dist_nm)
+        if len(h) > ROUTE_WINDOW and h[-1 - ROUTE_WINDOW] - dist_nm < ROUTE_MIN_PROGRESS_NM:
+            st["off"] = 1
+        if st["off"]:
+            return qdr, dist_nm
+        g = self._geom[a]
+        zones = g["zones"] if self.zone_margin_km <= 0.0 else self._true_zones(a)
+        gx, gy = g["goal"]
+        nx, ny = route_point(zones, (gx, gy), float(self.v2["mask_route_km"]), g["sector"])
+        if abs(nx - gx) < 1e-9 and abs(ny - gy) < 1e-9:
+            return qdr, dist_nm
+        st["via"] += 1
+        return (hdg + float(np.degrees(np.arctan2(ny, nx)))) % 360.0, float(np.hypot(nx, ny)) / NM2KM
 
     def _mask_turn(self, a, qdr, goal_km, hdg, turn, idx=None):
         """Heading mask for one aircraft: policy turn action (clipped) -> executed turn action. Static geometry of
@@ -415,6 +449,10 @@ class FlightEnv:
                 st = self._mask_stats.get(a, dict(dec=0, proj=0, angle=0.0, fb=0))
                 infos[a] = {**infos[a], "mask_decisions": float(st["dec"]), "mask_projected": float(st["proj"]),
                             "mask_angle_sum_deg": float(st["angle"]), "mask_fallbacks": float(st["fb"])}
+        if self.v2.get("mask_route", 0):              # route statistics of the flight so far (not scored)
+            for a in obs:
+                rs = self._route_stats.get(a, {})
+                infos[a] = {**infos[a], "route_via": float(rs.get("via", 0)), "route_off": float(rs.get("off", 0))}
         return obs, out_rew, {a: bool(term[a]) for a in obs}, {a: bool(trunc[a]) for a in obs}, infos
 
     def set_cat_prob(self, p):
@@ -583,6 +621,9 @@ def metrics_row(info, ep_return):
         row.update(mask_decisions=dec, mask_projected=proj, mask_fallbacks=float(info["mask_fallbacks"]),
                    mask_proj_share=proj / max(dec, 1.0),
                    mask_mean_angle_deg=float(info["mask_angle_sum_deg"]) / max(proj, 1.0))
+    if "route_via" in info:                            # route around the areas on (2026-11-22), not scored
+        row["route_via"] = float(info["route_via"])
+        row["route_off"] = float(info.get("route_off", 0.0))
     return row
 
 
