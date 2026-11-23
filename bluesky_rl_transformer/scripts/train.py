@@ -45,6 +45,9 @@ def build_parser():
     p.add_argument("--clip", type=float, default=0.2)
     p.add_argument("--vf-coef", type=float, default=0.5)
     p.add_argument("--entropy-coef", type=float, default=0.0)
+    p.add_argument("--heading-bins", type=int, default=0,
+                   help="2026-11-23: > 0 = discrete heading head with this many bins over -G ... +G (19 = 10 deg steps); "
+                        "speed stays Gaussian. 0 = Gaussian actor (default).")
     p.add_argument("--max-grad-norm", type=float, default=0.5, help="One clip over all weights (as in the reference).")
     # lidar and frame stack
     p.add_argument("--n-rays", type=int, default=120,
@@ -495,7 +498,10 @@ def main(argv=None):
                     d_all, v, feats = policy.forward_feats(f_state[te], f_lidar[te])
                 else:
                     d_all, v = policy(f_state[te], f_lidar[te])
-                d = torch.distributions.Normal(d_all.mean[torch.arange(len(b)), ag], d_all.stddev[torch.arange(len(b)), ag])
+                if hasattr(d_all, "pick"):              # discrete heading head (2026-11-23)
+                    d = d_all.pick(torch.arange(len(b)), ag)
+                else:
+                    d = torch.distributions.Normal(d_all.mean[torch.arange(len(b)), ag], d_all.stddev[torch.arange(len(b)), ag])
                 ratio = torch.exp((d.log_prob(f_raw[b]).sum(-1) - f_logp[b]).clamp(max=20.0))   # guard: no inf ratio
                 a = f_adv[b]
                 policy_loss = -torch.min(ratio * a, ratio.clamp(1 - args.clip, 1 + args.clip) * a).mean()

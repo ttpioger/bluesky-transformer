@@ -8,7 +8,39 @@ The change: the Conv1d stack over the lidar scan is replaced by a Transformer ov
 from __future__ import annotations
 import torch
 from torch import nn
-from torch.distributions import Normal
+from torch.distributions import Normal, Categorical
+
+
+class HybridHeading:
+    """Action distribution of the discrete heading head (2026-11-23): heading = categorical over K bins (offsets
+    -1 ... +1 of the action mapping, i.e. -90 ... +90 deg in 10 deg steps for K = 19); speed = Normal. Same interface
+    as Normal for the PPO code: mean, sample(), log_prob(x) [..., 2], entropy() [..., 2]; pick(i, j) for one aircraft.
+    A heading value x0 is mapped to its nearest bin."""
+
+    def __init__(self, logits, mu, std):
+        self.logits, self.mu, self.std = logits, mu, std
+        self.k = logits.shape[-1]
+        self.bins = torch.linspace(-1.0, 1.0, self.k, device=logits.device, dtype=mu.dtype)
+        self.cat, self.nrm = Categorical(logits=logits), Normal(mu, std)
+
+    @property
+    def mean(self):
+        return torch.stack([self.bins[self.logits.argmax(-1)], self.mu], -1)
+
+    def sample(self):
+        return torch.stack([self.bins[self.cat.sample()], self.nrm.sample()], -1)
+
+    def index(self, x0):
+        return ((x0.clamp(-1.0, 1.0) + 1.0) * (self.k - 1) / 2.0).round().long()
+
+    def log_prob(self, x):
+        return torch.stack([self.cat.log_prob(self.index(x[..., 0])), self.nrm.log_prob(x[..., 1])], -1)
+
+    def entropy(self):
+        return torch.stack([self.cat.entropy(), self.nrm.entropy()], -1)
+
+    def pick(self, i, j):
+        return HybridHeading(self.logits[i, j], self.mu[i, j], self.std[i, j])
 
 
 class LidarTransformerEncoder(nn.Module):
@@ -207,15 +239,22 @@ class AttentionCritic(nn.Module):
 class Policy(nn.Module):
     def __init__(self, state_dim, lidar_ch, n_rays, action_dim=2, patch=4, d_model=64, n_heads=4, n_layers=2,
                  features_dim=256, hidden=64, log_std_init=0.0, ac_tokens=0, zone_tokens=0, act_tokens=0,
-                 edge_tokens=0, ac_cpa=0, fourier=0, cls_token=0, map_px=0, map_patch=8):
+                 edge_tokens=0, ac_cpa=0, fourier=0, cls_token=0, map_px=0, map_patch=8, heading_bins=0):
         super().__init__()
         self.encoder = LidarTransformerEncoder(state_dim, lidar_ch, n_rays, patch, d_model, n_heads, n_layers,
                                                features_dim=features_dim, ac_tokens=ac_tokens,
                                                zone_tokens=zone_tokens, act_tokens=act_tokens,
                                                edge_tokens=edge_tokens, ac_cpa=ac_cpa, fourier=fourier,
                                                cls_token=cls_token, map_px=map_px, map_patch=map_patch)
-        self.actor = nn.Sequential(nn.Linear(features_dim, hidden), nn.Tanh(), nn.Linear(hidden, hidden), nn.Tanh(),
-                                   nn.Linear(hidden, action_dim), nn.Tanh())
+        self.heading_bins = int(heading_bins)
+        if self.heading_bins:                          # discrete heading head (2026-11-23): trunk + 2 output heads
+            self.actor = nn.Sequential(nn.Linear(features_dim, hidden), nn.Tanh(), nn.Linear(hidden, hidden),
+                                       nn.Tanh())
+            self.head_h = nn.Linear(hidden, self.heading_bins)
+            self.head_s = nn.Sequential(nn.Linear(hidden, 1), nn.Tanh())
+        else:
+            self.actor = nn.Sequential(nn.Linear(features_dim, hidden), nn.Tanh(), nn.Linear(hidden, hidden),
+                                       nn.Tanh(), nn.Linear(hidden, action_dim), nn.Tanh())
         self.log_std = nn.Parameter(torch.full((action_dim,), float(log_std_init)))
         self.critic = AttentionCritic(features_dim, hidden)
 
@@ -228,6 +267,11 @@ class Policy(nn.Module):
         """forward plus the encoder features [B, N, F] (the cost critics of the Lagrangian read them)."""
         b, n = state.shape[:2]
         f = self.encoder(state.reshape(b * n, -1), lidar.reshape(b * n, *lidar.shape[2:])).reshape(b, n, -1)
+        if self.heading_bins:
+            z = self.actor(f)
+            mu = self.head_s(z)[..., 0]
+            std = self.log_std[1].clamp(-20.0, 2.0).exp().expand_as(mu)
+            return HybridHeading(self.head_h(z), mu, std), self.critic(f), f
         mean = self.actor(f)
         std = self.log_std.clamp(-20.0, 2.0).exp().expand_as(mean)     # clamp of the reference
         return Normal(mean, std), self.critic(f), f
@@ -257,7 +301,7 @@ def build_policy(dims, args):
                   edge_tokens=dims.get("edge_tokens", 0), ac_cpa=dims.get("ac_cpa", 0),
                   fourier=args.get("fourier", 0), cls_token=args.get("cls_token", 0),
                   map_px=dims.get("map_px", 0), map_patch=args.get("map_patch", 8),
-                  **{k: args[k] for k in NET_KEYS})
+                  heading_bins=args.get("heading_bins", 0) or 0, **{k: args[k] for k in NET_KEYS})
 
 
 def save_checkpoint(path, policy, args, dims, extra=None):
@@ -310,7 +354,7 @@ def load_actor(policy, path, dims, args):
     bad = encoder_mismatch(ck["args"], ck["dims"], args, dims)
     if bad:
         raise ValueError(f"{path}: encoder settings differ from this run: {bad}")
-    state = {k: v for k, v in ck["policy"].items() if k.startswith(("encoder.", "actor.")) or k == "log_std"}
+    state = {k: v for k, v in ck["policy"].items() if k.startswith(("encoder.", "actor.", "head_")) or k == "log_std"}
     missing, unexpected = policy.load_state_dict(state, strict=False)
     if unexpected or any(not k.startswith("critic.") for k in missing):
         raise ValueError(f"{path}: weights do not fit: missing {missing}, unexpected {unexpected}")
