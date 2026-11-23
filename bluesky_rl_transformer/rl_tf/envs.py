@@ -11,7 +11,7 @@ import multiprocessing as mp
 import numpy as np
 from .lidar import (Lidar, own_state, state_dim, extra_dim, N_CHANNELS, ACT_FEATURES, DIST_NORM_KM, GEOM_KEY, NM2KM,
                     to_own_frame, inflate_polygon, zone_distance)
-from .heading_mask import MASK_DEFAULTS, mask_geometry, choose_offset, mask_polys, choose_offset_arc
+from .heading_mask import MASK_DEFAULTS, mask_geometry, choose_offset, mask_polys, choose_offset_arc, choose_trap_fb2
 from .route import route_point
 ROUTE_WINDOW = 60            # decisions (10 s each) of the route progress guard (30 switched off 25 % of the flights)
 ROUTE_MIN_PROGRESS_NM = 3.0  # least fall of the goal distance over that window, else the route goes off
@@ -151,8 +151,8 @@ def v2_kwargs(c):
         raise ValueError(f"action_map must be rel or goal, got {out['action_map']}")
     if out["cpa_margin_penalty"] > 0.0 or out["zone_margin_penalty"] > 0.0:
         raise ValueError("the margin penalties must be <= 0 (the reward has only negative terms)")
-    if out.get("mask_proj_penalty", 0.0) > 0.0:
-        raise ValueError("mask_proj_penalty must be <= 0")
+    if out.get("mask_proj_penalty", 0.0) > 0.0 or out.get("mask_fallback_penalty", 0.0) > 0.0:
+        raise ValueError("mask_proj_penalty and mask_fallback_penalty must be <= 0")
     if out["timeout_penalty"] > 0.0:
         raise ValueError("timeout_penalty must be <= 0 (the reward has only negative terms)")
     if out["heading_mask"] and out["action_map"] != "goal":
@@ -300,7 +300,8 @@ class FlightEnv:
         mask = bool(self.v2["heading_mask"])
         if mask:
             self.last_exec = {}
-            self._proj_cost = {}
+            self._proj_cost, self._fb_cost = {}, {}
+            self._fb2_spd = {}
         zero = os.environ.get("BLUESKY_TF_ZERO_POLICY", "0") == "1"   # ablation (2026-11-22): policy action 0
         for a, act in actions.items():
             act = np.asarray(act, dtype=np.float64).copy()
@@ -321,9 +322,11 @@ class FlightEnv:
                     target = float(qdr) + float(np.clip(act[0], -1.0, 1.0)) * self.v2["goal_offset_deg"]
                 delta = (target - float(bs.traf.hdg[idx]) + 180.0) % 360.0 - 180.0
                 act[0] = float(np.clip(delta / float(inner.d_heading), -1.0, 1.0))
+                if mask and self._fb2_spd.get(a, 0) and len(act) > 1:   # fb2 trap: speed action of this decision
+                    act[1] = float(self._fb2_spd[a])
             out[a] = act
             if mask:
-                self.last_exec[a] = ex.astype(np.float32)
+                self.last_exec[a] = np.clip(ex, -1.0, 1.0).astype(np.float32)   # fb2 offsets beyond +-G: clipped
         return out
 
     def _route_ref(self, a, qdr, dist_nm, hdg):
@@ -372,11 +375,18 @@ class FlightEnv:
                             horizon_s=float(v2["mask_intr_horizon_s"]))
             off, proj, fb = choose_offset_arc(geo, goal_rel, req, cur_off, G, v2["mask_dist_km"],
                                               v2["mask_step_deg"], tas, rate, goal_km, intr)
+            if fb and v2.get("mask_fb2", 0):           # trap: full circle and speed (2026-11-23, heading_mask.py)
+                off, spd = choose_trap_fb2(geo, goal_rel, req, cur_off, v2["mask_dist_km"], v2["mask_step_deg"],
+                                           tas, rate, goal_km, intr, float(v2["mask_fb2_dv_ms"]))
+                if not hasattr(self, "_fb2_spd"):
+                    self._fb2_spd = {}
+                self._fb2_spd[a] = spd
         else:
             edges = mask_geometry(zones, g["sector"], v2["mask_margin_km"], bool(v2["mask_sector"]))
             off, proj, fb = choose_offset(edges, goal_rel, req, cur_off, G, v2["mask_dist_km"], v2["mask_step_deg"],
                                           goal_km)
         self._proj_cost[a] = abs(off - req) / G if proj else 0.0     # shield distillation cost of this decision
+        self._fb_cost[a] = 1.0 if (proj and fb) else 0.0              # trapped: no free heading
         st = self._mask_stats.setdefault(a, dict(dec=0, proj=0, angle=0.0, fb=0))
         st["dec"] += 1
         if proj:
@@ -446,6 +456,8 @@ class FlightEnv:
                 out_rew[a] += v2["timeout_penalty"]
             if v2.get("mask_proj_penalty", 0.0) < 0.0:     # shield distillation (2026-11-22)
                 out_rew[a] += v2["mask_proj_penalty"] * getattr(self, "_proj_cost", {}).get(a, 0.0)
+            if v2.get("mask_fallback_penalty", 0.0) < 0.0:  # trap penalty (2026-11-22)
+                out_rew[a] += v2["mask_fallback_penalty"] * getattr(self, "_fb_cost", {}).get(a, 0.0)
             p.update(t=t, zone=zone, exit=ext, turn=turn, intr=intr)
         if self.extra_info:
             for a in obs:

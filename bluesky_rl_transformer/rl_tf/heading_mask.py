@@ -19,13 +19,20 @@ from .lidar import ray_segments, polygon_edges, points_in_polygon, inflate_polyg
 
 MASK_KEYS = ["heading_mask", "mask_dist_km", "mask_step_deg", "mask_margin_km", "mask_sector", "mask_mode",
              "mask_intruders", "mask_intr_nm", "mask_intr_horizon_s", "mask_route", "mask_route_km",
-             "mask_proj_penalty"]
+             "mask_proj_penalty", "mask_fallback_penalty", "mask_fb2", "mask_fb2_dv_ms"]
 MASK_DEFAULTS = dict(heading_mask=0, mask_dist_km=9.6, mask_step_deg=10.0, mask_margin_km=0.0, mask_sector=1,
                      mask_mode="ray", mask_intruders=0, mask_intr_nm=5.5, mask_intr_horizon_s=120.0,
-                     mask_route=0, mask_route_km=5.0, mask_proj_penalty=0.0)
+                     mask_route=0, mask_route_km=5.0, mask_proj_penalty=0.0, mask_fallback_penalty=0.0,
+                     mask_fb2=0, mask_fb2_dv_ms=10.0)
+# mask_fallback_penalty (2026-11-22, training): <= 0, reward per decision where all candidate headings are blocked
+# (mask fallback = the aircraft is trapped). 90 % of the area entries and later intrusions came after a fallback.
 # mask_proj_penalty (2026-11-22, shield distillation, training): <= 0, reward per decision that the mask corrects,
 # times |executed - requested offset| / goal_offset_deg (a 90 degree correction costs the full value). With
 # --mask-learn policy the policy learns to request safe headings itself, so that the mask is needed less.
+# mask_fb2 (2026-11-23, test time, arc mode): better trap fallback. Diagnosis (SA, lrd_avg5 + arcI + route3, seeds 7
+# and 11): 91-95 % of the flights with a later intrusion had a mask fallback. In a trap (no candidate within +-G free),
+# fb2 searches the full circle, tests the own speed - dv, + 0 and + dv (speed action -1, 0, +1 for this decision) and
+# also counts aircraft already nearer than mask_intr_nm, from FB2_NEAR_T0_S on (the heading that opens the distance).
 # mask_route (2026-11-22, test time, rl_tf/route.py): the reference bearing of action_map "goal" is the bearing to
 # the next point of the shortest path around the areas grown by mask_route_km (not the goal bearing). Works with or
 # without heading_mask; with the mask, the mask uses the same reference.
@@ -132,6 +139,13 @@ def add_mask_args(p, from_checkpoint=False):
     p.add_argument("--mask-proj-penalty", type=float, default=d("mask_proj_penalty"),
                    help="<= 0 (training, shield distillation): reward per mask correction, times the corrected angle / "
                         "goal_offset_deg. 0 = off." + src)
+    p.add_argument("--mask-fallback-penalty", type=float, default=d("mask_fallback_penalty"),
+                   help="<= 0 (training): reward per decision where the mask finds no free heading (trapped). 0 = off."
+                        + src)
+    p.add_argument("--mask-fb2", type=int, choices=[0, 1], default=d("mask_fb2"),
+                   help="Arc mode: 1 = trap fallback over the full circle with a speed change (test time)." + src)
+    p.add_argument("--mask-fb2-dv-ms", type=float, default=d("mask_fb2_dv_ms"),
+                   help=f"Speed change tested by fb2 (default {MASK_DEFAULTS['mask_fb2_dv_ms']:g} m/s)." + src)
     p.add_argument("--mask-mode", choices=["ray", "arc"], default=d("mask_mode"),
                    help="ray: straight line along the target heading (default). arc: predicted flight path with "
                         "the BlueSky turn rate from the current heading." + src)
@@ -238,3 +252,59 @@ def choose_offset_arc(geo, goal_rel_deg, req_off, cur_off, goal_offset_deg, dist
     tied = np.flatnonzero(ok & (np.abs(gap - best) <= 1e-9))
     k = tied[int(np.abs(cand[tied] - cur_off).argmin())]
     return float(cand[k]), True, False
+
+
+FB2_NEAR_T0_S = 30.0                                   # near aircraft: separation counted from this time on
+
+
+def separation_all(target_rel_deg, speed_ms, turn_rate_dps, intr, t0_near=FB2_NEAR_T0_S):
+    """As min_separation, but aircraft already nearer than sep_km are kept: for them only the path points from
+    t0_near seconds on count (so the candidate that opens the distance scores higher). Returns [C] km."""
+    pos = np.asarray(intr["pos"], dtype=np.float64).reshape(-1, 2)
+    vel = np.asarray(intr["vel"], dtype=np.float64).reshape(-1, 2)
+    n_t = len(np.atleast_1d(target_rel_deg))
+    if len(pos) == 0:
+        return np.full(n_t, np.inf)
+    pts, _ = arc_paths(target_rel_deg, speed_ms, turn_rate_dps, speed_ms * intr["horizon_s"] / 1000.0)
+    t = ARC_DT_S * np.arange(1, pts.shape[1] + 1)
+    other = pos[None, :, :] + vel[None, :, :] * t[:, None, None] / 1000.0
+    d = np.linalg.norm(pts[:, :, None, :] - other[None], axis=-1)          # [C, P, M]
+    near = np.hypot(pos[:, 0], pos[:, 1]) < intr["sep_km"]
+    if near.any():
+        d[:, t < t0_near, :] = np.where(near[None, None, :], np.inf, d[:, t < t0_near, :])
+    return d.min(axis=(1, 2))
+
+
+def choose_trap_fb2(geo, goal_rel_deg, req_off, cur_off, dist_km, step_deg, speed_ms, turn_rate_dps, goal_km,
+                    intr, dv_ms):
+    """Trap fallback of fb2 (call it only when choose_offset_arc returned fallback=True).
+    Candidates: offsets over the full circle x own speed (-dv, 0, +dv). Rules, in order:
+    1. statically free and separation >= sep_km: the offset nearest to req_off, then speed 0 first, then the side
+       nearer to the current heading; 2. statically free: the largest separation; 3. the longest free path (speed 0).
+    Returns (offset deg, speed action -1/0/+1)."""
+    if geo is None:
+        geo = ([], None)
+    dkm = min(float(dist_km), float(goal_km))
+    cand = np.arange(-180.0, 180.0, float(step_deg))
+    d = free_path(geo, goal_rel_deg + cand, speed_ms, turn_rate_dps, ARC_FALLBACK_FACTOR * dkm)
+    ok_s = d >= dkm
+    if not ok_s.any():
+        return float(cand[int(d.argmax())]), 0
+    if intr is None:                                   # static trap only: the free offset nearest to the request
+        gap = np.abs(_wrap(cand - req_off))
+        gap = np.where(ok_s, gap, np.inf)
+        best = gap.min()
+        tied = np.flatnonzero(np.abs(gap - best) <= 1e-9)
+        k = tied[int(np.abs(_wrap(cand[tied] - cur_off)).argmin())]
+        return float(cand[k]), 0
+    best_key, best_sep = None, None
+    for spd, dv in ((0, 0.0), (-1, -float(dv_ms)), (1, float(dv_ms))):
+        v = max(speed_ms + dv, 50.0)
+        rate = turn_rate_dps * speed_ms / v            # same bank angle: rate ~ 1 / speed
+        sep = separation_all(goal_rel_deg + cand, v, rate, intr)
+        for k in np.flatnonzero(ok_s):
+            key = (0 if sep[k] >= intr["sep_km"] else 1, abs(_wrap(cand[k] - req_off)) if sep[k] >= intr["sep_km"]
+                   else -sep[k], abs(spd), abs(_wrap(cand[k] - cur_off)))
+            if best_key is None or key < best_key:
+                best_key, best_sep = key, (float(cand[k]), spd)
+    return best_sep

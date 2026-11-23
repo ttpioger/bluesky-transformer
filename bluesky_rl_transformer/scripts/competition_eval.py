@@ -263,7 +263,9 @@ def main(argv=None):
         f"_min{mo['mask_intr_nm']:g}" if "mask_intr_nm" in mo else "",
         f"_mih{mo['mask_intr_horizon_s']:g}" if "mask_intr_horizon_s" in mo else "",
         f"_mr{mo['mask_route']}" if "mask_route" in mo else "",
-        f"_mrk{mo['mask_route_km']:g}" if "mask_route_km" in mo else ""])
+        f"_mrk{mo['mask_route_km']:g}" if "mask_route_km" in mo else "",
+        f"_fb{mo['mask_fb2']}" if "mask_fb2" in mo else "",
+        f"_fbv{mo['mask_fb2_dv_ms']:g}" if "mask_fb2_dv_ms" in mo else ""])
     if not tags:
         opts = None                                      # no option: the same jobs as before 2026-11-19
     import torch
