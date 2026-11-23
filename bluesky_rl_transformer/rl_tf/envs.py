@@ -11,7 +11,8 @@ import multiprocessing as mp
 import numpy as np
 from .lidar import (Lidar, own_state, state_dim, extra_dim, N_CHANNELS, ACT_FEATURES, DIST_NORM_KM, GEOM_KEY, NM2KM,
                     to_own_frame, inflate_polygon, zone_distance)
-from .heading_mask import MASK_DEFAULTS, mask_geometry, choose_offset, mask_polys, choose_offset_arc, choose_trap_fb2
+from .heading_mask import MASK_DEFAULTS, mask_geometry, choose_offset, mask_polys, choose_offset_arc, choose_trap_fb2, \
+    speed_option
 from .route import route_point
 ROUTE_WINDOW = 60            # decisions (10 s each) of the route progress guard (30 switched off 25 % of the flights)
 ROUTE_MIN_PROGRESS_NM = 3.0  # least fall of the goal distance over that window, else the route goes off
@@ -338,14 +339,28 @@ class FlightEnv:
         st["dec"] += 1
         h = st["hist"]
         h.append(dist_nm)
-        if len(h) > ROUTE_WINDOW and h[-1 - ROUTE_WINDOW] - dist_nm < ROUTE_MIN_PROGRESS_NM:
-            st["off"] = 1
+        cool = int(self.v2.get("mask_route_cooldown", 0))
+        if st["off"] and cool > 0 and st["dec"] >= st.get("off_until", 0):   # cooldown over (2026-11-23)
+            st["off"] = 0
+            h.clear()
+            h.append(dist_nm)
+        if not st["off"] and len(h) > ROUTE_WINDOW and h[-1 - ROUTE_WINDOW] - dist_nm < ROUTE_MIN_PROGRESS_NM:
+            if self.v2.get("mask_route_escalate", 0) and st.get("lvl", 0) < 2:   # re-plan wider (2026-11-23)
+                st["lvl"] = st.get("lvl", 0) + 1
+                st["n_esc"] = st.get("n_esc", 0) + 1
+                h.clear()
+                h.append(dist_nm)
+            else:
+                st["off"] = 1
+                st["n_off"] = st.get("n_off", 0) + 1
+                st["off_until"] = st["dec"] + cool
+                st["lvl"] = 0
         if st["off"]:
             return qdr, dist_nm
         g = self._geom[a]
         zones = g["zones"] if self.zone_margin_km <= 0.0 else self._true_zones(a)
         gx, gy = g["goal"]
-        nx, ny = route_point(zones, (gx, gy), float(self.v2["mask_route_km"]), g["sector"])
+        nx, ny = route_point(zones, (gx, gy), float(self.v2["mask_route_km"]) * (1 + st.get("lvl", 0)), g["sector"])
         if abs(nx - gx) < 1e-9 and abs(ny - gy) < 1e-9:
             return qdr, dist_nm
         st["via"] += 1
@@ -375,6 +390,14 @@ class FlightEnv:
                             horizon_s=float(v2["mask_intr_horizon_s"]))
             off, proj, fb = choose_offset_arc(geo, goal_rel, req, cur_off, G, v2["mask_dist_km"],
                                               v2["mask_step_deg"], tas, rate, goal_km, intr)
+            if proj and not fb and intr is not None and v2.get("mask_speed", 0):   # speed before turning (2026-11-23)
+                spd = speed_option(geo, goal_rel, req, tas, rate, v2["mask_dist_km"], goal_km, intr,
+                                   float(v2["mask_fb2_dv_ms"]))
+                if spd:
+                    off, proj = req, False
+                    self._fb2_spd[a] = spd
+                    st0 = self._mask_stats.setdefault(a, dict(dec=0, proj=0, angle=0.0, fb=0))
+                    st0["spd"] = st0.get("spd", 0) + 1
             if fb and v2.get("mask_fb2", 0):           # trap: full circle and speed (2026-11-23, heading_mask.py)
                 off, spd = choose_trap_fb2(geo, goal_rel, req, cur_off, v2["mask_dist_km"], v2["mask_step_deg"],
                                            tas, rate, goal_km, intr, float(v2["mask_fb2_dv_ms"]))
@@ -466,11 +489,14 @@ class FlightEnv:
             for a in obs:
                 st = self._mask_stats.get(a, dict(dec=0, proj=0, angle=0.0, fb=0))
                 infos[a] = {**infos[a], "mask_decisions": float(st["dec"]), "mask_projected": float(st["proj"]),
-                            "mask_angle_sum_deg": float(st["angle"]), "mask_fallbacks": float(st["fb"])}
+                            "mask_angle_sum_deg": float(st["angle"]), "mask_fallbacks": float(st["fb"]),
+                            "mask_speed_changes": float(st.get("spd", 0))}
         if self.v2.get("mask_route", 0):              # route statistics of the flight so far (not scored)
             for a in obs:
                 rs = self._route_stats.get(a, {})
-                infos[a] = {**infos[a], "route_via": float(rs.get("via", 0)), "route_off": float(rs.get("off", 0))}
+                infos[a] = {**infos[a], "route_via": float(rs.get("via", 0)),
+                            "route_off": float(rs.get("off", 0) or rs.get("n_off", 0) > 0),
+                            "route_n_off": float(rs.get("n_off", 0)), "route_n_esc": float(rs.get("n_esc", 0))}
         return obs, out_rew, {a: bool(term[a]) for a in obs}, {a: bool(trunc[a]) for a in obs}, infos
 
     def set_cat_prob(self, p):
@@ -643,6 +669,10 @@ def metrics_row(info, ep_return):
     if "route_via" in info:                            # route around the areas on (2026-11-22), not scored
         row["route_via"] = float(info["route_via"])
         row["route_off"] = float(info.get("route_off", 0.0))
+        row["route_n_off"] = float(info.get("route_n_off", 0.0))
+        row["route_n_esc"] = float(info.get("route_n_esc", 0.0))
+    if "mask_speed_changes" in info:                   # mask_speed (2026-11-23), not scored
+        row["mask_speed_changes"] = float(info["mask_speed_changes"])
     return row
 
 

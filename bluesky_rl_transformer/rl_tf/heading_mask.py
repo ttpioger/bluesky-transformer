@@ -19,11 +19,23 @@ from .lidar import ray_segments, polygon_edges, points_in_polygon, inflate_polyg
 
 MASK_KEYS = ["heading_mask", "mask_dist_km", "mask_step_deg", "mask_margin_km", "mask_sector", "mask_mode",
              "mask_intruders", "mask_intr_nm", "mask_intr_horizon_s", "mask_route", "mask_route_km",
-             "mask_proj_penalty", "mask_fallback_penalty", "mask_fb2", "mask_fb2_dv_ms"]
+             "mask_proj_penalty", "mask_fallback_penalty", "mask_fb2", "mask_fb2_dv_ms", "mask_route_cooldown",
+             "mask_speed", "mask_route_escalate"]
 MASK_DEFAULTS = dict(heading_mask=0, mask_dist_km=9.6, mask_step_deg=10.0, mask_margin_km=0.0, mask_sector=1,
                      mask_mode="ray", mask_intruders=0, mask_intr_nm=5.5, mask_intr_horizon_s=120.0,
                      mask_route=0, mask_route_km=5.0, mask_proj_penalty=0.0, mask_fallback_penalty=0.0,
-                     mask_fb2=0, mask_fb2_dv_ms=10.0)
+                     mask_fb2=0, mask_fb2_dv_ms=10.0, mask_route_cooldown=0, mask_speed=0,
+                     mask_route_escalate=0)
+# mask_route_escalate (2026-11-23, test time): when the progress guard fires, re-plan with a wider margin
+# (mask_route_km x 2, then x 3) before the route goes off. Video SA seed 73 (cooldown on): the route led into a narrow
+# gap between areas that the mask blocks (block distance 9.6 km > route margin 3 km); the aircraft circled there.
+# mask_route_cooldown (2026-11-23, test time): decisions the route stays off after the progress guard fires; then it
+# comes back with a fresh progress window. 0 = off for the rest of the flight (before). Diagnosis (lrd_avg5 + shield,
+# seeds 7 / 11): the route was off in 100 % of the flights that missed the goal (video SA seed 73: a traffic delay
+# early on switched the route off; later the aircraft circled behind a thin area until the time limit).
+# mask_speed (2026-11-23, test time, arc mode with intruders): when traffic (not the static geometry) blocks the
+# requested heading, first test the own speed -dv / +dv (dv = mask_fb2_dv_ms); if one makes the request free, keep the
+# heading and send that speed action for this decision (video SA seed 31: late conflict near the goal).
 # mask_fallback_penalty (2026-11-22, training): <= 0, reward per decision where all candidate headings are blocked
 # (mask fallback = the aircraft is trapped). 90 % of the area entries and later intrusions came after a fallback.
 # mask_proj_penalty (2026-11-22, shield distillation, training): <= 0, reward per decision that the mask corrects,
@@ -146,6 +158,12 @@ def add_mask_args(p, from_checkpoint=False):
                    help="Arc mode: 1 = trap fallback over the full circle with a speed change (test time)." + src)
     p.add_argument("--mask-fb2-dv-ms", type=float, default=d("mask_fb2_dv_ms"),
                    help=f"Speed change tested by fb2 (default {MASK_DEFAULTS['mask_fb2_dv_ms']:g} m/s)." + src)
+    p.add_argument("--mask-route-cooldown", type=int, default=d("mask_route_cooldown"),
+                   help="Decisions the route stays off after the progress guard (0 = rest of the flight)." + src)
+    p.add_argument("--mask-route-escalate", type=int, choices=[0, 1], default=d("mask_route_escalate"),
+                   help="1 = on a progress-guard event, re-plan the route with margin x2, then x3, before it goes off." + src)
+    p.add_argument("--mask-speed", type=int, choices=[0, 1], default=d("mask_speed"),
+                   help="Arc mode, intruders: 1 = try a speed change before turning away from traffic." + src)
     p.add_argument("--mask-mode", choices=["ray", "arc"], default=d("mask_mode"),
                    help="ray: straight line along the target heading (default). arc: predicted flight path with "
                         "the BlueSky turn rate from the current heading." + src)
@@ -308,3 +326,25 @@ def choose_trap_fb2(geo, goal_rel_deg, req_off, cur_off, dist_km, step_deg, spee
             if best_key is None or key < best_key:
                 best_key, best_sep = key, (float(cand[k]), spd)
     return best_sep
+
+
+def speed_option(geo, goal_rel_deg, req_off, speed_ms, turn_rate_dps, dist_km, goal_km, intr, dv_ms):
+    """mask_speed (2026-11-23): the request is blocked; test the own speed -dv and +dv on the requested heading.
+    Returns the speed action (-1 / +1) whose path is statically free and keeps separation >= sep_km (the larger
+    separation first), or 0 if neither does."""
+    if intr is None:
+        return 0
+    if geo is None:
+        geo = ([], None)
+    dkm = min(float(dist_km), float(goal_km))
+    tgt = np.array([goal_rel_deg + req_off])
+    best, best_sep = 0, -np.inf
+    for spd, dv in ((-1, -float(dv_ms)), (1, float(dv_ms))):
+        v = max(speed_ms + dv, 50.0)
+        rate = turn_rate_dps * speed_ms / v
+        if free_path(geo, tgt, v, rate, dkm)[0] < dkm:
+            continue
+        sep = float(min_separation(tgt, v, rate, intr)[0])
+        if sep >= intr["sep_km"] and sep > best_sep:
+            best, best_sep = spd, sep
+    return best
